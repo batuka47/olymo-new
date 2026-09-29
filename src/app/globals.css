@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #f3f0e8;
+  --color-ink: #17181a;
+  --color-line: #d6d2c8;
+  --color-muted: #55565a;
+  --color-accent: #2e3bff;
+  --color-lime: #c8f031;
+  --color-ink-line: #3a3b3f;
+
+  --radius-*: initial;
+  --radius: 0;
+
+  --tracking-label: 0.06em;
+  --tracking-display: -0.03em;
+}
+
+@theme inline {
+  --font-display: var(--font-unbounded), sans-serif;
+  --font-sans: var(--font-onest), sans-serif;
+  --font-mono: var(--font-jetbrains-mono), monospace;
+}
+
+@utility container {
+  margin-inline: auto;
+  max-width: 1440px;
+  padding-inline: 16px;
+
+  @variant lg {
+    padding-inline: 64px;
+  }
+}

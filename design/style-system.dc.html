@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="mn">
+<head>
+<meta charset="utf-8">
+<title>Загварын систем</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&amp;family=Onest:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap">
+<style>
+body{margin:0;background:#F3F0E8}
+.ph{background-color:#DDD8CC;background-image:repeating-linear-gradient(135deg,rgba(23,24,26,.08) 0 1px,transparent 1px 11px)}
+.dots{background-image:radial-gradient(rgba(255,255,255,.22) 1px,transparent 1.4px);background-size:12px 12px}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1180px; box-sizing: border-box; padding: 64px; display: flex; flex-direction: column; gap: 40px; background: #F3F0E8; color: #17181A; font-family: 'Onest', sans-serif">
+  <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid #17181A; padding-bottom: 24px">
+    <h1 style="margin: 0; font-family: 'Unbounded', sans-serif; font-weight: 800; font-size: 56px; letter-spacing: -0.03em">{{brand}} / Загварын систем</h1>
+    <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #55565A">v0.1 · Anir Agency</span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 40px">
+    <!-- colors -->
+    <div style="grid-column: span 5; display: flex; flex-direction: column; gap: 16px">
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em">01 · Өнгө</span>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid #17181A">
+        <sc-for list="{{colors}}" as="c" hint-placeholder-count="6">
+          <div style="display: flex; flex-direction: column; border-right: {{c.br}}; border-bottom: {{c.bb}}">
+            <div style="height: 96px; background: {{c.hex}}"></div>
+            <div style="padding: 10px 12px; display: flex; flex-direction: column; gap: 2px">
+              <span style="font-weight: 600; font-size: 14px">{{c.name}}</span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #55565A">{{c.hex}} · {{c.use}}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- type -->
+    <div style="grid-column: span 7; display: flex; flex-direction: column; gap: 16px">
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em">02 · Үсгийн хэв</span>
+      <div style="border: 1px solid #17181A; display: flex; flex-direction: column">
+        <div style="padding: 20px 24px; border-bottom: 1px solid #D6D2C8; display: flex; justify-content: space-between; align-items: baseline; gap: 24px">
+          <span style="font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 44px; letter-spacing: -0.03em; line-height: 1.05">Өөрчлөлт Үүсгэ</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #55565A; white-space: nowrap">Unbounded 700/800 · гарчиг</span>
+        </div>
+        <div style="padding: 20px 24px; border-bottom: 1px solid #D6D2C8; display: flex; justify-content: space-between; align-items: baseline; gap: 24px">
+          <span style="font-size: 19px; line-height: 1.6">Их сургуулийн элсэлт, олимпиадын бүртгэл, тэтгэлгийн мэдээ — уншихад амар, тод бичвэр.</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #55565A; white-space: nowrap">Onest 400–700 · бичвэр</span>
+        </div>
+        <div style="padding: 20px 24px; display: flex; justify-content: space-between; align-items: baseline; gap: 24px">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em">[ 01 · Олимпиад · 10.20 ]</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #55565A; white-space: nowrap">JetBrains Mono · шошго, огноо</span>
+        </div>
+      </div>
+      <p style="margin: 0; font-size: 14px; color: #55565A">Гурвуулаа кирилл (Ө, Ү) бүрэн дэмжинэ, Google Fonts-оос үнэгүй.</p>
+    </div>
+  </div>
+
+  <!-- components -->
+  <div style="display: flex; flex-direction: column; gap: 16px">
+    <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em">03 · Бүрэлдэхүүн</span>
+    <div style="display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); border: 1px solid #17181A">
+      <div style="grid-column: span 4; padding: 28px; border-right: 1px solid #D6D2C8; display: flex; flex-direction: column; gap: 14px; align-items: flex-start">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #55565A">Товч</span>
+        <button style="height: 48px; padding: 0 22px; border: none; background: {{accent}}; color: #FFFFFF; font-family: 'JetBrains Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em">Үндсэн үйлдэл</button>
+        <button style="height: 48px; padding: 0 22px; border: none; background: #17181A; color: #F3F0E8; font-family: 'JetBrains Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em">Хоёрдогч →</button>
+        <button style="height: 48px; padding: 0 22px; border: 1px solid #17181A; background: transparent; color: #17181A; font-family: 'JetBrains Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em">Хүрээтэй</button>
+      </div>
+      <div style="grid-column: span 4; padding: 28px; border-right: 1px solid #D6D2C8; display: flex; flex-direction: column; gap: 14px">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #55565A">Шошго ба бүртгэлийн хугацаа</span>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em">
+          <span style="border: 1px solid #17181A; padding: 4px 8px">Ангилал</span>
+          <span style="background: #17181A; color: #F3F0E8; padding: 5px 8px">Гол мэдээ</span>
+          <span style="background: #C8F031; padding: 5px 8px">Шинэ</span>
+          <span style="background: {{accent}}; color: #FFFFFF; padding: 5px 8px">Эвент</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; background: #17181A; color: #F3F0E8; padding: 14px 16px">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; color: #8E8C86">Бүртгэл дуусах</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; background: #C8F031; color: #17181A; padding: 4px 8px">10.20</span>
+        </div>
+        <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #55565A">7 хоногоос бага хугацаа үлдсэн бол лайм өнгөөр тодруулна.</p>
+      </div>
+      <div style="grid-column: span 4; padding: 28px; display: flex; flex-direction: column; gap: 12px">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #55565A">Карт · зургийн орлуулга</span>
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+          <div class="ph" style="height: 64px"></div>
+          <div class="dots" style="height: 64px; background-color: {{accent}}"></div>
+          <div class="dots" style="height: 64px; background-color: #17181A"></div>
+          <div style="height: 64px; background: #C8F031"></div>
+        </div>
+        <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #55565A">Булан дугуйлахгүй (0px). Хэсгүүдийг 1px шугамаар хуваана. Сүүдэр, градиент хэрэглэхгүй.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"brand":{"editor":"text","default":"НЭР"},"accent":{"editor":"color","default":"#2E3BFF","options":["#2E3BFF","#E8471C","#0F7B5F","#7A2FE0"]},"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const accent = this.props.accent ?? '#2E3BFF';
+    const brand = this.props.brand ?? 'НЭР';
+    const line = '1px solid #D6D2C8';
+    const colors = [
+      { name: 'Цаас', hex: '#F3F0E8', use: 'дэвсгэр' },
+      { name: 'Бэх', hex: '#17181A', use: 'текст, хар хэсэг' },
+      { name: 'Шугам', hex: '#D6D2C8', use: 'хуваагч' },
+      { name: 'Акцент', hex: accent, use: 'үйлдэл, линк' },
+      { name: 'Лайм', hex: '#C8F031', use: 'тодруулга' },
+      { name: 'Саарал', hex: '#55565A', use: 'мета текст' }
+    ].map((c, i) => ({ ...c, br: (i % 3) < 2 ? line : 'none', bb: i < 3 ? line : 'none' }));
+    return { accent, brand, colors };
+  }
+}
+</script>
+</body>
+</html>
