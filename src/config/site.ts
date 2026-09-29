@@ -8,6 +8,16 @@ if (!siteUrl) {
   );
 }
 
+export type SocialNetwork = "facebook" | "instagram" | "youtube" | "tiktok";
+
+// Full profile URLs; leave empty to hide a network.
+const socials: Record<SocialNetwork, string> = {
+  facebook: "",
+  instagram: "",
+  youtube: "",
+  tiktok: "",
+};
+
 export const siteConfig = {
   name: "НЭР",
   tagline: t("site.tagline"),
@@ -15,10 +25,5 @@ export const siteConfig = {
   email: "[ИМЭЙЛ]",
   phone: "[УТАС]",
   address: "[ХАЯГ]",
-  socials: {
-    facebook: "",
-    instagram: "",
-    youtube: "",
-    tiktok: "",
-  },
+  socials,
 } as const;

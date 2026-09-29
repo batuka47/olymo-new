@@ -49,3 +49,11 @@ const categorySlugs: ReadonlySet<string> = new Set(categories.map((category) => 
 export function isCategorySlug(value: string): value is CategorySlug {
   return categorySlugs.has(value);
 }
+
+export function getCategory(slug: string) {
+  return categories.find((category) => category.slug === slug);
+}
+
+export function categoryPath(slug: CategorySlug): string {
+  return `/${slug}`;
+}

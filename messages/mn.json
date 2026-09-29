@@ -2,11 +2,56 @@
   "site": {
     "tagline": "Олимпиад, тэмцээн, тэтгэлэг — нэг дор, цаг алдалгүй."
   },
+  "nav": {
+    "skipToContent": "Үндсэн агуулга руу шилжих",
+    "featured": "Онцлох",
+    "categories": "Ангилал",
+    "info": "Мэдээлэл",
+    "partner": "Хамтрах",
+    "menu": "Цэс",
+    "openMenu": "Цэс нээх",
+    "closeMenu": "Цэс хаах",
+    "search": "Хайх",
+    "submit": "Мэдээ илгээх"
+  },
+  "ticker": {
+    "label": "Шинэ мэдээ",
+    "new": "Шинэ"
+  },
+  "pages": {
+    "about": "Бидний тухай",
+    "faq": "Түгээмэл асуулт",
+    "editorialPolicy": "Редакцийн ёс зүй",
+    "privacy": "Нууцлалын бодлого",
+    "advertise": "Сурталчилгаа байршуулах",
+    "partner": "Хамтарч ажиллах",
+    "contact": "Холбоо барих",
+    "search": "Хайх",
+    "submit": "Мэдээ илгээх"
+  },
+  "footer": {
+    "contact": "Холбоо",
+    "email": "Имэйл",
+    "phone": "Утас",
+    "rights": "Бүх эрх хуулиар хамгаалагдсан",
+    "credit": "Anir Agency бүтээв"
+  },
+  "section": {
+    "viewAll": "Бүгдийг үзэх"
+  },
   "tokenPreview": {
     "label": "Загварын шалгалт",
     "intro": "ЕБС болон их сургуулийн сурагч, оюутнуудад зориулсан боловсролын мэдээ. Бүртгэлийн хугацаа, шалгуур, хаана болох — бүгд тодорхой.",
+    "buttonsTitle": "Товч",
     "buttonAccent": "Үндсэн үйлдэл",
-    "buttonInk": "Хоёрдогч →",
-    "buttonOutline": "Хүрээтэй"
+    "buttonInk": "Хоёрдогч",
+    "buttonOutline": "Хүрээтэй",
+    "tagsTitle": "Шошго",
+    "tagOutline": "Ангилал",
+    "tagInk": "Гол мэдээ",
+    "tagLime": "Шинэ",
+    "tagAccent": "Эвент",
+    "placeholderTitle": "Зургийн орлуулга",
+    "placeholderLabel": "[ ЗУРАГ ]"
   }
 }

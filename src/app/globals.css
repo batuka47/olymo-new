@@ -9,6 +9,12 @@
   --color-lime: #c8f031;
   --color-ink-line: #3a3b3f;
 
+  /* Supporting shades from the design boards */
+  --color-stone: #ddd8cc; /* image placeholder background */
+  --color-coal: #26272b; /* raised surface and faded wordmark on ink */
+  --color-fog: #b9b7b0; /* secondary text on ink */
+  --color-ash: #8e8c86; /* meta text on ink */
+
   --radius-*: initial;
   --radius: 0;
 
@@ -29,5 +35,25 @@
 
   @variant lg {
     padding-inline: 64px;
+  }
+}
+
+@utility stripe-pattern {
+  background-color: var(--color-stone);
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgb(23 24 26 / 0.08) 0 1px,
+    transparent 1px 11px
+  );
+}
+
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  html:has(dialog[open]:modal) {
+    overflow: hidden;
   }
 }
