@@ -685,8 +685,7 @@ export type Database = {
       };
     };
     Functions: {
-      is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
-      is_staff: { Args: Record<PropertyKey, never>; Returns: boolean };
+      [_ in never]: never;
     };
     Enums: {
       [_ in never]: never;

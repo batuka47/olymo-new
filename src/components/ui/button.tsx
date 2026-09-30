@@ -24,7 +24,7 @@ const sizeClasses: Record<ButtonSize, string> = {
 
 export function buttonClasses({ variant = "accent", size = "md", className }: ButtonStyleProps) {
   return cx(
-    "inline-flex cursor-pointer items-center justify-center gap-2 font-mono tracking-label whitespace-nowrap uppercase transition-colors",
+    "inline-flex cursor-pointer items-center justify-center gap-2 font-mono tracking-label whitespace-nowrap uppercase transition-colors disabled:cursor-not-allowed disabled:opacity-60",
     variantClasses[variant],
     sizeClasses[size],
     className,

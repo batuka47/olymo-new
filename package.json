@@ -11,7 +11,8 @@
     "format": "prettier --write .",
     "db:types": "supabase gen types typescript --local --schema public > src/lib/supabase/types.ts && prettier --write src/lib/supabase/types.ts",
     "check:categories": "node scripts/check-categories.mjs",
-    "db:test": "supabase test db"
+    "db:test": "supabase test db",
+    "admin:create": "tsx scripts/create-admin.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -19,7 +20,8 @@
     "next": "16.3.7",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -33,6 +35,7 @@
     "prettier-plugin-tailwindcss": "^0.8.1",
     "supabase": "^2.118.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

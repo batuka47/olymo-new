@@ -82,13 +82,14 @@ select ok((select display_name from public.profiles) = 'Шинэ нэр', 'reade
 select throws_ok($$update public.profiles set role = 'admin' where id = '00000000-0000-0000-0000-00000000000a'$$, '42501', null, 'reader: cannot promote self');
 select throws_ok($$insert into public.articles (slug, title, category_slug) values ('reader-x', 'X', 'education')$$, '42501', null, 'reader: cannot insert articles');
 select throws_ok($$insert into storage.objects (bucket_id, name) values ('media', 'reader.webp')$$, '42501', null, 'reader: cannot upload media');
+select throws_ok($$select public.handle_new_user()$$, '42501', null, 'reader: cannot call the signup trigger function');
 
 -- editor --------------------------------------------------------------------
 reset role;
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000b","role":"authenticated"}', true);
 
-select ok(public.is_staff() and not public.is_admin(), 'editor: is_staff() true, is_admin() false');
+select ok(private.is_staff() and not private.is_admin(), 'editor: is_staff() true, is_admin() false');
 select ok((select count(*) from public.articles) = 10, 'editor: sees drafts and future items');
 select ok((select count(*) from public.published_articles) = 7, 'editor: view still shows only public articles');
 select ok((select count(*) from public.events) = 4, 'editor: sees future scheduled events');
@@ -116,6 +117,16 @@ select ok((select status from public.submissions limit 1) = 'done', 'admin: upda
 update public.profiles set role = 'editor' where id = '00000000-0000-0000-0000-00000000000a';
 select ok((select role from public.profiles where id = '00000000-0000-0000-0000-00000000000a') = 'editor', 'admin: changes roles');
 
+-- service role (server actions with the secret key, scripts/create-admin.ts) ----------------
+reset role;
+set local role service_role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', true);
+
+update public.profiles set role = 'admin' where id = '00000000-0000-0000-0000-00000000000a';
+select ok((select role from public.profiles where id = '00000000-0000-0000-0000-00000000000a') = 'admin', 'service role: changes roles through the guard trigger');
+update public.comments set status = 'visible';
+select ok((select status from public.comments limit 1) = 'visible', 'service role: moderates comments through the guard trigger');
+
 -- constraints, search, storage config ------------------------------------------
 reset role;
 select throws_ok($$insert into public.articles (slug, title, category_slug, excerpt) values ('long', 'X', 'education', repeat('а', 201))$$, '23514', null, 'excerpt longer than 200 is rejected');
@@ -139,6 +150,14 @@ select ok(
   (select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace
    where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity) = 0,
   'RLS enabled on every public table'
+);
+select ok(
+  not exists (
+    select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.prosecdef
+      and (has_function_privilege('anon', p.oid, 'execute') or has_function_privilege('authenticated', p.oid, 'execute'))
+  ),
+  'no SECURITY DEFINER function in public is callable by anon or authenticated'
 );
 
 select * from finish();

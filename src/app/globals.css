@@ -14,6 +14,7 @@
   --color-coal: #26272b; /* raised surface and faded wordmark on ink */
   --color-fog: #b9b7b0; /* secondary text on ink */
   --color-ash: #8e8c86; /* meta text on ink */
+  --color-danger: #b42318; /* form errors; 5.8:1 on paper */
 
   --radius-*: initial;
   --radius: 0;

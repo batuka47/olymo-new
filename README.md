@@ -49,11 +49,8 @@ The Supabase CLI is a dev dependency, so every command runs through `npx supabas
   into `.env.local`.
 - **Sample content:** `supabase/seed.sql` loads 6 articles, 2 events and 1 ad. Every title starts
   with `[ЖИШЭЭ]`. The seed only runs locally.
-- **An admin account:** in Studio open Authentication → Add user (tick "Auto confirm"), then run in
-  the SQL editor:
-  ```sql
-  update public.profiles set role = 'admin' where id = (select id from auth.users where email = 'you@example.com');
-  ```
+- **An admin account:** see [Admin area](#admin-area) below.
+- **Emails** (staff invites) are not sent locally; they appear in Mailpit: http://127.0.0.1:54324
 
 ### Changing the schema
 
@@ -83,6 +80,57 @@ npx supabase db push                             # apply pending migrations
 hosted database. After the first push, add the hosted URL and keys to Vercel (see Environment
 variables).
 
+## Admin area
+
+The admin lives at `/admin` (sign in at `/admin/login`). Only accounts whose profile role is `admin`
+or `editor` get in; there is no public sign-up for staff. Admins manage staff at `/admin/users`
+(invite, change role, remove the staff role). Editors see everything except users and submissions.
+
+### The first admin
+
+`scripts/create-admin.ts` creates an admin account, or promotes an existing account to admin:
+
+```bash
+# bash / Git Bash
+ADMIN_EMAIL=you@example.com ADMIN_PASSWORD='a-long-password' npx tsx scripts/create-admin.ts
+```
+
+```powershell
+# PowerShell
+$env:ADMIN_EMAIL="you@example.com"; $env:ADMIN_PASSWORD="a-long-password"; npx tsx scripts/create-admin.ts
+```
+
+The password needs at least 8 characters. The script reads `NEXT_PUBLIC_SUPABASE_URL` and
+`SUPABASE_SECRET_KEY` from the shell, falling back to `.env.local`. For the **hosted** project, set
+those two variables in the shell to the hosted values for that one command. `npm run admin:create`
+is a shortcut for the same script.
+
+### Inviting staff and resetting passwords
+
+Both are emailed by Supabase Auth, and both links go to `/admin/auth/confirm`, which signs the
+person in and sends them to `/admin/set-password` to choose a password. Any staff member can also
+change their password on that page later.
+
+- **Invite:** an admin invites from `/admin/users`.
+- **Forgot password:** "Нууц үгээ мартсан?" on the login page opens `/admin/forgot-password`. It
+  answers with the same message whether or not the email has an account, so it cannot be used to
+  find out who works here.
+
+One-time setup on the hosted project (Supabase dashboard):
+
+1. **Authentication → URL Configuration:** set Site URL to the public site URL (the same value as
+   `NEXT_PUBLIC_SITE_URL`).
+2. **Authentication → Emails → Invite user:** paste the subject and body from
+   `supabase/templates/invite.html`.
+3. **Authentication → Emails → Reset password:** paste the subject and body from
+   `supabase/templates/recovery.html`.
+4. **Authentication → Emails → SMTP settings:** connect a real email sender (for example Resend).
+   Supabase's built-in sender only delivers to your own team's addresses and is heavily rate limited.
+
+The default Supabase templates do not work with this app: their links cannot be read by the server.
+The subjects are in the comment at the top of each template file and in `supabase/config.toml`, which
+configures all of this for local development.
+
 ## Scripts
 
 | Command                    | What it does                                                 |
@@ -96,6 +144,7 @@ variables).
 | `npm run db:types`         | Regenerate Supabase types from the local database            |
 | `npm run db:test`          | Run the database tests (local Supabase must be running)      |
 | `npm run check:categories` | Check `categories.ts` and the migrations list the same slugs |
+| `npm run admin:create`     | Create or promote an admin (see Admin area)                  |
 
 Before merging, `lint`, `typecheck` and `build` must all pass.
 

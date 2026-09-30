@@ -1,0 +1,14 @@
+<!-- Password reset. Copy this into Supabase Dashboard → Authentication → Emails → "Reset password"
+     for the hosted project. The link must point to /admin/auth/confirm with the token hash.
+     Subject: Нууц үг сэргээх -->
+<h2>Нууц үг сэргээх</h2>
+<p>{{ .SiteURL }} сайтын бүртгэлийнхээ нууц үгийг сэргээх хүсэлт ирлээ.</p>
+<p>
+  <a href="{{ .SiteURL }}/admin/auth/confirm?token_hash={{ .TokenHash }}&type=recovery">
+    Шинэ нууц үг тохируулах
+  </a>
+</p>
+<p>Холбоос богино хугацаанд хүчинтэй бөгөөд зөвхөн нэг удаа ашиглагдана.</p>
+<p>
+  Хэрэв та энэ хүсэлтийг илгээгээгүй бол энэ имэйлийг үл тоомсорлоно уу. Таны нууц үг өөрчлөгдөхгүй.
+</p>

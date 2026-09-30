@@ -1,0 +1,12 @@
+<!-- Staff invite. Copy this into Supabase Dashboard → Authentication → Emails → "Invite user"
+     for the hosted project. The link must point to /admin/auth/confirm with the token hash.
+     Subject: Редакцид нэгдэх урилга -->
+<h2>Редакцид нэгдэх урилга</h2>
+<p>Таныг {{ .SiteURL }} сайтын админ самбарт ажилтнаар урьж байна.</p>
+<p>
+  <a href="{{ .SiteURL }}/admin/auth/confirm?token_hash={{ .TokenHash }}&type=invite">
+    Урилгыг хүлээн авч нууц үгээ тохируулах
+  </a>
+</p>
+<p>Холбоос богино хугацаанд хүчинтэй. Хугацаа нь дууссан бол админаас дахин урилга хүснэ үү.</p>
+<p>Хэрэв та энэ урилгыг хүлээгээгүй бол энэ имэйлийг үл тоомсорлоно уу.</p>
