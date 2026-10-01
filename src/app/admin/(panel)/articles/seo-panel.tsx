@@ -75,7 +75,7 @@ export function SeoPanel({
               version={coverVersion}
               alt=""
               sizes="448px"
-              className="aspect-[1.91/1] w-full object-cover"
+              className="aspect-[1.91/1] w-full"
             />
           ) : (
             <div className="aspect-[1.91/1] w-full stripe-pattern" />

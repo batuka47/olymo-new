@@ -17,6 +17,7 @@ export interface ArticleFormValues {
   bodyJson: JSONContent;
   coverPath: string | null;
   coverAlt: string;
+  coverCaption: string;
   subject: OlympiadSubject | "";
   levelText: string;
   registrationDeadline: string;
@@ -48,6 +49,7 @@ export function emptyArticleValues(): ArticleFormValues {
     bodyJson: emptyDocument,
     coverPath: null,
     coverAlt: "",
+    coverCaption: "",
     subject: "",
     levelText: "",
     registrationDeadline: "",
@@ -84,6 +86,7 @@ export function articleRowToValues(
     bodyJson: (row.body_json as JSONContent | null) ?? emptyDocument,
     coverPath: row.cover_path,
     coverAlt: row.cover_alt ?? "",
+    coverCaption: row.cover_caption ?? "",
     subject: (row.subject as OlympiadSubject | null) ?? "",
     levelText: row.level_text ?? "",
     registrationDeadline: row.registration_deadline ?? "",

@@ -26,4 +26,6 @@ export const siteConfig = {
   phone: "[УТАС]",
   address: "[ХАЯГ]",
   socials,
+  /** Optional; enables the Messenger share button on computers. See .env.example. */
+  facebookAppId: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID ?? "",
 } as const;

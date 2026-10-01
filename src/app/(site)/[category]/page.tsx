@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { StubPage } from "@/components/site/stub-page";
 import { categories, getCategory } from "@/config/categories";
 
-export const dynamicParams = false;
-
+// No dynamicParams = false: with it, a page cleared by revalidatePath() (every article save) is
+// answered with 404 instead of being rendered again. Unknown slugs still get notFound() below.
 export function generateStaticParams() {
   return categories.map((category) => ({ category: category.slug }));
 }

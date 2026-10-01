@@ -1,4 +1,4 @@
-import { IMAGE_WIDTHS, type ImageExtension, type ImageWidth } from "@/lib/media";
+import { IMAGE_WIDTHS, SOCIAL_IMAGE_SIZE, type ImageExtension, type ImageWidth } from "@/lib/media";
 
 export const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 export const MAX_SOURCE_BYTES = 20 * 1024 * 1024;
@@ -28,6 +28,18 @@ export interface EncodedImage {
   variants: { width: ImageWidth; blob: Blob }[];
 }
 
+export interface EncodedCover extends EncodedImage {
+  /** SOCIAL_IMAGE_SIZE JPEG; every link-preview crawler reads JPEG. */
+  socialImage: Blob;
+}
+
+interface SourceArea {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 function canvasToBlob(canvas: HTMLCanvasElement, format: OutputFormat): Promise<Blob | null> {
   return new Promise((resolve) => canvas.toBlob(resolve, format.mimeType, format.quality));
 }
@@ -43,6 +55,7 @@ async function canEncodeWebp(): Promise<boolean> {
 
 async function encode(
   bitmap: ImageBitmap,
+  source: SourceArea,
   width: number,
   height: number,
   format: OutputFormat,
@@ -60,7 +73,7 @@ async function encode(
     context.fillRect(0, 0, width, height);
   }
   context.imageSmoothingQuality = "high";
-  context.drawImage(bitmap, 0, 0, width, height);
+  context.drawImage(bitmap, source.x, source.y, source.width, source.height, 0, 0, width, height);
 
   const blob = await canvasToBlob(canvas, format);
   if (blob?.type !== format.mimeType) {
@@ -69,25 +82,73 @@ async function encode(
   return blob;
 }
 
-/**
- * Resizes an image in the browser to every IMAGE_WIDTHS width, as WebP or (where WebP cannot be
- * encoded) JPEG. Images are never enlarged: a 900 px photo produces 400, 800 and 900 px files.
- */
-export async function encodeImageVariants(file: File): Promise<EncodedImage> {
-  const format = (await canEncodeWebp()) ? WEBP : JPEG;
+function wholeImage(bitmap: ImageBitmap): SourceArea {
+  return { x: 0, y: 0, width: bitmap.width, height: bitmap.height };
+}
+
+/** The centred part of the image with the target's aspect ratio (like object-fit: cover). */
+function centredCrop(bitmap: ImageBitmap, width: number, height: number): SourceArea {
+  const scale = Math.max(width / bitmap.width, height / bitmap.height);
+  const cropWidth = width / scale;
+  const cropHeight = height / scale;
+  return {
+    x: (bitmap.width - cropWidth) / 2,
+    y: (bitmap.height - cropHeight) / 2,
+    width: cropWidth,
+    height: cropHeight,
+  };
+}
+
+/** Images are never enlarged: a 900 px photo produces 400, 800 and 900 px files. */
+function encodeWidths(
+  bitmap: ImageBitmap,
+  format: OutputFormat,
+): Promise<EncodedImage["variants"]> {
+  return Promise.all(
+    IMAGE_WIDTHS.map(async (width) => {
+      const targetWidth = Math.min(width, bitmap.width);
+      const targetHeight = Math.round((bitmap.height * targetWidth) / bitmap.width);
+      const blob = await encode(bitmap, wholeImage(bitmap), targetWidth, targetHeight, format);
+      return { width, blob };
+    }),
+  );
+}
+
+async function withBitmap<T>(file: File, handle: (bitmap: ImageBitmap) => Promise<T>): Promise<T> {
   const bitmap = await createImageBitmap(file);
   try {
-    const variants = await Promise.all(
-      IMAGE_WIDTHS.map(async (width) => {
-        const targetWidth = Math.min(width, bitmap.width);
-        const targetHeight = Math.round((bitmap.height * targetWidth) / bitmap.width);
-        return { width, blob: await encode(bitmap, targetWidth, targetHeight, format) };
-      }),
-    );
-    return { format, variants };
+    return await handle(bitmap);
   } finally {
     bitmap.close();
   }
+}
+
+async function outputFormat(): Promise<OutputFormat> {
+  return (await canEncodeWebp()) ? WEBP : JPEG;
+}
+
+/**
+ * Resizes an image in the browser to every IMAGE_WIDTHS width, as WebP or (where WebP cannot be
+ * encoded) JPEG.
+ */
+export function encodeImageVariants(file: File): Promise<EncodedImage> {
+  return withBitmap(file, async (bitmap) => {
+    const format = await outputFormat();
+    return { format, variants: await encodeWidths(bitmap, format) };
+  });
+}
+
+/** The widths of encodeImageVariants plus the share image for link previews. */
+export function encodeCoverImage(file: File): Promise<EncodedCover> {
+  return withBitmap(file, async (bitmap) => {
+    const format = await outputFormat();
+    const { width, height } = SOCIAL_IMAGE_SIZE;
+    const [variants, socialImage] = await Promise.all([
+      encodeWidths(bitmap, format),
+      encode(bitmap, centredCrop(bitmap, width, height), width, height, JPEG),
+    ]);
+    return { format, variants, socialImage };
+  });
 }
 
 export function formatFileSize(bytes: number): string {

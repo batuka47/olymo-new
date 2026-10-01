@@ -154,6 +154,7 @@ export async function saveArticle(input: ArticleInput): Promise<SaveArticleResul
     body_html: bodyHtml,
     cover_path: values.coverPath,
     cover_alt: values.coverAlt,
+    cover_caption: values.coverCaption,
     subject: values.subject,
     level_text: values.levelText,
     registration_deadline: values.registrationDeadline,

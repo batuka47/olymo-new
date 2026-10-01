@@ -54,3 +54,10 @@ export function articleCoverPath(
 ): string {
   return `${articleFolder(articleId)}/cover-${width}.${extension}`;
 }
+
+/** Share image for Facebook, Messenger and X: 1200 × 630 JPEG, cropped from the cover on upload. */
+export const SOCIAL_IMAGE_SIZE = { width: 1200, height: 630 } as const;
+
+export function articleSocialImagePath(articleId: string): string {
+  return `${articleFolder(articleId)}/cover-og.jpg`;
+}

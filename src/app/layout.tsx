@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
 import { jetbrainsMono, onest, unbounded } from "@/lib/fonts";
+import { siteOpenGraph } from "@/lib/metadata";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -10,11 +11,7 @@ export const metadata: Metadata = {
     template: `%s — ${siteConfig.name}`,
   },
   description: siteConfig.tagline,
-  openGraph: {
-    siteName: siteConfig.name,
-    locale: "mn_MN",
-    type: "website",
-  },
+  openGraph: { ...siteOpenGraph, type: "website" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

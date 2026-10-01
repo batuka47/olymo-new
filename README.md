@@ -112,7 +112,10 @@ is a shortcut for the same script.
 - **Images** are resized in the browser to 1600, 800 and 400 px and uploaded to
   `media/articles/{id}/` as `cover-{width}.webp`. Browsers that cannot create WebP (Safari) upload
   JPEG instead (`cover-{width}.jpg`); the saved path keeps the extension, so the site always asks
-  for the files that exist.
+  for the files that exist. The cover also gets a 1200 × 630 JPEG crop, `cover-og.jpg`, used as
+  the share image on Facebook, Messenger and X. `next/image` uses a custom loader
+  (`src/lib/images/loader.ts`) that only picks one of the stored widths; nothing is resized on the
+  server.
 - **Body text** is saved as Tiptap JSON. The server builds the HTML from that JSON and cleans it
   with an allow-list; HTML sent by a browser is never stored.
 - **Publishing:** "Нийтлэх" publishes now, or at the chosen Ulaanbaatar time when "Огноо товлох" is
@@ -124,6 +127,24 @@ is a shortcut for the same script.
 - **Unused images:** images uploaded to an article that was never saved stay in storage. Admins can
   remove them with "Ашиглагдаагүй зураг цэвэрлэх" on the dashboard: it deletes `articles/{id}/`
   folders that have no article and nothing uploaded in the last 24 hours.
+
+### Public article page
+
+`/{category}/{slug}` is rendered on the server and cached (ISR, 60 s). The newest 50 articles are
+built at deploy time; the rest are built on their first visit. Saving in the admin refreshes the
+page immediately. A link with the wrong category answers 308 with the right address.
+
+- **Key facts** ("Гол мэдээлэл") appear when any olympiad field is filled. Deadlines under 7 days
+  away are lime; past ones say "Хугацаа дууссан". On phones the box sits above the text.
+- **Most read** ("Их уншсан"): the 4 most viewed articles published in the last 30 days.
+- **Related** ("Холбоотой мэдээ"): 3 articles, the ones sharing the most tags first, then the newest
+  in the same category.
+- **Views:** the page asks the server once per browser session (a `sessionStorage` flag, no cookie)
+  to add one to `view_count`. Only the server can do that, through the `record_article_view`
+  database function, and a view does not change `updated_at`. No reader data is stored.
+- **Sharing:** Facebook, Messenger (`fb-messenger://` on phones, Facebook's send dialog on
+  computers, which needs `NEXT_PUBLIC_FACEBOOK_APP_ID`), copy link, and the phone's own share sheet
+  where the browser has one.
 
 ### Inviting staff and resetting passwords
 
@@ -179,6 +200,7 @@ All configuration comes from env vars. `.env.example` lists every variable with 
 | `NEXT_PUBLIC_SUPABASE_URL`             | yes      | Supabase API URL                                             |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | yes      | Publishable key; safe in the browser, RLS applies            |
 | `SUPABASE_SECRET_KEY`                  | yes      | Secret (service role) key; server only, bypasses RLS         |
+| `NEXT_PUBLIC_FACEBOOK_APP_ID`          | no       | Facebook app ID; shows the Messenger share button on desktop |
 
 ## Project layout
 

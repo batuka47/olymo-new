@@ -99,6 +99,7 @@ export type Database = {
           body_json: Json | null;
           category_slug: string;
           cover_alt: string | null;
+          cover_caption: string | null;
           cover_path: string | null;
           created_at: string;
           exam_date: string | null;
@@ -131,6 +132,7 @@ export type Database = {
           body_json?: Json | null;
           category_slug: string;
           cover_alt?: string | null;
+          cover_caption?: string | null;
           cover_path?: string | null;
           created_at?: string;
           exam_date?: string | null;
@@ -163,6 +165,7 @@ export type Database = {
           body_json?: Json | null;
           category_slug?: string;
           cover_alt?: string | null;
+          cover_caption?: string | null;
           cover_path?: string | null;
           created_at?: string;
           exam_date?: string | null;
@@ -512,6 +515,7 @@ export type Database = {
           body_json: Json | null;
           category_slug: string | null;
           cover_alt: string | null;
+          cover_caption: string | null;
           cover_path: string | null;
           created_at: string | null;
           exam_date: string | null;
@@ -544,6 +548,7 @@ export type Database = {
           body_json?: Json | null;
           category_slug?: string | null;
           cover_alt?: string | null;
+          cover_caption?: string | null;
           cover_path?: string | null;
           created_at?: string | null;
           exam_date?: string | null;
@@ -576,6 +581,7 @@ export type Database = {
           body_json?: Json | null;
           category_slug?: string | null;
           cover_alt?: string | null;
+          cover_caption?: string | null;
           cover_path?: string | null;
           created_at?: string | null;
           exam_date?: string | null;
@@ -685,7 +691,7 @@ export type Database = {
       };
     };
     Functions: {
-      [_ in never]: never;
+      record_article_view: { Args: { article_id: string }; Returns: undefined };
     };
     Enums: {
       [_ in never]: never;

@@ -3,29 +3,27 @@ import { MEDIA_BUCKET, type ImageExtension, type ImageWidth } from "@/lib/media"
 import { createClient } from "@/lib/supabase/client";
 
 /**
- * Uploads every width of an encoded image to the media bucket from the browser, as the signed-in
- * staff member (storage RLS allows staff only). Returns the 1600 px path, which is what gets saved.
+ * Uploads a file to the media bucket from the browser, as the signed-in staff member (storage RLS
+ * allows staff only). Replaces any file at the same path.
  */
+export async function uploadMedia(path: string, blob: Blob): Promise<void> {
+  const { error } = await createClient()
+    .storage.from(MEDIA_BUCKET)
+    .upload(path, blob, { contentType: blob.type, cacheControl: "3600", upsert: true });
+  if (error) {
+    throw error;
+  }
+}
+
+/** Uploads every width of an encoded image. Returns the 1600 px path, which is what gets saved. */
 export async function uploadVariants(
   image: EncodedImage,
   pathFor: (width: ImageWidth, extension: ImageExtension) => string,
 ): Promise<string> {
-  const supabase = createClient();
-  const results = await Promise.all(
+  await Promise.all(
     image.variants.map((variant) =>
-      supabase.storage
-        .from(MEDIA_BUCKET)
-        .upload(pathFor(variant.width, image.format.extension), variant.blob, {
-          contentType: image.format.mimeType,
-          cacheControl: "3600",
-          upsert: true,
-        }),
+      uploadMedia(pathFor(variant.width, image.format.extension), variant.blob),
     ),
   );
-
-  const failed = results.find((result) => result.error);
-  if (failed?.error) {
-    throw failed.error;
-  }
   return pathFor(1600, image.format.extension);
 }

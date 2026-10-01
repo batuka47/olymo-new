@@ -71,6 +71,7 @@ export const articleInputSchema = z
     bodyJson: z.object({ type: z.literal("doc") }).loose(),
     coverPath: z.string().nullable(),
     coverAlt: optionalText(200),
+    coverCaption: optionalText(200),
     subject: z.enum(olympiadSubjects).nullable(),
     levelText: optionalText(100),
     registrationDeadline: optionalDate,

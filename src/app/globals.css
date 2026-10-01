@@ -13,7 +13,8 @@
   --color-stone: #ddd8cc; /* image placeholder background */
   --color-coal: #26272b; /* raised surface and faded wordmark on ink */
   --color-fog: #b9b7b0; /* secondary text on ink */
-  --color-ash: #8e8c86; /* meta text on ink */
+  --color-ash: #8e8c86; /* meta text on ink, dashed ad slot border */
+  --color-graphite: #3b3c40; /* lead paragraph; 9.7:1 on paper */
   --color-danger: #b42318; /* form errors; 5.8:1 on paper */
 
   --radius-*: initial;
@@ -39,6 +40,14 @@
   }
 }
 
+/* Image captions and photo credits: under the article cover and inside the article body. */
+@utility caption {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--color-muted);
+}
+
 @utility stripe-pattern {
   background-color: var(--color-stone);
   background-image: repeating-linear-gradient(
@@ -59,7 +68,8 @@
   }
 }
 
-/* Article text: the public article page and the admin editor share these styles. */
+/* Article text (the "Мэдээ — desktop" board): shared by the public article page and the admin
+   editor, so the editor shows what readers will see. */
 @layer components {
   .article-body {
     font-size: 1.0625rem;
@@ -71,7 +81,7 @@
     }
 
     & > * + * {
-      margin-top: 1.25rem;
+      margin-top: 1.375rem;
     }
 
     & > :first-child {
@@ -131,18 +141,35 @@
     }
 
     & blockquote {
+      margin-block: 2.125rem;
       border: 1px solid var(--color-ink);
       background: var(--color-lime);
       padding: 1.25rem 1.75rem;
       font-family: var(--font-display);
       font-weight: 500;
-      font-size: 1.25rem;
+      font-size: 1.125rem;
       line-height: 1.4;
+
+      @variant lg {
+        font-size: 1.375rem;
+      }
+    }
+
+    & blockquote p + p {
+      margin-top: 0.75rem;
     }
 
     & img {
       width: 100%;
       height: auto;
+    }
+
+    & figure {
+      margin-block: 1.875rem;
+    }
+
+    & figcaption {
+      @apply mt-2.5 caption;
     }
 
     & hr {

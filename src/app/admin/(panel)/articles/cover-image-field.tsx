@@ -2,29 +2,34 @@
 
 import { useId, useState, type DragEvent } from "react";
 import { Button } from "@/components/ui/button";
+import { CharacterCount } from "@/components/ui/character-count";
 import { FormMessage } from "@/components/ui/form-message";
 import { ResponsiveImage } from "@/components/ui/responsive-image";
 import { TextField } from "@/components/ui/text-field";
 import { cx } from "@/lib/cx";
 import { t } from "@/lib/i18n";
-import { uploadVariants } from "@/lib/images/upload";
 import {
   ACCEPTED_IMAGE_TYPES,
-  encodeImageVariants,
+  encodeCoverImage,
   formatFileSize,
   MAX_SOURCE_BYTES,
 } from "@/lib/images/encode";
-import { articleCoverPath } from "@/lib/media";
+import { uploadMedia, uploadVariants } from "@/lib/images/upload";
+import { articleCoverPath, articleSocialImagePath } from "@/lib/media";
+
+const CAPTION_LIMIT = 200;
 
 interface CoverImageFieldProps {
   articleId: string;
   path: string | null;
   alt: string;
+  caption: string;
   /** Cache buster for the preview; changes after every upload. */
   version: string;
   onUploaded: (path: string, version: string) => void;
   onRemove: () => void;
   onAltChange: (alt: string) => void;
+  onCaptionChange: (caption: string) => void;
 }
 
 type Phase = "idle" | "converting" | "uploading";
@@ -33,10 +38,12 @@ export function CoverImageField({
   articleId,
   path,
   alt,
+  caption,
   version,
   onUploaded,
   onRemove,
   onAltChange,
+  onCaptionChange,
 }: CoverImageFieldProps) {
   const inputId = useId();
   const [phase, setPhase] = useState<Phase>("idle");
@@ -58,11 +65,12 @@ export function CoverImageField({
     setError(undefined);
     try {
       setPhase("converting");
-      const image = await encodeImageVariants(file);
+      const image = await encodeCoverImage(file);
       setPhase("uploading");
-      const uploadedPath = await uploadVariants(image, (width, extension) =>
-        articleCoverPath(articleId, width, extension),
-      );
+      const [uploadedPath] = await Promise.all([
+        uploadVariants(image, (width, extension) => articleCoverPath(articleId, width, extension)),
+        uploadMedia(articleSocialImagePath(articleId), image.socialImage),
+      ]);
       setSaved({
         format: image.format.label,
         sizes: image.variants.map(({ width, blob }) => `${width}px · ${formatFileSize(blob.size)}`),
@@ -104,7 +112,7 @@ export function CoverImageField({
             version={version}
             alt=""
             sizes="(min-width: 1024px) 640px, 100vw"
-            className="mb-3 aspect-video w-full max-w-xl object-cover"
+            className="mb-3 aspect-video w-full max-w-xl"
           />
         )}
         {busy ? (
@@ -156,6 +164,19 @@ export function CoverImageField({
             required
             aria-invalid={!alt.trim()}
             hint={t("admin.articles.cover.altHint")}
+          />
+          <TextField
+            label={t("admin.articles.cover.caption")}
+            name="coverCaption"
+            value={caption}
+            maxLength={CAPTION_LIMIT}
+            onChange={(event) => onCaptionChange(event.target.value)}
+            hint={
+              <span className="flex flex-wrap justify-between gap-2">
+                {t("admin.articles.cover.captionHint")}
+                <CharacterCount value={caption} limit={CAPTION_LIMIT} />
+              </span>
+            }
           />
           <div>
             <Button variant="outline" onClick={onRemove} disabled={busy}>

@@ -7,13 +7,13 @@ select * from no_plan();
 
 -- Test users: the signup trigger must create reader profiles.
 insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data, created_at, updated_at) values
-  ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'reader@test.local', '{"display_name":"Уншигч"}', now(), now()),
-  ('00000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'editor@test.local', '{}', now(), now()),
-  ('00000000-0000-0000-0000-00000000000c', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'admin@test.local', '{}', now(), now());
+  ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'pgtap-reader@test.local', '{"display_name":"Уншигч"}', now(), now()),
+  ('00000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'pgtap-editor@test.local', '{}', now(), now()),
+  ('00000000-0000-0000-0000-00000000000c', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'pgtap-admin@test.local', '{}', now(), now());
 
 select ok((select count(*) from public.profiles where role = 'reader' and id::text like '00000000-%') = 3, 'signup trigger creates reader profiles');
 select ok((select display_name from public.profiles where id = '00000000-0000-0000-0000-00000000000a') = 'Уншигч', 'display_name taken from signup metadata');
-select ok((select display_name from public.profiles where id = '00000000-0000-0000-0000-00000000000b') = 'editor', 'display_name falls back to email name');
+select ok((select display_name from public.profiles where id = '00000000-0000-0000-0000-00000000000b') = 'pgtap-editor', 'display_name falls back to email name');
 
 update public.profiles set role = 'editor' where id = '00000000-0000-0000-0000-00000000000b';
 update public.profiles set role = 'admin' where id = '00000000-0000-0000-0000-00000000000c';
@@ -130,6 +130,9 @@ select ok((select status from public.comments limit 1) = 'visible', 'service rol
 -- constraints, search, storage config ------------------------------------------
 reset role;
 select throws_ok($$insert into public.articles (slug, title, category_slug, excerpt) values ('long', 'X', 'education', repeat('а', 201))$$, '23514', null, 'excerpt longer than 200 is rejected');
+select throws_ok($$insert into public.articles (slug, title, category_slug, cover_caption) values ('long-caption', 'X', 'education', repeat('а', 201))$$, '23514', null, 'cover caption longer than 200 is rejected');
+select lives_ok($$insert into public.articles (slug, title, category_slug, cover_caption) values ('max-caption', 'X', 'education', repeat('а', 200))$$, 'cover caption of 200 characters is accepted');
+select ok(exists (select 1 from information_schema.columns where table_name = 'published_articles' and column_name = 'cover_caption'), 'published_articles view includes cover_caption');
 select throws_ok($$insert into public.articles (slug, title, category_slug, status) values ('no-date', 'X', 'education', 'published')$$, '23514', null, 'published without publish_at is rejected');
 select throws_ok($$insert into public.articles (slug, title, category_slug) values ('Bad Slug', 'X', 'education')$$, '23514', null, 'non-kebab slug is rejected');
 select throws_ok($$insert into public.comments (article_id, user_id, body) select id, '00000000-0000-0000-0000-00000000000a', repeat('а', 1001) from public.articles limit 1$$, '23514', null, 'comment longer than 1000 is rejected');

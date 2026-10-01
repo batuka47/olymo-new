@@ -307,6 +307,7 @@ export function ArticleEditor({
               articleId={articleId}
               path={values.coverPath}
               alt={values.coverAlt}
+              caption={values.coverCaption}
               version={coverVersion}
               onUploaded={(path, version) => {
                 update("coverPath", path);
@@ -314,6 +315,7 @@ export function ArticleEditor({
               }}
               onRemove={() => update("coverPath", null)}
               onAltChange={(alt) => update("coverAlt", alt)}
+              onCaptionChange={(caption) => update("coverCaption", caption)}
             />
           </Panel>
 
