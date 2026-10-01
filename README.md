@@ -146,6 +146,21 @@ page immediately. A link with the wrong category answers 308 with the right addr
   computers, which needs `NEXT_PUBLIC_FACEBOOK_APP_ID`), copy link, and the phone's own share sheet
   where the browser has one.
 
+### Category pages
+
+`/{category}` uses one template for every category except Эвентүүд (its own page comes later).
+
+- **Banner:** the newest "Онцлох" article of the category. It is left out of the list below.
+- **Бүх мэдээ:** 9 per page, `?page=N` with real links. Olympiad also has `?subject=` (Математик,
+  Физик, …) and `?sort=deadline` ("Бүртгэл дуусах": open registrations closing soonest first, then
+  the rest, newest first). Values the page does not offer answer 404, so each view has one address.
+- **Cards** come from `src/components/site/article-card.tsx` (`grid`, `row`, `banner`); use it for
+  every article list.
+- **Caching:** reading `?page=` makes the page render on each request, so the database reads are
+  cached instead (60 s, tag `articles`, in `src/lib/articles/category.ts`). Saving or deleting an
+  article in the admin expires the tag, so changes show at once. Changes made directly in the
+  database show within 60 seconds.
+
 ### Inviting staff and resetting passwords
 
 Both are emailed by Supabase Auth, and both links go to `/admin/auth/confirm`, which signs the

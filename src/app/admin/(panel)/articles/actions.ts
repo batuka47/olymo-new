@@ -1,10 +1,11 @@
 "use server";
 
 import type { JSONContent } from "@tiptap/react";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { adminRoutes } from "@/config/admin";
+import { ARTICLES_CACHE_TAG } from "@/lib/articles/public";
 import { articleInputSchema, type ArticleInput, type TagValue } from "@/lib/articles/schema";
 import { articlePath } from "@/lib/articles/status";
 import { requireStaff } from "@/lib/auth/staff";
@@ -39,8 +40,9 @@ interface ArticleLocation {
   slug: string;
 }
 
-/** Home, category page and article page all show the article; refresh their cached HTML. */
+/** Home, category page and article page all show the article; refresh their cached HTML and lists. */
 function revalidateArticlePages(locations: (ArticleLocation | null | undefined)[]) {
+  updateTag(ARTICLES_CACHE_TAG);
   revalidatePath("/");
   for (const location of locations) {
     if (location) {

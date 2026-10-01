@@ -51,3 +51,22 @@ export function fromUlaanbaatarInputValue(value: string): Date | null {
   const [, year, month, day, hour, minute] = match.map(Number);
   return new Date(Date.UTC(year, month - 1, day, hour, minute) - ULAANBAATAR_OFFSET_MS);
 }
+
+const isoDateFormat = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Ulaanbaatar",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/** "2026-09-29": the calendar date in Ulaanbaatar, comparable with Postgres date columns. */
+export function ulaanbaatarDate(value: string | Date = new Date()): string {
+  return isoDateFormat.format(new Date(value));
+}
+
+/** "09.29" within the current year, "2025.09.29" for older dates (Ulaanbaatar time). */
+export function formatShortDate(value: string | Date, now = new Date()): string {
+  const [year, month, day] = ulaanbaatarDate(value).split("-");
+  const [currentYear] = ulaanbaatarDate(now).split("-");
+  return year === currentYear ? `${month}.${day}` : `${year}.${month}.${day}`;
+}

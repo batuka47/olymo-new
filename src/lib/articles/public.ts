@@ -5,10 +5,27 @@ import type { Database } from "@/lib/supabase/types";
 
 type ArticleRow = Database["public"]["Tables"]["articles"]["Row"];
 
-export type ArticleCard = Pick<
+/** What article cards and lists show. */
+export type ArticleSummary = Pick<
   ArticleRow,
-  "id" | "slug" | "title" | "category_slug" | "cover_path" | "cover_alt" | "updated_at"
+  | "id"
+  | "slug"
+  | "title"
+  | "excerpt"
+  | "category_slug"
+  | "subject"
+  | "cover_path"
+  | "cover_alt"
+  | "publish_at"
+  | "updated_at"
+  | "registration_deadline"
 >;
+
+export const SUMMARY_COLUMNS =
+  "id, slug, title, excerpt, category_slug, subject, cover_path, cover_alt, publish_at, updated_at, registration_deadline";
+
+/** unstable_cache tag of cached article lists; article saves expire it (see the admin actions). */
+export const ARTICLES_CACHE_TAG = "articles";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MOST_READ_DAYS = 30;
@@ -56,11 +73,11 @@ export async function getLatestArticlePaths(limit: number) {
  * Most viewed articles published in the last 30 days. view_count is a lifetime total, so a
  * rolling window keeps the list current without an empty list at the start of each month.
  */
-export async function getMostReadArticles(excludeId: string, limit = 4): Promise<ArticleCard[]> {
+export async function getMostReadArticles(excludeId: string, limit = 4): Promise<ArticleSummary[]> {
   const since = new Date(Date.now() - MOST_READ_DAYS * DAY_MS).toISOString();
   const { data, error } = await createPublicClient()
     .from("articles")
-    .select("id, slug, title, category_slug, cover_path, cover_alt, updated_at")
+    .select(SUMMARY_COLUMNS)
     .gte("publish_at", since)
     .neq("id", excludeId)
     .order("view_count", { ascending: false })
@@ -77,16 +94,14 @@ async function getArticlesSharingTags(
   articleId: string,
   tagSlugs: string[],
   limit: number,
-): Promise<ArticleCard[]> {
+): Promise<ArticleSummary[]> {
   if (tagSlugs.length === 0) {
     return [];
   }
   // The tag filter also trims article_tags to the shared tags, so its length ranks the matches.
   const { data, error } = await createPublicClient()
     .from("articles")
-    .select(
-      "id, slug, title, category_slug, cover_path, cover_alt, updated_at, article_tags!inner(tag_slug)",
-    )
+    .select(`${SUMMARY_COLUMNS}, article_tags!inner(tag_slug)`)
     .in("article_tags.tag_slug", tagSlugs)
     .neq("id", articleId)
     .order("publish_at", { ascending: false })
@@ -105,10 +120,10 @@ async function getLatestInCategory(
   categorySlug: string,
   excludeIds: string[],
   limit: number,
-): Promise<ArticleCard[]> {
+): Promise<ArticleSummary[]> {
   const { data, error } = await createPublicClient()
     .from("articles")
-    .select("id, slug, title, category_slug, cover_path, cover_alt, updated_at")
+    .select(SUMMARY_COLUMNS)
     .eq("category_slug", categorySlug)
     .not("id", "in", `(${excludeIds.join(",")})`)
     .order("publish_at", { ascending: false })
@@ -121,7 +136,7 @@ async function getLatestInCategory(
 }
 
 /** Articles sharing the most tags first (newest among equals), then the newest of the category. */
-export async function getRelatedArticles(article: Article, limit = 3): Promise<ArticleCard[]> {
+export async function getRelatedArticles(article: Article, limit = 3): Promise<ArticleSummary[]> {
   const tagSlugs = articleTags(article).map((tag) => tag.slug);
   const byTags = await getArticlesSharingTags(article.id, tagSlugs, limit);
   if (byTags.length === limit) {

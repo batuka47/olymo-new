@@ -418,5 +418,33 @@
   },
   "ads": {
     "label": "Сурталчилгаа"
+  },
+  "categoryPage": {
+    "label": "Ангилал",
+    "subjectFilter": "Хичээлээр шүүх",
+    "allSubjects": "Бүгд",
+    "featured": "Онцлох мэдээ",
+    "allNews": "Бүх мэдээ",
+    "sort": {
+      "label": "Эрэмбэлэх",
+      "newest": "Шинэ",
+      "deadline": "Бүртгэл дуусах"
+    },
+    "empty": "Одоогоор мэдээ алга байна",
+    "showAll": "Бүх мэдээг харах",
+    "pageTitle": "{title} · {page}-р хуудас"
+  },
+  "articleCard": {
+    "featured": "Онцлох",
+    "more": "Дэлгэрэнгүй",
+    "deadline": "Бүртгэл дуусах",
+    "deadlinePassed": "Хугацаа дууссан"
+  },
+  "pagination": {
+    "label": "Хуудаслалт",
+    "previous": "Өмнөх",
+    "next": "Дараах",
+    "page": "{page}-р хуудас",
+    "status": "{page} / {pages}"
   }
 }

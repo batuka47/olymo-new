@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { articlePath } from "@/lib/articles/status";
-import type { ArticleCard } from "@/lib/articles/public";
+import type { ArticleSummary } from "@/lib/articles/public";
 import { t } from "@/lib/i18n";
 
-export function MostRead({ articles }: { articles: ArticleCard[] }) {
+export function MostRead({ articles }: { articles: ArticleSummary[] }) {
   return (
     <section aria-labelledby="most-read-title">
       <h2 id="most-read-title" className="pb-3 font-mono text-xs tracking-[0.08em] uppercase">
