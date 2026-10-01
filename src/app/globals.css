@@ -58,3 +58,109 @@
     overflow: hidden;
   }
 }
+
+/* Article text: the public article page and the admin editor share these styles. */
+@layer components {
+  .article-body {
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    overflow-wrap: break-word;
+
+    @variant lg {
+      font-size: 1.1875rem;
+    }
+
+    & > * + * {
+      margin-top: 1.25rem;
+    }
+
+    & > :first-child {
+      margin-top: 0;
+    }
+
+    & h2,
+    & h3 {
+      font-family: var(--font-display);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      margin-top: 2.5rem;
+    }
+
+    & h2 {
+      font-size: 1.5rem;
+
+      @variant lg {
+        font-size: 1.75rem;
+      }
+    }
+
+    & h3 {
+      font-size: 1.25rem;
+    }
+
+    & a {
+      color: var(--color-accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    & strong {
+      font-weight: 700;
+    }
+
+    & em {
+      font-style: italic;
+    }
+
+    & ul,
+    & ol {
+      padding-left: 1.5rem;
+    }
+
+    & ul {
+      list-style: disc;
+    }
+
+    & ol {
+      list-style: decimal;
+    }
+
+    & li + li {
+      margin-top: 0.5rem;
+    }
+
+    & blockquote {
+      border: 1px solid var(--color-ink);
+      background: var(--color-lime);
+      padding: 1.25rem 1.75rem;
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.25rem;
+      line-height: 1.4;
+    }
+
+    & img {
+      width: 100%;
+      height: auto;
+    }
+
+    & hr {
+      border-top: 1px solid var(--color-line);
+      margin-block: 2.5rem;
+    }
+  }
+
+  /* Tiptap: placeholder in an empty editor and the selected image. */
+  .article-body p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    color: var(--color-muted);
+    pointer-events: none;
+  }
+
+  .article-body img.ProseMirror-selectednode {
+    outline: 2px solid var(--color-accent);
+  }
+}

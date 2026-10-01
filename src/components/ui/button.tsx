@@ -2,8 +2,9 @@ import Link from "next/link";
 import type { ComponentProps } from "react";
 import { cx } from "@/lib/cx";
 
-type ButtonVariant = "accent" | "ink" | "outline";
-type ButtonSize = "md" | "lg";
+type ButtonVariant = "accent" | "ink" | "outline" | "danger";
+/** md 44 px, field 48 px (next to form inputs), lg 56 px. */
+type ButtonSize = "md" | "field" | "lg";
 
 interface ButtonStyleProps {
   variant?: ButtonVariant;
@@ -15,10 +16,12 @@ const variantClasses: Record<ButtonVariant, string> = {
   accent: "bg-accent text-white hover:bg-ink",
   ink: "bg-ink text-paper hover:bg-accent",
   outline: "border border-ink text-ink hover:bg-ink hover:text-paper",
+  danger: "bg-danger text-white hover:bg-ink",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
   md: "h-11 px-4.5 text-xs",
+  field: "h-12 px-5 text-xs",
   lg: "h-14 px-6.5 text-[13px]",
 };
 

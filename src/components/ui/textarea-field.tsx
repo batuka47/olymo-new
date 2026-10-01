@@ -1,24 +1,21 @@
 import type { ComponentProps, ReactNode } from "react";
+import { fieldLabelClasses, inputClasses } from "@/components/ui/text-field";
 import { cx } from "@/lib/cx";
 
-export const fieldLabelClasses = "font-mono text-[11px] tracking-label text-muted uppercase";
-export const inputClasses = "w-full border border-ink bg-white px-4 text-base text-ink";
-
-interface TextFieldProps extends ComponentProps<"input"> {
+interface TextAreaFieldProps extends ComponentProps<"textarea"> {
   name: string;
   label: string;
-  /** Help text or a character counter under the input; linked with aria-describedby. */
   hint?: ReactNode;
 }
 
-export function TextField({
+export function TextAreaField({
   label,
   name,
   id = name,
   hint,
   className,
-  ...inputProps
-}: TextFieldProps) {
+  ...textareaProps
+}: TextAreaFieldProps) {
   const hintId = hint ? `${id}-hint` : undefined;
 
   return (
@@ -26,12 +23,12 @@ export function TextField({
       <label htmlFor={id} className={fieldLabelClasses}>
         {label}
       </label>
-      <input
+      <textarea
         id={id}
         name={name}
         aria-describedby={hintId}
-        className={cx(inputClasses, "h-12")}
-        {...inputProps}
+        className={cx(inputClasses, "min-h-24 py-3 leading-relaxed")}
+        {...textareaProps}
       />
       {hint && (
         <div id={hintId} className="text-xs leading-relaxed text-muted">

@@ -1,7 +1,7 @@
 import type { ComponentProps } from "react";
 import { cx } from "@/lib/cx";
 
-type TagVariant = "outline" | "ink" | "lime" | "accent";
+export type TagVariant = "outline" | "ink" | "lime" | "accent";
 
 const variantClasses: Record<TagVariant, string> = {
   outline: "border-ink text-ink",

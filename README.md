@@ -105,6 +105,26 @@ The password needs at least 8 characters. The script reads `NEXT_PUBLIC_SUPABASE
 those two variables in the shell to the hosted values for that one command. `npm run admin:create`
 is a shortcut for the same script.
 
+### Articles
+
+`/admin/articles` lists, filters and searches articles; `/admin/articles/new` opens the editor.
+
+- **Images** are resized in the browser to 1600, 800 and 400 px and uploaded to
+  `media/articles/{id}/` as `cover-{width}.webp`. Browsers that cannot create WebP (Safari) upload
+  JPEG instead (`cover-{width}.jpg`); the saved path keeps the extension, so the site always asks
+  for the files that exist.
+- **Body text** is saved as Tiptap JSON. The server builds the HTML from that JSON and cleans it
+  with an allow-list; HTML sent by a browser is never stored.
+- **Publishing:** "Нийтлэх" publishes now, or at the chosen Ulaanbaatar time when "Огноо товлох" is
+  selected. Drafts autosave every 30 seconds; published articles are only saved on "Шинэчлэх".
+- **Preview** opens the public page in Next.js Draft Mode, so staff see drafts exactly as readers
+  will. The yellow bar at the top has a link to leave preview.
+- **Unpublishing** ("Ноорог болгох" on a live article) asks for confirmation first.
+- **Deleting** an article also deletes its images; **duplicating** copies them.
+- **Unused images:** images uploaded to an article that was never saved stay in storage. Admins can
+  remove them with "Ашиглагдаагүй зураг цэвэрлэх" on the dashboard: it deletes `articles/{id}/`
+  folders that have no article and nothing uploaded in the last 24 hours.
+
 ### Inviting staff and resetting passwords
 
 Both are emailed by Supabase Auth, and both links go to `/admin/auth/confirm`, which signs the

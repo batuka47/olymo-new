@@ -33,7 +33,7 @@ export function InviteForm({ roleOptions, labels }: InviteFormProps) {
           defaultValue="editor"
           className="sm:w-44"
         />
-        <SubmitButton size="lg" pendingLabel={labels.submitting} className="h-12">
+        <SubmitButton size="field" pendingLabel={labels.submitting}>
           {labels.submit}
         </SubmitButton>
       </div>

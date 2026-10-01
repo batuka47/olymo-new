@@ -31,11 +31,12 @@ async function createAdmin() {
     throw new Error(`ADMIN_PASSWORD must be at least ${MIN_PASSWORD_LENGTH} characters.`);
   }
 
-  const supabase = createClient<Database>(
-    readEnv("NEXT_PUBLIC_SUPABASE_URL"),
-    readEnv("SUPABASE_SECRET_KEY"),
-    { auth: { persistSession: false, autoRefreshToken: false } },
-  );
+  const supabaseUrl = readEnv("NEXT_PUBLIC_SUPABASE_URL");
+  console.log(`Supabase project: ${supabaseUrl}`);
+
+  const supabase = createClient<Database>(supabaseUrl, readEnv("SUPABASE_SECRET_KEY"), {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 
   const { data, error } = await supabase.auth.admin.createUser({
     email,

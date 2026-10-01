@@ -6,13 +6,19 @@ type KeyPaths<T> = {
 
 export type MessageKey = KeyPaths<typeof messages>;
 
-export function t(key: MessageKey): string {
-  const value = key
+/** Looks up a message; `{name}` placeholders are filled from `values`. */
+export function t(key: MessageKey, values?: Record<string, string | number>): string {
+  const message = key
     .split(".")
     .reduce<unknown>((node, part) => (node as Record<string, unknown>)[part], messages);
 
-  if (typeof value !== "string") {
+  if (typeof message !== "string") {
     throw new Error(`Missing message for key "${key}"`);
   }
-  return value;
+  if (!values) {
+    return message;
+  }
+  return message.replace(/\{(\w+)\}/g, (placeholder, name: string) =>
+    name in values ? String(values[name]) : placeholder,
+  );
 }

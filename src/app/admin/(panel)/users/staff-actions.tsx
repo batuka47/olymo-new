@@ -42,13 +42,13 @@ export function StaffActions({ userId, role, roleOptions, labels }: StaffActions
             defaultValue={role}
             hideLabel
           />
-          <SubmitButton variant="ink" pendingLabel={labels.saving} className="h-12">
+          <SubmitButton variant="ink" size="field" pendingLabel={labels.saving}>
             {labels.save}
           </SubmitButton>
         </form>
         <form action={removeAction} onSubmit={confirmRemoval}>
           <input type="hidden" name="userId" value={userId} />
-          <SubmitButton variant="outline" pendingLabel={labels.saving} className="h-12">
+          <SubmitButton variant="outline" size="field" pendingLabel={labels.saving}>
             {labels.remove}
           </SubmitButton>
         </form>

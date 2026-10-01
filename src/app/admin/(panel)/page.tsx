@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { adminRoutes } from "@/config/admin";
+import { publicStatuses } from "@/lib/articles/status";
 import { requireStaff } from "@/lib/auth/staff";
 import { startOfWeekInUlaanbaatar } from "@/lib/dates";
 import { t } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/server";
+import { CleanImagesForm } from "./clean-images-form";
 
 export const metadata: Metadata = { title: t("admin.dashboard.title") };
-
-const publicStatuses = ["published", "scheduled"];
 
 async function getArticleCounts() {
   const supabase = await createClient();
@@ -81,17 +81,17 @@ export default async function AdminDashboardPage() {
         <StatCard
           label={t("admin.dashboard.drafts")}
           value={articles.drafts}
-          href={adminRoutes.articles}
+          href={`${adminRoutes.articles}?status=draft`}
         />
         <StatCard
           label={t("admin.dashboard.scheduled")}
           value={articles.scheduled}
-          href={adminRoutes.articles}
+          href={`${adminRoutes.articles}?status=scheduled`}
         />
         <StatCard
           label={t("admin.dashboard.publishedThisWeek")}
           value={articles.publishedThisWeek}
-          href={adminRoutes.articles}
+          href={`${adminRoutes.articles}?status=published`}
         />
         {newSubmissions !== null && (
           <StatCard
@@ -106,6 +106,14 @@ export default async function AdminDashboardPage() {
         <PlaceholderPanel title={t("admin.dashboard.recentTitle")} />
         <PlaceholderPanel title={t("admin.dashboard.activityTitle")} />
       </div>
+
+      {isAdmin && (
+        <section className="mt-8 border border-line p-5">
+          <h2 className="font-display text-lg font-bold">{t("admin.cleanup.title")}</h2>
+          <p className="mt-2 mb-4 max-w-2xl text-sm text-muted">{t("admin.cleanup.description")}</p>
+          <CleanImagesForm />
+        </section>
+      )}
     </>
   );
 }

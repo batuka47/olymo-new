@@ -7,6 +7,8 @@ export const adminRoutes = {
   confirm: "/admin/auth/confirm",
   setPassword: "/admin/set-password",
   articles: "/admin/articles",
+  preview: "/admin/preview",
+  previewExit: "/admin/preview/exit",
   events: "/admin/events",
   ads: "/admin/ads",
   pages: "/admin/pages",
