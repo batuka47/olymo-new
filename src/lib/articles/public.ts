@@ -19,13 +19,21 @@ export type ArticleSummary = Pick<
   | "publish_at"
   | "updated_at"
   | "registration_deadline"
+  | "level_text"
+  | "author_name"
 >;
 
 export const SUMMARY_COLUMNS =
-  "id, slug, title, excerpt, category_slug, subject, cover_path, cover_alt, publish_at, updated_at, registration_deadline";
+  "id, slug, title, excerpt, category_slug, subject, cover_path, cover_alt, publish_at, updated_at, registration_deadline, level_text, author_name";
 
 /** unstable_cache tag of cached article lists; article saves expire it (see the admin actions). */
 export const ARTICLES_CACHE_TAG = "articles";
+
+/**
+ * Lists read through unstable_cache use this: the same data for 60 s (like ISR), so readers never
+ * wait for the database, and article saves expire it at once.
+ */
+export const LIST_CACHE = { revalidate: 60, tags: [ARTICLES_CACHE_TAG] };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MOST_READ_DAYS = 30;

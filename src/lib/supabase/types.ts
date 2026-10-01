@@ -109,6 +109,7 @@ export type Database = {
           is_breaking: boolean;
           is_featured: boolean;
           is_good_to_know: boolean;
+          is_special: boolean;
           level_text: string | null;
           location: string | null;
           organizer: string | null;
@@ -119,6 +120,7 @@ export type Database = {
           seo_description: string | null;
           seo_title: string | null;
           slug: string;
+          special_until: string | null;
           status: string;
           subject: string | null;
           title: string;
@@ -142,6 +144,7 @@ export type Database = {
           is_breaking?: boolean;
           is_featured?: boolean;
           is_good_to_know?: boolean;
+          is_special?: boolean;
           level_text?: string | null;
           location?: string | null;
           organizer?: string | null;
@@ -152,6 +155,7 @@ export type Database = {
           seo_description?: string | null;
           seo_title?: string | null;
           slug: string;
+          special_until?: string | null;
           status?: string;
           subject?: string | null;
           title: string;
@@ -175,6 +179,7 @@ export type Database = {
           is_breaking?: boolean;
           is_featured?: boolean;
           is_good_to_know?: boolean;
+          is_special?: boolean;
           level_text?: string | null;
           location?: string | null;
           organizer?: string | null;
@@ -185,6 +190,7 @@ export type Database = {
           seo_description?: string | null;
           seo_title?: string | null;
           slug?: string;
+          special_until?: string | null;
           status?: string;
           subject?: string | null;
           title?: string;
@@ -525,6 +531,7 @@ export type Database = {
           is_breaking: boolean | null;
           is_featured: boolean | null;
           is_good_to_know: boolean | null;
+          is_special: boolean | null;
           level_text: string | null;
           location: string | null;
           organizer: string | null;
@@ -535,6 +542,7 @@ export type Database = {
           seo_description: string | null;
           seo_title: string | null;
           slug: string | null;
+          special_until: string | null;
           status: string | null;
           subject: string | null;
           title: string | null;
@@ -558,6 +566,7 @@ export type Database = {
           is_breaking?: boolean | null;
           is_featured?: boolean | null;
           is_good_to_know?: boolean | null;
+          is_special?: boolean | null;
           level_text?: string | null;
           location?: string | null;
           organizer?: string | null;
@@ -568,6 +577,7 @@ export type Database = {
           seo_description?: string | null;
           seo_title?: string | null;
           slug?: string | null;
+          special_until?: string | null;
           status?: string | null;
           subject?: string | null;
           title?: string | null;
@@ -591,6 +601,7 @@ export type Database = {
           is_breaking?: boolean | null;
           is_featured?: boolean | null;
           is_good_to_know?: boolean | null;
+          is_special?: boolean | null;
           level_text?: string | null;
           location?: string | null;
           organizer?: string | null;
@@ -601,6 +612,7 @@ export type Database = {
           seo_description?: string | null;
           seo_title?: string | null;
           slug?: string | null;
+          special_until?: string | null;
           status?: string | null;
           subject?: string | null;
           title?: string | null;

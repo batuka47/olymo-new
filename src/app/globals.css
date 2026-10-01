@@ -48,6 +48,12 @@
   color: var(--color-muted);
 }
 
+/* Dotted surface behind the subject glyphs on dark olympiad cards. */
+@utility dot-pattern {
+  background-image: radial-gradient(rgb(255 255 255 / 0.22) 1px, transparent 1.4px);
+  background-size: 12px 12px;
+}
+
 @utility stripe-pattern {
   background-color: var(--color-stone);
   background-image: repeating-linear-gradient(

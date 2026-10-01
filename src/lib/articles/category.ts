@@ -2,7 +2,7 @@ import "server-only";
 import type { PostgrestError } from "@supabase/supabase-js";
 import { unstable_cache } from "next/cache";
 import type { OlympiadSubject } from "@/lib/articles/olympiad";
-import { ARTICLES_CACHE_TAG, SUMMARY_COLUMNS, type ArticleSummary } from "@/lib/articles/public";
+import { LIST_CACHE, SUMMARY_COLUMNS, type ArticleSummary } from "@/lib/articles/public";
 import { ulaanbaatarDate } from "@/lib/dates";
 import { createPublicClient } from "@/lib/supabase/server";
 
@@ -24,9 +24,6 @@ export interface CategoryList {
   articles: ArticleSummary[];
   total: number;
 }
-
-/** Same data for 60 s (like ISR), so readers never wait for the database; saves expire the tag. */
-const CACHE_OPTIONS = { revalidate: 60, tags: [ARTICLES_CACHE_TAG] };
 
 function categoryArticles(query: CategoryListQuery) {
   let builder = createPublicClient()
@@ -135,7 +132,7 @@ async function deadlinesFirst(query: CategoryListQuery): Promise<CategoryList> {
 export const getCategoryArticles = unstable_cache(
   (query: CategoryListQuery) => (query.sort === "deadline" ? deadlinesFirst : newestFirst)(query),
   ["category-articles"],
-  CACHE_OPTIONS,
+  LIST_CACHE,
 );
 
 /** Newest article marked "Онцлох" in the category, for the banner. */
@@ -155,5 +152,5 @@ export const getFeaturedArticle = unstable_cache(
     return data;
   },
   ["category-featured"],
-  CACHE_OPTIONS,
+  LIST_CACHE,
 );

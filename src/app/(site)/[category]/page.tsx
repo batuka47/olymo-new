@@ -115,7 +115,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps<"
         )}
 
         <div className="border-t border-line py-6 lg:p-8">
-          <AdSlot size="leaderboard" />
+          <AdSlot placement="category_1" />
         </div>
 
         {showList && (

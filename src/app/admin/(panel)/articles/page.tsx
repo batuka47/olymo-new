@@ -71,7 +71,7 @@ async function getArticles(filters: ArticleFilters) {
   let query = supabase
     .from("articles")
     .select(
-      "id, title, slug, category_slug, status, publish_at, is_featured, is_good_to_know, is_breaking",
+      "id, title, slug, category_slug, status, publish_at, is_featured, is_good_to_know, is_breaking, is_special",
       { count: "exact" },
     );
 
@@ -217,6 +217,9 @@ export default async function AdminArticlesPage({ searchParams }: PageProps<"/ad
                         )}
                         {article.is_breaking && (
                           <Tag variant="lime">{t("admin.articles.flags.breakingShort")}</Tag>
+                        )}
+                        {article.is_special && (
+                          <Tag variant="ink">{t("admin.articles.flags.specialShort")}</Tag>
                         )}
                       </div>
                     </td>

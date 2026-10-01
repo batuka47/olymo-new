@@ -433,6 +433,21 @@ export function ArticleEditor({
               checked={values.isBreaking}
               onChange={(event) => update("isBreaking", event.target.checked)}
             />
+            <CheckboxField
+              label={t("admin.articles.flags.special")}
+              checked={values.isSpecial}
+              onChange={(event) => update("isSpecial", event.target.checked)}
+            />
+            {values.isSpecial && (
+              <TextField
+                label={t("admin.articles.flags.specialUntil")}
+                name="specialUntil"
+                type="date"
+                value={values.specialUntil}
+                onChange={(event) => update("specialUntil", event.target.value)}
+                hint={t("admin.articles.flags.specialUntilHint")}
+              />
+            )}
           </Panel>
 
           <Link href={adminRoutes.articles} className="text-sm underline underline-offset-4">

@@ -7,17 +7,33 @@ interface SectionHeaderProps {
   title: string;
   href?: string;
   linkLabel?: string;
+  /** On an ink background: the index turns lime and the title grows (the board's dark band). */
+  onInk?: boolean;
   className?: string;
 }
 
-export function SectionHeader({ index, title, href, linkLabel, className }: SectionHeaderProps) {
+export function SectionHeader({
+  index,
+  title,
+  href,
+  linkLabel,
+  onInk = false,
+  className,
+}: SectionHeaderProps) {
   return (
     <div className={cx("flex items-baseline justify-between gap-4", className)}>
       <div className="flex items-baseline gap-2.5 lg:gap-5">
-        <span className="font-mono text-[11px] text-accent lg:text-xs">
+        <span
+          className={cx("font-mono text-[11px] lg:text-xs", onInk ? "text-lime" : "text-accent")}
+        >
           {String(index).padStart(2, "0")}
         </span>
-        <h2 className="font-display text-[22px] font-bold tracking-[-0.02em] lg:text-[32px]">
+        <h2
+          className={cx(
+            "font-display font-bold tracking-[-0.02em]",
+            onInk ? "text-2xl lg:text-[40px]" : "text-[22px] lg:text-[32px]",
+          )}
+        >
           {title}
         </h2>
       </div>

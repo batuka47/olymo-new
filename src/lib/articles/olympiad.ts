@@ -28,3 +28,13 @@ export function deadlineStatus(deadline: string, now = new Date()): DeadlineStat
   }
   return msLeft < SOON_DAYS * DAY_MS ? "soon" : "open";
 }
+
+/** Large symbol on olympiad cards (the home page scroller). */
+export const subjectGlyphs: Record<OlympiadSubject, string> = {
+  math: "∑",
+  physics: "λ",
+  chemistry: "H₂O",
+  informatics: "{ }",
+  biology: "DNA",
+  other: "?",
+};

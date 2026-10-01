@@ -30,6 +30,9 @@ export interface ArticleFormValues {
   isFeatured: boolean;
   isGoodToKnow: boolean;
   isBreaking: boolean;
+  isSpecial: boolean;
+  /** Last day on the home banner (YYYY-MM-DD); "" for no end. */
+  specialUntil: string;
   seoTitle: string;
   seoDescription: string;
   publishMode: "now" | "schedule";
@@ -62,6 +65,8 @@ export function emptyArticleValues(): ArticleFormValues {
     isFeatured: false,
     isGoodToKnow: false,
     isBreaking: false,
+    isSpecial: false,
+    specialUntil: "",
     seoTitle: "",
     seoDescription: "",
     publishMode: "now",
@@ -99,6 +104,8 @@ export function articleRowToValues(
     isFeatured: row.is_featured,
     isGoodToKnow: row.is_good_to_know,
     isBreaking: row.is_breaking,
+    isSpecial: row.is_special,
+    specialUntil: row.special_until ?? "",
     seoTitle: row.seo_title ?? "",
     seoDescription: row.seo_description ?? "",
     publishMode: scheduled ? "schedule" : "now",

@@ -161,6 +161,30 @@ page immediately. A link with the wrong category answers 308 with the right addr
   article in the admin expires the tag, so changes show at once. Changes made directly in the
   database show within 60 seconds.
 
+### Home page
+
+`/` is ISR (60 s). All sections load in parallel and are filled top to bottom without repeating an
+article (`arrangeHomeSections` in `src/lib/articles/home.ts`). A section with nothing to show is left
+out and the section numbers close up.
+
+| Section                | Content                                                                |
+| ---------------------- | ---------------------------------------------------------------------- |
+| Ticker (every page)    | 3 newest "Шинэ мэдээ" (`is_breaking`) articles                         |
+| Hero                   | Search (`/search?q=`) and the newest "Онцлох" article                  |
+| Онцлох                 | The next 4 "Онцлох" articles                                           |
+| Олимпиадууд            | Olympiads still taking registrations, closing soonest first (scroller) |
+| Мэдүүштэй              | 5 "Мэдүүштэй" articles + the "Тусгай нийтлэл" banner (see below)       |
+| Салбар бүрээс          | Newest Спорт, Технологи, Шинжлэх ухаан article + the next event        |
+| Удахгүй болох эвентүүд | The 3 events after that one (`events` table)                           |
+
+**Тусгай нийтлэл:** the newest article marked "Нүүрний том баннер" in the editor whose last day
+(optional, Ulaanbaatar time, inclusive) has not passed. It is a paid placement, so it is reserved
+before the other sections are filled and never also shows in the hero or Онцлох. With no marked
+article, the newest "Мэдүүштэй" article with a cover is used. Duplicating an article clears the mark.
+
+Ad slots `home_1`–`home_4` follow Онцлох, Мэдүүштэй, Салбар бүрээс and the events, and hide with
+them. Event lists are cached under the `events` tag (60 s).
+
 ### Inviting staff and resetting passwords
 
 Both are emailed by Supabase Auth, and both links go to `/admin/auth/confirm`, which signs the

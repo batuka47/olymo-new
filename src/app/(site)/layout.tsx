@@ -1,23 +1,21 @@
 import { Footer } from "@/components/site/footer";
 import { Header } from "@/components/site/header";
 import { Ticker } from "@/components/site/ticker";
-import { categoryPath } from "@/config/categories";
-import type { NavLink } from "@/config/navigation";
+import { getBreakingArticles } from "@/lib/articles/home";
+import { articlePath } from "@/lib/articles/status";
 import { t } from "@/lib/i18n";
 
 export const revalidate = 60;
 
-// Sample headlines until the ticker reads the latest olympiad articles from the database.
-const tickerItems: NavLink[] = [
-  {
-    href: categoryPath("olympiad"),
-    label: "Математикийн олимпиадын I шатны бүртгэл 10.20 хүртэл",
-  },
-  { href: categoryPath("education"), label: "ЭЕШ 2027 — бүртгэлийн журам гарлаа" },
-  { href: categoryPath("olympiad"), label: "Програмчлалын олимпиадын сонгон шалгаруулалт" },
-];
+const TICKER_ITEMS = 3;
 
-export default function SiteLayout({ children }: LayoutProps<"/">) {
+export default async function SiteLayout({ children }: LayoutProps<"/">) {
+  const breaking = await getBreakingArticles(TICKER_ITEMS);
+  const tickerItems = breaking.map((article) => ({
+    href: articlePath(article.category_slug, article.slug),
+    label: article.title,
+  }));
+
   return (
     <>
       <a

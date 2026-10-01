@@ -134,7 +134,7 @@ export default async function ArticlePage({ params }: PageProps<"/[category]/[sl
                   showKeyFacts ? "lg:row-start-2 lg:pt-7" : "lg:row-start-1 lg:pt-10",
                 )}
               >
-                <AdSlot size="rectangle" />
+                <AdSlot placement="article_side" />
                 {mostRead.length > 0 && <MostRead articles={mostRead} />}
               </aside>
             </div>

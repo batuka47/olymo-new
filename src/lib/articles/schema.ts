@@ -84,6 +84,8 @@ export const articleInputSchema = z
     isFeatured: z.boolean(),
     isGoodToKnow: z.boolean(),
     isBreaking: z.boolean(),
+    isSpecial: z.boolean(),
+    specialUntil: optionalDate,
     seoTitle: optionalText(120),
     seoDescription: optionalText(300),
     publishMode: z.enum(["now", "schedule"]),

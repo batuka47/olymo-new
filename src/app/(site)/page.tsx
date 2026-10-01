@@ -1,74 +1,151 @@
 import type { Metadata } from "next";
-import { Button } from "@/components/ui/button";
+import { AdSlot, type AdPlacement } from "@/components/site/ad-slot";
 import { Container } from "@/components/ui/container";
-import { ImagePlaceholder } from "@/components/ui/image-placeholder";
-import { SectionHeader } from "@/components/ui/section-header";
-import { Tag } from "@/components/ui/tag";
-import { categoryPath } from "@/config/categories";
-import { routes } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
+import {
+  arrangeHomeSections,
+  getFeaturedArticles,
+  getGoodToKnowArticles,
+  getLatestInCategory,
+  getOpenOlympiads,
+  getSpecialArticles,
+  HOME_FETCH,
+  SECTOR_CATEGORIES,
+  type HomeSections,
+} from "@/lib/articles/home";
+import { getUpcomingEvents } from "@/lib/events";
 import { t } from "@/lib/i18n";
+import { siteOpenGraph } from "@/lib/metadata";
+import { CardGridSection } from "./_home/card-grid-section";
+import { EventsSection } from "./_home/events-section";
+import { GoodToKnowSection } from "./_home/good-to-know-section";
+import { HomeHero } from "./_home/hero";
+import { OlympiadsSection } from "./_home/olympiads-section";
+import { OrganizationsCta } from "./_home/organizations-cta";
+
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: { absolute: siteConfig.name },
   description: siteConfig.tagline,
+  alternates: { canonical: "/" },
+  openGraph: {
+    ...siteOpenGraph,
+    type: "website",
+    url: "/",
+    title: siteConfig.name,
+    description: siteConfig.tagline,
+  },
 };
 
-export default function HomePage() {
+type NumberedSection = "featured" | "olympiads" | "goodToKnow" | "sectors" | "events";
+
+/** A section with nothing to show is left out. */
+function visibleSections(sections: HomeSections): Record<NumberedSection, boolean> {
+  return {
+    featured: sections.featured.length > 0,
+    olympiads: sections.olympiads.length > 0,
+    goodToKnow: sections.goodToKnow.length > 0 || sections.special !== null,
+    sectors: sections.sectorTiles.length > 0,
+    events: sections.events.length > 0,
+  };
+}
+
+/** The numbers ("01", "02", …) count only the sections shown, in page order. */
+function sectionNumbers(
+  visible: Record<NumberedSection, boolean>,
+): Record<NumberedSection, number> {
+  const shown = (Object.keys(visible) as NumberedSection[]).filter((name) => visible[name]);
+  return Object.fromEntries(shown.map((name, position) => [name, position + 1])) as Record<
+    NumberedSection,
+    number
+  >;
+}
+
+function AdBand({ placement }: { placement: AdPlacement }) {
   return (
-    <Container className="flex flex-col gap-16 py-12 lg:gap-24 lg:py-20">
-      <section>
-        <p className="font-mono text-xs tracking-label text-muted uppercase">
-          <span className="text-accent">00</span> · {t("tokenPreview.label")}
-        </p>
-        <h1 className="mt-6 max-w-5xl font-display text-3xl leading-[1.1] font-bold tracking-display lg:text-6xl lg:leading-[1.04]">
-          {siteConfig.tagline}
-        </h1>
-        <p className="mt-6 max-w-xl text-base leading-normal lg:text-lg lg:leading-relaxed">
-          {t("tokenPreview.intro")}
-        </p>
-      </section>
+    <div className="border-t border-line py-6 lg:p-8">
+      <AdSlot placement={placement} />
+    </div>
+  );
+}
 
-      <section className="flex flex-col gap-6 border-t border-line pt-6">
-        <SectionHeader index={1} title={t("tokenPreview.buttonsTitle")} href={routes.submit} />
-        <div className="flex flex-wrap items-center gap-4">
-          <Button variant="accent">{t("tokenPreview.buttonAccent")}</Button>
-          <Button variant="ink" href={categoryPath("olympiad")}>
-            {t("tokenPreview.buttonInk")}
-            <span aria-hidden="true">→</span>
-          </Button>
-          <Button variant="outline">{t("tokenPreview.buttonOutline")}</Button>
-        </div>
-        <div className="flex flex-wrap items-center gap-4">
-          <Button variant="accent" size="lg">
-            {t("tokenPreview.buttonAccent")}
-          </Button>
-          <Button variant="ink" size="lg">
-            {t("tokenPreview.buttonInk")}
-          </Button>
-          <Button variant="outline" size="lg">
-            {t("tokenPreview.buttonOutline")}
-          </Button>
-        </div>
-      </section>
+export default async function HomePage() {
+  const [special, featured, olympiads, goodToKnow, sectors, events] = await Promise.all([
+    getSpecialArticles(HOME_FETCH.special),
+    getFeaturedArticles(HOME_FETCH.featured),
+    getOpenOlympiads(HOME_FETCH.olympiads),
+    getGoodToKnowArticles(HOME_FETCH.goodToKnow),
+    Promise.all(
+      SECTOR_CATEGORIES.map((category) => getLatestInCategory(category, HOME_FETCH.sector)),
+    ),
+    getUpcomingEvents(HOME_FETCH.events),
+  ]);
+  const sections = arrangeHomeSections({
+    special,
+    featured,
+    olympiads,
+    goodToKnow,
+    sectors,
+    events,
+  });
+  const visible = visibleSections(sections);
+  const number = sectionNumbers(visible);
 
-      <section className="flex flex-col gap-6 border-t border-line pt-6">
-        <SectionHeader index={2} title={t("tokenPreview.tagsTitle")} />
-        <div className="flex flex-wrap gap-2">
-          <Tag variant="outline">{t("tokenPreview.tagOutline")}</Tag>
-          <Tag variant="ink">{t("tokenPreview.tagInk")}</Tag>
-          <Tag variant="lime">{t("tokenPreview.tagLime")}</Tag>
-          <Tag variant="accent">{t("tokenPreview.tagAccent")}</Tag>
+  // Each ad slot follows a section and hides with it, so two ads never meet.
+  return (
+    <>
+      <Container>
+        <div className="lg:border-x lg:border-line">
+          <HomeHero lead={sections.lead} />
+          {visible.featured && (
+            <>
+              <CardGridSection
+                index={number.featured}
+                title={t("home.featured")}
+                articles={sections.featured}
+              />
+              <AdBand placement="home_1" />
+            </>
+          )}
         </div>
-      </section>
+      </Container>
 
-      <section className="flex flex-col gap-6 border-t border-line pt-6">
-        <SectionHeader index={3} title={t("tokenPreview.placeholderTitle")} />
-        <ImagePlaceholder
-          label={t("tokenPreview.placeholderLabel")}
-          className="aspect-video max-w-xl"
-        />
-      </section>
-    </Container>
+      {visible.olympiads && (
+        <OlympiadsSection index={number.olympiads} articles={sections.olympiads} />
+      )}
+
+      <Container className="pb-16 lg:pb-24">
+        <div className="border-b border-line lg:border-x">
+          {visible.goodToKnow && (
+            <>
+              <GoodToKnowSection
+                index={number.goodToKnow}
+                articles={sections.goodToKnow}
+                special={sections.special}
+              />
+              <AdBand placement="home_2" />
+            </>
+          )}
+          {visible.sectors && (
+            <>
+              <CardGridSection
+                index={number.sectors}
+                title={t("home.sectors")}
+                articles={sections.sectorTiles}
+              />
+              <AdBand placement="home_3" />
+            </>
+          )}
+          {visible.events && (
+            <>
+              <EventsSection index={number.events} events={sections.events} />
+              <AdBand placement="home_4" />
+            </>
+          )}
+          <OrganizationsCta />
+        </div>
+      </Container>
+    </>
   );
 }

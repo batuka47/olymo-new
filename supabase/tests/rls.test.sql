@@ -133,6 +133,8 @@ select throws_ok($$insert into public.articles (slug, title, category_slug, exce
 select throws_ok($$insert into public.articles (slug, title, category_slug, cover_caption) values ('long-caption', 'X', 'education', repeat('а', 201))$$, '23514', null, 'cover caption longer than 200 is rejected');
 select lives_ok($$insert into public.articles (slug, title, category_slug, cover_caption) values ('max-caption', 'X', 'education', repeat('а', 200))$$, 'cover caption of 200 characters is accepted');
 select ok(exists (select 1 from information_schema.columns where table_name = 'published_articles' and column_name = 'cover_caption'), 'published_articles view includes cover_caption');
+select ok((select not is_special and special_until is null from public.articles where slug = 'max-caption'), 'is_special defaults to false without an end date');
+select ok((select count(*) = 2 from information_schema.columns where table_name = 'published_articles' and column_name in ('is_special', 'special_until')), 'published_articles view includes is_special and special_until');
 select throws_ok($$insert into public.articles (slug, title, category_slug, status) values ('no-date', 'X', 'education', 'published')$$, '23514', null, 'published without publish_at is rejected');
 select throws_ok($$insert into public.articles (slug, title, category_slug) values ('Bad Slug', 'X', 'education')$$, '23514', null, 'non-kebab slug is rejected');
 select throws_ok($$insert into public.comments (article_id, user_id, body) select id, '00000000-0000-0000-0000-00000000000a', repeat('а', 1001) from public.articles limit 1$$, '23514', null, 'comment longer than 1000 is rejected');
