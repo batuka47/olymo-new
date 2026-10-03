@@ -12,7 +12,7 @@ export const adminRoutes = {
   events: "/admin/events",
   ads: "/admin/ads",
   pages: "/admin/pages",
-  submissions: "/admin/submissions",
+  inbox: "/admin/inbox",
   comments: "/admin/comments",
   users: "/admin/users",
 } as const;
@@ -42,6 +42,8 @@ export interface AdminNavItem {
   href: string;
   labelKey: MessageKey;
   adminOnly?: boolean;
+  /** Shows the number of new form submissions next to the link. */
+  newSubmissionsBadge?: boolean;
 }
 
 export const adminNavItems: readonly AdminNavItem[] = [
@@ -51,7 +53,12 @@ export const adminNavItems: readonly AdminNavItem[] = [
   { href: adminRoutes.ads, labelKey: "admin.nav.ads" },
   { href: adminRoutes.pages, labelKey: "admin.nav.pages" },
   // Submissions are readable only by admins (RLS), so editors do not see the section.
-  { href: adminRoutes.submissions, labelKey: "admin.nav.submissions", adminOnly: true },
+  {
+    href: adminRoutes.inbox,
+    labelKey: "admin.nav.inbox",
+    adminOnly: true,
+    newSubmissionsBadge: true,
+  },
   { href: adminRoutes.comments, labelKey: "admin.nav.comments" },
   { href: adminRoutes.users, labelKey: "admin.nav.users", adminOnly: true },
 ];

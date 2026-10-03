@@ -8,11 +8,18 @@ export interface FilterOption {
   active: boolean;
 }
 
+interface FilterLinksProps {
+  label: string;
+  options: FilterOption[];
+  /** end: beside a page title on desktop (the site's lists); start: above a table (admin). */
+  align?: "start" | "end";
+}
+
 /** A row of links that switch a list (?subject=, ?when=, …); the current one is ink. */
-export function FilterLinks({ label, options }: { label: string; options: FilterOption[] }) {
+export function FilterLinks({ label, options, align = "end" }: FilterLinksProps) {
   return (
     <nav aria-label={label}>
-      <ul className="flex flex-wrap gap-1.5 lg:justify-end">
+      <ul className={cx("flex flex-wrap gap-1.5", align === "end" && "lg:justify-end")}>
         {options.map((option) => (
           <li key={option.key}>
             <Link

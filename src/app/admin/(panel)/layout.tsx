@@ -6,13 +6,19 @@ import { Tag } from "@/components/ui/tag";
 import { adminNavItems, adminRoutes } from "@/config/admin";
 import { requireStaff } from "@/lib/auth/staff";
 import { t } from "@/lib/i18n";
+import { getNewSubmissionCount } from "@/lib/submissions/queries";
 import { signOut } from "./actions";
 
 export default async function AdminPanelLayout({ children }: LayoutProps<"/admin">) {
   const staff = await requireStaff();
+  const newSubmissions = staff.role === "admin" ? await getNewSubmissionCount() : 0;
   const navLinks = adminNavItems
     .filter((item) => !item.adminOnly || staff.role === "admin")
-    .map((item) => ({ href: item.href, label: t(item.labelKey) }));
+    .map((item) => ({
+      href: item.href,
+      label: t(item.labelKey),
+      badge: item.newSubmissionsBadge ? newSubmissions : undefined,
+    }));
 
   return (
     // Phone: brand + user bar on top, nav scrolls sideways below. Desktop: nav becomes a sidebar.
@@ -46,6 +52,7 @@ export default async function AdminPanelLayout({ children }: LayoutProps<"/admin
             label={t("admin.nav.label")}
             links={navLinks}
             exactHref={adminRoutes.dashboard}
+            badgeLabel={t("admin.nav.newBadge")}
           />
         </div>
       </aside>

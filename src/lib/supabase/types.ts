@@ -207,6 +207,27 @@ export type Database = {
           },
         ];
       };
+      auth_attempts: {
+        Row: {
+          action: string;
+          created_at: string;
+          id: number;
+          ip_hash: string;
+        };
+        Insert: {
+          action: string;
+          created_at?: string;
+          id?: never;
+          ip_hash: string;
+        };
+        Update: {
+          action?: string;
+          created_at?: string;
+          id?: never;
+          ip_hash?: string;
+        };
+        Relationships: [];
+      };
       categories: {
         Row: {
           created_at: string;
@@ -456,6 +477,7 @@ export type Database = {
           admin_note: string | null;
           created_at: string;
           email: string | null;
+          files_url: string | null;
           first_name: string;
           id: string;
           ip_hash: string | null;
@@ -465,12 +487,14 @@ export type Database = {
           organization: string | null;
           phone: string | null;
           status: string;
+          title: string | null;
           updated_at: string;
         };
         Insert: {
           admin_note?: string | null;
           created_at?: string;
           email?: string | null;
+          files_url?: string | null;
           first_name: string;
           id?: string;
           ip_hash?: string | null;
@@ -480,12 +504,14 @@ export type Database = {
           organization?: string | null;
           phone?: string | null;
           status?: string;
+          title?: string | null;
           updated_at?: string;
         };
         Update: {
           admin_note?: string | null;
           created_at?: string;
           email?: string | null;
+          files_url?: string | null;
           first_name?: string;
           id?: string;
           ip_hash?: string | null;
@@ -495,6 +521,7 @@ export type Database = {
           organization?: string | null;
           phone?: string | null;
           status?: string;
+          title?: string | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -756,6 +783,10 @@ export type Database = {
       record_ad_click: { Args: { ad_id: string }; Returns: string };
       record_ad_impression: { Args: { ad_id: string }; Returns: undefined };
       record_article_view: { Args: { article_id: string }; Returns: undefined };
+      record_auth_attempt: {
+        Args: { attempt_action: string; attempt_ip_hash: string; window_minutes: number };
+        Returns: number;
+      };
       search_content: {
         Args: {
           category?: string;

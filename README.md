@@ -272,6 +272,28 @@ page. `/advertise`, `/submit` and `/contact` are fixed layouts whose forms come 
   The team placeholders are in `seed.sql` (local only). The privacy policy is a draft and says so
   at the top; the company fills in `[ХУГАЦАА]` and `siteConfig.legalName` before approving it.
 
+### Forms and inbox
+
+`SubmissionForm` (`src/components/site/submission-form.tsx`) is the form on `/contact`, `/advertise`,
+`/partner` and `/submit` (kind `contact`, `ad`, `partner`, `news`; news adds a headline and a
+files link). One zod schema (`src/lib/submissions/schema.ts`) checks it in the browser and again
+in the server action. Phones are stored as `+976XXXXXXXX`; a phone or an email is required.
+
+- **Spam:** Cloudflare Turnstile (verified on the server), a hidden honeypot field (bots get a
+  fake "sent"), at least 3 seconds to fill in, and 5 forms per IP per hour. The IP is never
+  stored: `ip_hash` is a salted SHA-256 (`IP_HASH_SALT`).
+- **Email:** each saved form is emailed to `NOTIFY_EMAIL` through Resend, after the visitor has
+  their answer. If sending fails the submission is still saved and the error is logged. Until a
+  domain is verified in Resend, mail comes from `onboarding@resend.dev`, which only delivers to
+  the Resend account's own address.
+- **`/admin/inbox`** (admins only): tabs by form, status filter (spam has its own), a drawer with
+  every field, `tel:`/`mailto:` links, status and an internal note. "Шинэ" ones are counted in
+  the sidebar and on the dashboard. The email links straight to the drawer (`?id=`).
+- **Staff sign-in and password reset** use Turnstile too, plus 10 attempts per IP hash in 15
+  minutes (table `auth_attempts`): sign-in runs on the server, so Supabase's own limit sees the
+  server's address, not the visitor's.
+- **Local testing:** Cloudflare's test keys (in `.env.example`) always pass.
+
 ### Inviting staff and resetting passwords
 
 Both are emailed by Supabase Auth, and both links go to `/admin/auth/confirm`, which signs the

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Turnstile } from "@/components/turnstile";
 import { FormMessage, type FormState } from "@/components/ui/form-message";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { TextField } from "@/components/ui/text-field";
@@ -23,6 +24,7 @@ export function ForgotPasswordForm({ labels }: ForgotPasswordFormProps) {
         inputMode="email"
         required
       />
+      <Turnstile resetKey={state} />
       <FormMessage state={state} />
       <SubmitButton size="lg" pendingLabel={labels.submitting} className="w-full">
         {labels.submit}

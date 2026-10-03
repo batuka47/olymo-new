@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { FormPlaceholder } from "@/components/site/form-placeholder";
 import { InfoPageBody, InfoPageLayout } from "@/components/site/info-page-layout";
 import { NumberedBlocks } from "@/components/site/numbered-blocks";
+import { SubmissionForm } from "@/components/site/submission-form";
 import { SectionHeader } from "@/components/ui/section-header";
 import { routes } from "@/config/navigation";
 import { t } from "@/lib/i18n";
@@ -34,7 +34,7 @@ export default async function PartnerPage() {
           <NumberedBlocks blocks={benefits} />
         </section>
       )}
-      <FormPlaceholder title={t("partnerPage.formTitle")} />
+      <SubmissionForm kind="partner" title={t("partnerPage.formTitle")} />
     </InfoPageLayout>
   );
 }

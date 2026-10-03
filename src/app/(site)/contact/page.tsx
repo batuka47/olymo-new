@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import type { ComponentType, SVGProps } from "react";
 import { MailIcon, MapPinIcon, PhoneIcon } from "@/components/icons";
-import { FormPlaceholder } from "@/components/site/form-placeholder";
 import { InfoPageLayout } from "@/components/site/info-page-layout";
+import { SubmissionForm } from "@/components/site/submission-form";
 import { routes } from "@/config/navigation";
 import { isPlaceholder, siteConfig } from "@/config/site";
 import { t } from "@/lib/i18n";
@@ -10,7 +10,6 @@ import { pageMetadata } from "@/lib/metadata";
 import { telHref } from "@/lib/phone";
 import { mapsHref } from "@/lib/url";
 
-// The contact form comes in step 13.
 export const metadata: Metadata = pageMetadata({
   url: routes.contact,
   title: t("pages.contact"),
@@ -83,7 +82,7 @@ export default function ContactPage() {
       lead={t("contactPage.description")}
     >
       {details.length > 0 && <ContactDetails details={details} />}
-      <FormPlaceholder title={t("contactPage.formTitle")} />
+      <SubmissionForm kind="contact" title={t("contactPage.formTitle")} />
     </InfoPageLayout>
   );
 }

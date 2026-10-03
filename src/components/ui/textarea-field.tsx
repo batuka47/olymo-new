@@ -1,11 +1,19 @@
 import type { ComponentProps, ReactNode } from "react";
-import { fieldLabelClasses, inputClasses } from "@/components/ui/text-field";
+import {
+  describedBy,
+  FieldText,
+  fieldLabelClasses,
+  inputClasses,
+  invalidInputClasses,
+} from "@/components/ui/text-field";
 import { cx } from "@/lib/cx";
 
 interface TextAreaFieldProps extends ComponentProps<"textarea"> {
   name: string;
   label: string;
   hint?: ReactNode;
+  /** Shown in red under the textarea, which is marked aria-invalid. */
+  error?: string;
 }
 
 export function TextAreaField({
@@ -13,11 +21,10 @@ export function TextAreaField({
   name,
   id = name,
   hint,
+  error,
   className,
   ...textareaProps
 }: TextAreaFieldProps) {
-  const hintId = hint ? `${id}-hint` : undefined;
-
   return (
     <div className={cx("flex flex-col gap-2", className)}>
       <label htmlFor={id} className={fieldLabelClasses}>
@@ -26,15 +33,12 @@ export function TextAreaField({
       <textarea
         id={id}
         name={name}
-        aria-describedby={hintId}
-        className={cx(inputClasses, "min-h-24 py-3 leading-relaxed")}
+        aria-describedby={describedBy({ id, hint, error })}
+        aria-invalid={error ? true : undefined}
+        className={cx(inputClasses, invalidInputClasses, "min-h-24 py-3 leading-relaxed")}
         {...textareaProps}
       />
-      {hint && (
-        <div id={hintId} className="text-xs leading-relaxed text-muted">
-          {hint}
-        </div>
-      )}
+      <FieldText id={id} hint={hint} error={error} />
     </div>
   );
 }

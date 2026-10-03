@@ -7,6 +7,7 @@ import type { FormState } from "@/components/ui/form-message";
 import { safeAdminRedirect } from "@/config/admin";
 import { isStaffRole } from "@/lib/auth/roles";
 import { t } from "@/lib/i18n";
+import { checkAuthAttempt } from "@/lib/spam/auth-guard";
 import { createClient } from "@/lib/supabase/server";
 
 export interface SignInState extends FormState {
@@ -40,6 +41,11 @@ export async function signIn(_previous: SignInState, formData: FormData): Promis
   const email = String(formData.get("email") ?? "");
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message, email };
+  }
+  // Supabase limits sign-ins by address too, but it sees this server's address, not the visitor's.
+  const blocked = await checkAuthAttempt("login", formData);
+  if (blocked) {
+    return { error: blocked, email };
   }
 
   const supabase = await createClient();

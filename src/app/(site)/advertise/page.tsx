@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import { FormPlaceholder } from "@/components/site/form-placeholder";
 import { InfoPageLayout } from "@/components/site/info-page-layout";
+import { SubmissionForm } from "@/components/site/submission-form";
 import { routes } from "@/config/navigation";
 import { t } from "@/lib/i18n";
 import { pageMetadata } from "@/lib/metadata";
 
-// The request form comes in step 13.
 export const metadata: Metadata = pageMetadata({
   url: routes.advertise,
   title: t("pages.advertise"),
@@ -19,7 +18,7 @@ export default function AdvertisePage() {
       title={t("pages.advertise")}
       lead={t("advertisePage.description")}
     >
-      <FormPlaceholder title={t("advertisePage.formTitle")} />
+      <SubmissionForm kind="ad" title={t("advertisePage.formTitle")} />
     </InfoPageLayout>
   );
 }

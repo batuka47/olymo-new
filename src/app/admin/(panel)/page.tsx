@@ -6,8 +6,10 @@ import { adPlacementLabelKeys, type AdPlacement } from "@/config/ads";
 import { lastDay } from "@/lib/ads/form";
 import { publicStatuses } from "@/lib/articles/status";
 import { requireStaff } from "@/lib/auth/staff";
+import { cx } from "@/lib/cx";
 import { formatShortDate, startOfWeekInUlaanbaatar } from "@/lib/dates";
 import { t } from "@/lib/i18n";
+import { getNewSubmissionCount } from "@/lib/submissions/queries";
 import { createClient } from "@/lib/supabase/server";
 import { CleanImagesForm } from "./clean-images-form";
 
@@ -32,15 +34,6 @@ async function getArticleCounts() {
     scheduled: scheduled.count ?? 0,
     publishedThisWeek: publishedThisWeek.count ?? 0,
   };
-}
-
-async function getNewSubmissionCount() {
-  const supabase = await createClient();
-  const { count } = await supabase
-    .from("submissions")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "new");
-  return count ?? 0;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -96,11 +89,19 @@ interface StatCardProps {
   label: string;
   value: number;
   href: string;
+  /** Lime while the number asks for attention (new submissions waiting). */
+  highlight?: boolean;
 }
 
-function StatCard({ label, value, href }: StatCardProps) {
+function StatCard({ label, value, href, highlight = false }: StatCardProps) {
   return (
-    <Link href={href} className="flex flex-col gap-3 border border-ink p-5 hover:bg-stone">
+    <Link
+      href={href}
+      className={cx(
+        "flex flex-col gap-3 border border-ink p-5",
+        highlight ? "bg-lime hover:bg-lime/80" : "hover:bg-stone",
+      )}
+    >
       <span className="font-mono text-[11px] tracking-label text-muted uppercase">{label}</span>
       <span className="font-display text-4xl font-bold">{value}</span>
     </Link>
@@ -149,7 +150,8 @@ export default async function AdminDashboardPage() {
           <StatCard
             label={t("admin.dashboard.newSubmissions")}
             value={newSubmissions}
-            href={adminRoutes.submissions}
+            href={`${adminRoutes.inbox}?status=new`}
+            highlight={newSubmissions > 0}
           />
         )}
       </div>

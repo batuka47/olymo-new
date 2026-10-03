@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import { FormPlaceholder } from "@/components/site/form-placeholder";
 import { InfoPageLayout } from "@/components/site/info-page-layout";
+import { SubmissionForm } from "@/components/site/submission-form";
 import { routes } from "@/config/navigation";
 import { t } from "@/lib/i18n";
 import { pageMetadata } from "@/lib/metadata";
 
-// The news tip form comes in step 13.
 export const metadata: Metadata = pageMetadata({
   url: routes.submit,
   title: t("pages.submit"),
@@ -19,7 +18,7 @@ export default function SubmitPage() {
       title={t("pages.submit")}
       lead={t("submitPage.description")}
     >
-      <FormPlaceholder title={t("submitPage.formTitle")} />
+      <SubmissionForm kind="news" title={t("submitPage.formTitle")} />
     </InfoPageLayout>
   );
 }

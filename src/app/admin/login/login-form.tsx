@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Turnstile } from "@/components/turnstile";
 import { FormMessage } from "@/components/ui/form-message";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { TextField } from "@/components/ui/text-field";
@@ -41,6 +42,7 @@ export function LoginForm({ next, initialError, labels }: LoginFormProps) {
         autoComplete="current-password"
         required
       />
+      <Turnstile resetKey={state} />
       <FormMessage state={state} />
       <SubmitButton size="lg" pendingLabel={labels.submitting} className="w-full">
         {labels.submit}

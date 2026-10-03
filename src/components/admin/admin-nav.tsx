@@ -6,14 +6,21 @@ import type { NavLink } from "@/config/navigation";
 import { cx } from "@/lib/cx";
 import { isActivePath } from "@/lib/is-active-path";
 
-interface AdminNavProps {
-  label: string;
-  links: NavLink[];
-  /** The dashboard link is active only on its exact path, not for every /admin/* page. */
-  exactHref: string;
+interface AdminNavLink extends NavLink {
+  /** A count shown after the label when above zero (new form submissions). */
+  badge?: number;
 }
 
-export function AdminNav({ label, links, exactHref }: AdminNavProps) {
+interface AdminNavProps {
+  label: string;
+  links: AdminNavLink[];
+  /** The dashboard link is active only on its exact path, not for every /admin/* page. */
+  exactHref: string;
+  /** For screen readers after the count, e.g. "шинэ". */
+  badgeLabel: string;
+}
+
+export function AdminNav({ label, links, exactHref, badgeLabel }: AdminNavProps) {
   const pathname = usePathname();
 
   return (
@@ -35,6 +42,12 @@ export function AdminNav({ label, links, exactHref }: AdminNavProps) {
                 )}
               >
                 {link.label}
+                {link.badge ? (
+                  <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center bg-accent px-1.5 font-mono text-[11px] text-white lg:ml-auto">
+                    {link.badge}
+                    <span className="sr-only"> {badgeLabel}</span>
+                  </span>
+                ) : null}
               </Link>
             </li>
           );
