@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AdSlot } from "@/components/site/ad-slot";
+import { AdSlot, adBandClasses } from "@/components/site/ad-slot";
 import { ArticleCard } from "@/components/site/article-card";
 import { ArticleGrid } from "@/components/site/article-grid";
 import { Pagination } from "@/components/site/pagination";
@@ -21,6 +21,9 @@ import { SortToggle } from "./sort-toggle";
 
 // Rendered on each request because it reads ?subject=, ?sort= and ?page=. The database reads are
 // cached for 60 s (see lib/articles/category.ts) and expired when an article is saved.
+
+/** category_2 sits in the list after this many cards (two rows on desktop). */
+const MID_LIST_AD_AFTER = 6;
 
 async function resolveCategory(params: PageProps<"/[category]">["params"]) {
   const { category: slug } = await params;
@@ -114,9 +117,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps<"
           </section>
         )}
 
-        <div className="border-t border-line py-6 lg:p-8">
-          <AdSlot placement="category_1" />
-        </div>
+        <AdSlot placement="category_1" className={adBandClasses} />
 
         {showList && (
           <section aria-labelledby="all-news-title" className="border-t border-line">
@@ -133,7 +134,15 @@ export default async function CategoryPage({ params, searchParams }: PageProps<"
             </div>
 
             {articles.length > 0 ? (
-              <ArticleGrid articles={articles} />
+              <>
+                <ArticleGrid articles={articles.slice(0, MID_LIST_AD_AFTER)} />
+                {articles.length > MID_LIST_AD_AFTER && (
+                  <>
+                    <AdSlot placement="category_2" className={adBandClasses} />
+                    <ArticleGrid articles={articles.slice(MID_LIST_AD_AFTER)} />
+                  </>
+                )}
+              </>
             ) : (
               <EmptyState
                 filteredHref={
@@ -151,6 +160,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps<"
             />
           </section>
         )}
+        {showList && <AdSlot placement="category_3" className={adBandClasses} />}
       </div>
     </Container>
   );

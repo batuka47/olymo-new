@@ -13,6 +13,7 @@ import { fromUlaanbaatarInputValue } from "@/lib/dates";
 import { renderArticleHtml } from "@/lib/editor/render-html";
 import { t } from "@/lib/i18n";
 import { articleFolder, MEDIA_BUCKET } from "@/lib/media";
+import { removeFolder } from "@/lib/media-cleanup";
 import { SLUG_PATTERN } from "@/lib/slug";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/supabase/types";
@@ -209,19 +210,6 @@ export async function checkSlugAvailability(
   return !(await isSlugTaken(supabase, slug, articleId));
 }
 
-async function removeArticleFiles(supabase: Supabase, articleId: string) {
-  const folder = articleFolder(articleId);
-  const { data: files, error } = await supabase.storage
-    .from(MEDIA_BUCKET)
-    .list(folder, { limit: 1000 });
-  if (error || !files?.length) return error;
-
-  const { error: removeError } = await supabase.storage
-    .from(MEDIA_BUCKET)
-    .remove(files.map((file) => `${folder}/${file.name}`));
-  return removeError;
-}
-
 export async function deleteArticle(articleId: string): Promise<ActionResult> {
   await requireStaff();
   if (!z.uuid().safeParse(articleId).success) {
@@ -240,9 +228,10 @@ export async function deleteArticle(articleId: string): Promise<ActionResult> {
   }
 
   // The article row is gone either way; leftover files would only waste space, so log and go on.
-  const storageError = await removeArticleFiles(supabase, articleId);
-  if (storageError) {
-    console.error(`Could not remove images of deleted article ${articleId}:`, storageError.message);
+  try {
+    await removeFolder(supabase, articleFolder(articleId));
+  } catch (storageError) {
+    console.error(`Could not remove images of deleted article ${articleId}:`, storageError);
   }
 
   revalidateArticlePages([deleted]);

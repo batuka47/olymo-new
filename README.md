@@ -185,6 +185,32 @@ article, the newest "Мэдүүштэй" article with a cover is used. Duplicati
 Ad slots `home_1`–`home_4` follow Онцлох, Мэдүүштэй, Салбар бүрээс and the events, and hide with
 them. Event lists are cached under the `events` tag (60 s).
 
+### Ads
+
+`/admin/ads` (all staff) lists ads with their image, placement, dates, impressions, clicks and CTR,
+and switches them on and off. The dashboard lists ads that end within 3 days.
+
+- **Images:** a desktop image and, for full-width placements, an optional phone image (shown under
+  640 px). They are resized in the browser like article covers, into `media/ads/{id}/`. The slot
+  keeps the recommended proportions and crops anything else.
+- **Dates:** start and end are days in Ulaanbaatar; the end day is included.
+- **Slots:** `<AdSlot placement="…" />` shows one running ad (active and inside its dates), at random
+  when several share a placement, and renders nothing when there is none. The running ads are cached
+  for 60 s under the `ads` tag; saving in the admin refreshes every page at once. On pages cached
+  as a whole (home, articles) the random choice changes when the page is rebuilt, not per reader.
+- **Counting:** links go through `/r/ad/[id]`, which counts the click and answers 302 to the
+  advertiser (`rel="sponsored"`). An impression is counted once per page view, when half of the ad
+  is on screen. Only the server can count (`record_ad_click`, `record_ad_impression`); no reader
+  data is stored.
+
+| Placement      | Where                                                | Size                        |
+| -------------- | ---------------------------------------------------- | --------------------------- |
+| `home_1`–`4`   | Home, under Онцлох, Мэдүүштэй, Салбар бүрээс, events | 1248 × 140, phone 358 × 100 |
+| `category_1`   | Category page, under the featured banner             | 1248 × 140, phone 358 × 100 |
+| `category_2`   | Category page, after the 6th card                    | 1248 × 140, phone 358 × 100 |
+| `category_3`   | Category page, after the list                        | 1248 × 140, phone 358 × 100 |
+| `article_side` | Article page, side column                            | 300 × 250                   |
+
 ### Inviting staff and resetting passwords
 
 Both are emailed by Supabase Auth, and both links go to `/admin/auth/confirm`, which signs the

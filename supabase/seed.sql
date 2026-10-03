@@ -107,7 +107,8 @@ insert into public.events (
   'published', now() - interval '2 days'
 );
 
--- The image file does not exist yet; upload one to media/samples/ in Studio to see it.
+-- Off: its image file does not exist, and the site would show it broken. Replace the image in
+-- /admin/ads (or add a new ad there) to see ads locally.
 insert into public.ads (title, image_path, link_url, placement, starts_at, ends_at, is_active)
 values (
   '[ЖИШЭЭ] Нүүр хуудасны баннер',
@@ -116,5 +117,5 @@ values (
   'home_1',
   now() - interval '1 day',
   now() + interval '30 days',
-  true
+  false
 );

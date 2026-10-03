@@ -295,11 +295,11 @@ function ImageDialog({ editor, articleId, open, onClose }: ImageDialogProps) {
     const alt = String(form.get("alt") ?? "").trim();
 
     if (!(file instanceof File) || !ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-      setError(t("admin.articles.cover.invalidType"));
+      setError(t("admin.image.invalidType"));
       return;
     }
     if (file.size > MAX_SOURCE_BYTES) {
-      setError(t("admin.articles.cover.tooLarge"));
+      setError(t("admin.image.tooLarge"));
       return;
     }
 
@@ -323,7 +323,7 @@ function ImageDialog({ editor, articleId, open, onClose }: ImageDialogProps) {
         .run();
       onClose();
     } catch {
-      setError(t("admin.articles.cover.failed"));
+      setError(t("admin.image.failed"));
     } finally {
       setWorking(false);
     }

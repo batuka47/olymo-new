@@ -1,12 +1,20 @@
 import "server-only";
 import { z } from "zod";
-import { articleFolder, MEDIA_BUCKET } from "@/lib/media";
+import { MEDIA_BUCKET } from "@/lib/media";
 import type { createClient } from "@/lib/supabase/server";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
 const LIST_PAGE_SIZE = 1000;
 const ID_BATCH_SIZE = 100;
+
+/** Image folders named after the row that owns them: articles/{id}/ and ads/{id}/. */
+const OWNED_FOLDERS = [
+  { prefix: "articles", table: "articles" },
+  { prefix: "ads", table: "ads" },
+] as const;
+
+type OwnerTable = (typeof OWNED_FOLDERS)[number]["table"];
 
 async function listAll(supabase: Supabase, prefix: string) {
   const entries = [];
@@ -20,11 +28,24 @@ async function listAll(supabase: Supabase, prefix: string) {
   }
 }
 
-async function existingArticleIds(supabase: Supabase, ids: string[]): Promise<Set<string>> {
+/** Deletes every file in a folder; storage has no folders of its own, so it disappears with them. */
+export async function removeFolder(supabase: Supabase, folder: string) {
+  const files = await listAll(supabase, folder);
+  if (files.length === 0) {
+    return 0;
+  }
+  const { error } = await supabase.storage
+    .from(MEDIA_BUCKET)
+    .remove(files.map((file) => `${folder}/${file.name}`));
+  if (error) throw error;
+  return files.length;
+}
+
+async function existingIds(supabase: Supabase, table: OwnerTable, ids: string[]) {
   const found = new Set<string>();
   for (let start = 0; start < ids.length; start += ID_BATCH_SIZE) {
     const { data, error } = await supabase
-      .from("articles")
+      .from(table)
       .select("id")
       .in("id", ids.slice(start, start + ID_BATCH_SIZE));
     if (error) throw error;
@@ -39,37 +60,36 @@ export interface CleanupResult {
 }
 
 /**
- * Deletes articles/{id}/ folders that have no matching article and nothing uploaded within
- * `minAgeMs`. The age check protects new articles whose images are uploaded before the first save.
+ * Deletes articles/{id}/ and ads/{id}/ folders whose row no longer exists (or never did) and with
+ * nothing uploaded within `minAgeMs`. The age check protects new items: their images are uploaded
+ * before the first save.
  */
-export async function removeUnusedArticleFolders(
+export async function removeUnusedFolders(
   supabase: Supabase,
   minAgeMs: number,
   now = Date.now(),
 ): Promise<CleanupResult> {
-  const folderIds = (await listAll(supabase, "articles"))
-    // Folders are listed without an id; article folders are named after the article id.
-    .filter((entry) => entry.id === null && z.uuid().safeParse(entry.name).success)
-    .map((entry) => entry.name);
-  const usedIds = await existingArticleIds(supabase, folderIds);
   const result: CleanupResult = { folders: 0, files: 0 };
 
-  for (const id of folderIds.filter((folderId) => !usedIds.has(folderId))) {
-    const folder = articleFolder(id);
-    const files = await listAll(supabase, folder);
-    const uploadTimes = files.map((file) => Date.parse(file.updated_at ?? file.created_at ?? ""));
-    // A file of unknown age counts as new: when in doubt, keep the folder.
-    const tooRecent = uploadTimes.some(Number.isNaN) || now - Math.max(...uploadTimes) < minAgeMs;
-    if (files.length === 0 || tooRecent) {
-      continue;
-    }
+  for (const { prefix, table } of OWNED_FOLDERS) {
+    const folderIds = (await listAll(supabase, prefix))
+      // Folders are listed without an id; they are named after the row id.
+      .filter((entry) => entry.id === null && z.uuid().safeParse(entry.name).success)
+      .map((entry) => entry.name);
+    const usedIds = await existingIds(supabase, table, folderIds);
 
-    const { error } = await supabase.storage
-      .from(MEDIA_BUCKET)
-      .remove(files.map((file) => `${folder}/${file.name}`));
-    if (error) throw error;
-    result.folders += 1;
-    result.files += files.length;
+    for (const id of folderIds.filter((folderId) => !usedIds.has(folderId))) {
+      const folder = `${prefix}/${id}`;
+      const files = await listAll(supabase, folder);
+      const uploadTimes = files.map((file) => Date.parse(file.updated_at ?? file.created_at ?? ""));
+      // A file of unknown age counts as new: when in doubt, keep the folder.
+      const tooRecent = uploadTimes.some(Number.isNaN) || now - Math.max(...uploadTimes) < minAgeMs;
+      if (files.length === 0 || tooRecent) {
+        continue;
+      }
+      result.files += await removeFolder(supabase, folder);
+      result.folders += 1;
+    }
   }
   return result;
 }

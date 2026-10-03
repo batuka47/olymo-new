@@ -4,20 +4,12 @@ import { olympiadSubjects } from "@/lib/articles/olympiad";
 import { t } from "@/lib/i18n";
 import { articleCoverPath, IMAGE_EXTENSIONS } from "@/lib/media";
 import { SLUG_PATTERN } from "@/lib/slug";
+import { isHttpUrl } from "@/lib/url";
 
 const categorySlugs = categories.map((category) => category.slug) as [
   CategorySlug,
   ...CategorySlug[],
 ];
-
-function isHttpUrl(value: string): boolean {
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:" || url.protocol === "http:";
-  } catch {
-    return false;
-  }
-}
 
 /** Trimmed text; an empty field becomes null in the database. */
 const optionalText = (max: number) =>

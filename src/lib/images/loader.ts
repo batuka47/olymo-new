@@ -1,5 +1,3 @@
-"use client";
-
 import type { ImageLoaderProps } from "next/image";
 import { IMAGE_WIDTHS, variantPath } from "../media";
 

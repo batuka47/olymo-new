@@ -703,6 +703,8 @@ export type Database = {
       };
     };
     Functions: {
+      record_ad_click: { Args: { ad_id: string }; Returns: string };
+      record_ad_impression: { Args: { ad_id: string }; Returns: undefined };
       record_article_view: { Args: { article_id: string }; Returns: undefined };
     };
     Enums: {

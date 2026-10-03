@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AdSlot, type AdPlacement } from "@/components/site/ad-slot";
+import { AdSlot, adBandClasses } from "@/components/site/ad-slot";
 import { Container } from "@/components/ui/container";
 import { siteConfig } from "@/config/site";
 import {
@@ -62,14 +62,6 @@ function sectionNumbers(
   >;
 }
 
-function AdBand({ placement }: { placement: AdPlacement }) {
-  return (
-    <div className="border-t border-line py-6 lg:p-8">
-      <AdSlot placement={placement} />
-    </div>
-  );
-}
-
 export default async function HomePage() {
   const [special, featured, olympiads, goodToKnow, sectors, events] = await Promise.all([
     getSpecialArticles(HOME_FETCH.special),
@@ -105,7 +97,7 @@ export default async function HomePage() {
                 title={t("home.featured")}
                 articles={sections.featured}
               />
-              <AdBand placement="home_1" />
+              <AdSlot placement="home_1" className={adBandClasses} />
             </>
           )}
         </div>
@@ -124,7 +116,7 @@ export default async function HomePage() {
                 articles={sections.goodToKnow}
                 special={sections.special}
               />
-              <AdBand placement="home_2" />
+              <AdSlot placement="home_2" className={adBandClasses} />
             </>
           )}
           {visible.sectors && (
@@ -134,13 +126,13 @@ export default async function HomePage() {
                 title={t("home.sectors")}
                 articles={sections.sectorTiles}
               />
-              <AdBand placement="home_3" />
+              <AdSlot placement="home_3" className={adBandClasses} />
             </>
           )}
           {visible.events && (
             <>
               <EventsSection index={number.events} events={sections.events} />
-              <AdBand placement="home_4" />
+              <AdSlot placement="home_4" className={adBandClasses} />
             </>
           )}
           <OrganizationsCta />

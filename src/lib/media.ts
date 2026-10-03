@@ -61,3 +61,17 @@ export const SOCIAL_IMAGE_SIZE = { width: 1200, height: 630 } as const;
 export function articleSocialImagePath(articleId: string): string {
   return `${articleFolder(articleId)}/cover-og.jpg`;
 }
+
+export function adFolder(adId: string): string {
+  return `ads/${adId}`;
+}
+
+/** Ad images: ads/{id}/desktop-{width}.{extension} and ads/{id}/mobile-{width}.{extension}. */
+export function adImagePath(
+  adId: string,
+  kind: "desktop" | "mobile",
+  width: ImageWidth,
+  extension: ImageExtension,
+): string {
+  return `${adFolder(adId)}/${kind}-${width}.${extension}`;
+}

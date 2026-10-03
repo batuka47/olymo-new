@@ -31,6 +31,7 @@ insert into public.events (slug, title, starts_at, status, publish_at) values
 select id as draft_id from public.articles where slug = 'test-draft' \gset
 insert into public.ads (title, image_path, link_url, placement, starts_at, ends_at) values ('Expired', 'x.webp', 'https://example.com', 'home_2', now() - interval '10 days', now() - interval '1 day');
 insert into public.ads (title, image_path, link_url, placement, is_active) values ('Inactive', 'x.webp', 'https://example.com', 'home_3', false);
+insert into public.ads (title, image_path, link_url, placement, starts_at, ends_at) values ('Running', 'x.webp', 'https://example.com', 'home_4', now() - interval '1 day', now() + interval '1 day');
 insert into public.submissions (kind, first_name, email, message) values ('contact', 'Бат', 'bat@test.local', 'Сайн байна уу');
 
 select ok((select count(*) from public.published_articles) = 7, 'view hides draft and future articles (as owner)');
@@ -52,7 +53,7 @@ select ok(exists (select 1 from public.site_pages where slug = 'editorial-policy
 select ok((select count(*) from public.events) = 3, 'anon: reads published/scheduled, due events');
 select ok(not exists (select 1 from public.events where slug = 'test-event-scheduled-future'), 'anon: scheduled event with future publish_at is invisible');
 select ok(exists (select 1 from public.published_events where slug = 'test-event-scheduled-past'), 'anon: scheduled event with past publish_at is visible');
-select ok((select count(*) from public.ads) = 1, 'anon: only running ads');
+select ok(exists (select 1 from public.ads where title = 'Running') and not exists (select 1 from public.ads where title in ('Expired', 'Inactive')), 'anon: only running ads');
 select ok((select count(*) from public.article_tags) = 3, 'anon: tags of visible articles');
 select ok((select count(*) from public.submissions) = 0, 'anon: cannot read submissions');
 select ok((select count(*) from public.profiles) = 0, 'anon: cannot read profiles');
@@ -93,7 +94,7 @@ select ok(private.is_staff() and not private.is_admin(), 'editor: is_staff() tru
 select ok((select count(*) from public.articles) = 10, 'editor: sees drafts and future items');
 select ok((select count(*) from public.published_articles) = 7, 'editor: view still shows only public articles');
 select ok((select count(*) from public.events) = 4, 'editor: sees future scheduled events');
-select ok((select count(*) from public.ads) = 3, 'editor: sees all ads');
+select ok((select count(*) from public.ads where title in ('Running', 'Expired', 'Inactive')) = 3, 'editor: sees all ads');
 insert into public.articles (slug, title, category_slug) values ('editor-draft', 'Editor draft', 'science');
 update public.articles set is_featured = true where slug = 'editor-draft';
 delete from public.articles where slug = 'editor-draft';

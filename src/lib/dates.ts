@@ -70,3 +70,12 @@ export function formatShortDate(value: string | Date, now = new Date()): string 
   const [currentYear] = ulaanbaatarDate(now).split("-");
   return year === currentYear ? `${month}.${day}` : `${year}.${month}.${day}`;
 }
+
+/**
+ * Midnight at the start of a calendar day in Ulaanbaatar ("2026-10-05"), as an ISO instant.
+ * dayOffset moves to a later day: 1 gives the end of that day as an exclusive bound.
+ */
+export function ulaanbaatarDayStart(date: string, dayOffset = 0): string {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day + dayOffset) - ULAANBAATAR_OFFSET_MS).toISOString();
+}

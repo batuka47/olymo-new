@@ -207,7 +207,7 @@ function LeadCard({ article, kicker, readingMinutes, titleLevel = "h2", preload 
         article={article}
         sizes="(min-width: 1440px) 550px, (min-width: 1024px) 40vw, 100vw"
         preload={preload}
-        className="aspect-[16/10] w-full"
+        className="aspect-16/10 w-full"
       />
       <div className="flex flex-col gap-2.5 px-4 pt-4.5 pb-5 lg:gap-3.5 lg:px-8 lg:pt-7 lg:pb-8">
         <div className="flex flex-wrap gap-2">
