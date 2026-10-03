@@ -44,6 +44,12 @@ export const categories = [
 
 export type CategorySlug = (typeof categories)[number]["slug"];
 
+/**
+ * Categories an article can belong to. "events" is the events section: /events/{slug} shows an
+ * event from the events table, so an article there would be unreachable.
+ */
+export const articleCategories = categories.filter((category) => category.slug !== "events");
+
 const categorySlugs: ReadonlySet<string> = new Set(categories.map((category) => category.slug));
 
 export function isCategorySlug(value: string): value is CategorySlug {
@@ -56,4 +62,13 @@ export function getCategory(slug: string) {
 
 export function categoryPath(slug: CategorySlug): string {
   return `/${slug}`;
+}
+
+/** A category that is known to exist (for pages built around one, like /events). */
+export function requireCategory(slug: CategorySlug) {
+  const category = getCategory(slug);
+  if (!category) {
+    throw new Error(`Unknown category "${slug}"`);
+  }
+  return category;
 }

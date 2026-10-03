@@ -60,3 +60,38 @@ export function PhoneIcon(props: IconProps) {
     </Icon>
   );
 }
+
+export function BuildingIcon(props: IconProps) {
+  return (
+    <Icon strokeWidth={1.8} strokeLinejoin="round" {...props}>
+      <path d="M4 21V4h11v17M15 9h5v12M2 21h20M8 8h3M8 12h3M8 16h3" />
+    </Icon>
+  );
+}
+
+export function CalendarIcon(props: IconProps) {
+  return (
+    <Icon strokeWidth={1.8} strokeLinecap="butt" {...props}>
+      <rect x="3" y="5" width="18" height="16" />
+      <path d="M3 10h18M8 3v4M16 3v4" />
+    </Icon>
+  );
+}
+
+export function MapPinIcon(props: IconProps) {
+  return (
+    <Icon strokeWidth={1.8} strokeLinejoin="round" {...props}>
+      <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" />
+      <circle cx="12" cy="9.5" r="2.5" />
+    </Icon>
+  );
+}
+
+export function TicketIcon(props: IconProps) {
+  return (
+    <Icon strokeWidth={1.8} strokeLinejoin="round" {...props}>
+      <path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z" />
+      <path d="M14 7v10" strokeDasharray="2 2" />
+    </Icon>
+  );
+}

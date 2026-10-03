@@ -1,13 +1,13 @@
 import type { JSONContent } from "@tiptap/react";
 import type { OlympiadSubject } from "@/lib/articles/olympiad";
 import type { ArticleInput, TagValue } from "@/lib/articles/schema";
-import { toUlaanbaatarInputValue } from "@/lib/dates";
+import { publishFieldsFromRow, type PublishFormFields } from "@/lib/publishing";
 import type { Database } from "@/lib/supabase/types";
 
 type ArticleRow = Database["public"]["Tables"]["articles"]["Row"];
 
 /** Everything the article editor edits. Empty text fields are "" here and null in the database. */
-export interface ArticleFormValues {
+export interface ArticleFormValues extends PublishFormFields {
   title: string;
   slug: string;
   categorySlug: string;
@@ -35,8 +35,6 @@ export interface ArticleFormValues {
   specialUntil: string;
   seoTitle: string;
   seoDescription: string;
-  publishMode: "now" | "schedule";
-  scheduleAt: string;
 }
 
 export const emptyDocument: JSONContent = { type: "doc", content: [{ type: "paragraph" }] };
@@ -79,8 +77,6 @@ export function articleRowToValues(
   tags: TagValue[],
   now = new Date(),
 ): ArticleFormValues {
-  const scheduled = row.status !== "draft" && row.publish_at && new Date(row.publish_at) > now;
-
   return {
     title: row.title,
     slug: row.slug,
@@ -108,8 +104,7 @@ export function articleRowToValues(
     specialUntil: row.special_until ?? "",
     seoTitle: row.seo_title ?? "",
     seoDescription: row.seo_description ?? "",
-    publishMode: scheduled ? "schedule" : "now",
-    scheduleAt: scheduled && row.publish_at ? toUlaanbaatarInputValue(row.publish_at) : "",
+    ...publishFieldsFromRow(row, now),
   };
 }
 

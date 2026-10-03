@@ -298,7 +298,7 @@ export type Database = {
           cover_path: string | null;
           created_at: string;
           ends_at: string | null;
-          event_type: string | null;
+          event_type: string;
           excerpt: string | null;
           id: string;
           is_featured: boolean;
@@ -321,7 +321,7 @@ export type Database = {
           cover_path?: string | null;
           created_at?: string;
           ends_at?: string | null;
-          event_type?: string | null;
+          event_type?: string;
           excerpt?: string | null;
           id?: string;
           is_featured?: boolean;
@@ -344,7 +344,7 @@ export type Database = {
           cover_path?: string | null;
           created_at?: string;
           ends_at?: string | null;
-          event_type?: string | null;
+          event_type?: string;
           excerpt?: string | null;
           id?: string;
           is_featured?: boolean;

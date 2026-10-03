@@ -4,7 +4,7 @@ import type { CategorySlug } from "@/config/categories";
 import { LIST_CACHE, SUMMARY_COLUMNS, type ArticleSummary } from "@/lib/articles/public";
 import { readingMinutes } from "@/lib/articles/reading-time";
 import { ulaanbaatarDate } from "@/lib/dates";
-import { eventAsArticleSummary, type EventSummary } from "@/lib/events";
+import { eventAsArticleSummary, type EventSummary } from "@/lib/events/queries";
 import { createPublicClient } from "@/lib/supabase/server";
 
 export interface LeadArticle extends ArticleSummary {

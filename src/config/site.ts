@@ -18,6 +18,11 @@ const socials: Record<SocialNetwork, string> = {
   tiktok: "",
 };
 
+/** True while a contact value is still a "[УТАС]"-style placeholder that nobody has filled in. */
+export function isPlaceholder(value: string): boolean {
+  return value.includes("[");
+}
+
 export const siteConfig = {
   name: "НЭР",
   tagline: t("site.tagline"),

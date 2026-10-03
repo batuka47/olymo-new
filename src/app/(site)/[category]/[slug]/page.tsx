@@ -22,7 +22,7 @@ import { articleMetadata } from "./article-metadata";
 import { CommentsPlaceholder } from "./comments-placeholder";
 import { hasKeyFacts, KeyFacts } from "./key-facts";
 import { MostRead } from "./most-read";
-import { PreviewBanner } from "./preview-banner";
+import { PreviewBanner } from "@/components/site/preview-banner";
 import { RelatedArticles } from "./related-articles";
 import { ViewBeacon } from "./view-beacon";
 

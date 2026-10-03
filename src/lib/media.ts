@@ -75,3 +75,19 @@ export function adImagePath(
 ): string {
   return `${adFolder(adId)}/${kind}-${width}.${extension}`;
 }
+
+export function eventFolder(eventId: string): string {
+  return `events/${eventId}`;
+}
+
+export function eventCoverPath(
+  eventId: string,
+  width: ImageWidth,
+  extension: ImageExtension,
+): string {
+  return `${eventFolder(eventId)}/cover-${width}.${extension}`;
+}
+
+export function eventSocialImagePath(eventId: string): string {
+  return `${eventFolder(eventId)}/cover-og.jpg`;
+}

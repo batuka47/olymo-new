@@ -211,6 +211,25 @@ and switches them on and off. The dashboard lists ads that end within 3 days.
 | `category_3`   | Category page, after the list                        | 1248 × 140, phone 358 × 100 |
 | `article_side` | Article page, side column                            | 300 × 250                   |
 
+### Events
+
+`/admin/events` works like the article editor and shares its parts (`components/admin/editor/`):
+the rich-text editor, the cover upload with its share image (`media/events/{id}/`), the slug
+check, publish now or schedule, preview in Draft Mode, and the unpublish confirmation. Start and end
+are entered in Ulaanbaatar time; the type is one of Хурал, Хакатон, Үзэсгэлэн, Сургалт, Тэмцээн,
+Бусад (stored as keys, see `config/events.ts`).
+
+- **`/events`:** upcoming (soonest first) or past (newest first), all or featured only:
+  `?when=past`, `?featured=1`, `?page=N`. An event counts as upcoming until its end (or its start,
+  without an end) has passed, so running events stay listed. Rows on desktop, cards on phones.
+- **`/events/{slug}`:** facts box (organizer, time, place with a Google Maps link, price, phone as a
+  `tel:` link, registration), "Календарт нэмэх" (an `.ics` file from `/events/{slug}/calendar`),
+  share row, related events, Open Graph like articles and schema.org `Event` JSON-LD.
+- **Home page:** section 05 and the "Эвентүүд" tile of section 04 read the same events.
+- **Refreshing:** saving or deleting an event expires the `events` cache and the home page,
+  `/events` and the event's page at once.
+- **Articles** can no longer use the "Эвентүүд" category: `/events/{slug}` always shows an event.
+
 ### Inviting staff and resetting passwords
 
 Both are emailed by Supabase Auth, and both links go to `/admin/auth/confirm`, which signs the

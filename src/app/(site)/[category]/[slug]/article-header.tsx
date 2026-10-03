@@ -1,51 +1,23 @@
-import Link from "next/link";
+import { Breadcrumb, type Crumb } from "@/components/site/breadcrumb";
 import { ShareButtons } from "@/components/site/share-buttons";
 import { categoryPath, getCategory } from "@/config/categories";
 import { siteConfig } from "@/config/site";
 import { isOlympiadSubject } from "@/lib/articles/olympiad";
 import type { Article } from "@/lib/articles/public";
 import { readingMinutes } from "@/lib/articles/reading-time";
-import { cx } from "@/lib/cx";
 import { formatDate } from "@/lib/dates";
 import { t } from "@/lib/i18n";
 
-// py-3.5 on inline links widens the tap target to 44 px without changing the line height.
-const crumbLinkClasses = "py-3.5 hover:underline";
-
-function Separator() {
-  return (
-    <span aria-hidden="true" className="opacity-50">
-      {" / "}
-    </span>
-  );
-}
-
-function Breadcrumb({ article }: { article: Article }) {
+function ArticleBreadcrumb({ article }: { article: Article }) {
   const category = getCategory(article.category_slug);
-  return (
-    <nav
-      aria-label={t("article.breadcrumb")}
-      className="font-mono text-xs tracking-label text-muted uppercase"
-    >
-      <Link href="/" className={crumbLinkClasses}>
-        {t("article.home")}
-      </Link>
-      {category && (
-        <>
-          <Separator />
-          <Link href={categoryPath(category.slug)} className={cx(crumbLinkClasses, "text-accent")}>
-            {category.label}
-          </Link>
-        </>
-      )}
-      {isOlympiadSubject(article.subject) && (
-        <>
-          <Separator />
-          {t(`olympiad.subjects.${article.subject}`)}
-        </>
-      )}
-    </nav>
-  );
+  const items: Crumb[] = [{ label: t("article.home"), href: "/" }];
+  if (category) {
+    items.push({ label: category.label, href: categoryPath(category.slug) });
+  }
+  if (isOlympiadSubject(article.subject)) {
+    items.push({ label: t(`olympiad.subjects.${article.subject}`) });
+  }
+  return <Breadcrumb items={items} />;
 }
 
 function Byline({ article }: { article: Article }) {
@@ -77,7 +49,7 @@ function Byline({ article }: { article: Article }) {
 export function ArticleHeader({ article, path }: { article: Article; path: string }) {
   return (
     <header className="flex flex-col gap-6 py-8 lg:px-12 lg:pt-14 lg:pb-10">
-      <Breadcrumb article={article} />
+      <ArticleBreadcrumb article={article} />
       <h1 className="max-w-260 font-display text-[30px] leading-[1.1] font-bold tracking-display lg:text-[54px] lg:leading-[1.08]">
         {article.title}
       </h1>

@@ -92,7 +92,7 @@ insert into public.events (
   'Залуу судлаачид судалгааныхаа үр дүнг танилцуулж, туршлага солилцоно.',
   '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"[ЖИШЭЭ] Форумын хөтөлбөр удахгүй зарлагдана."}]}]}',
   '<p>[ЖИШЭЭ] Форумын хөтөлбөр удахгүй зарлагдана.</p>',
-  'Хурал', 'МУИС', now() + interval '12 days', now() + interval '12 days 6 hours',
+  'conference', 'МУИС', now() + interval '12 days', now() + interval '12 days 6 hours',
   'МУИС, II байр', 'Үнэгүй', '[УТАС]', 'https://example.com/forum', false,
   'published', now() - interval '1 day'
 ),
@@ -102,7 +102,7 @@ insert into public.events (
   'Хиймэл оюуны шийдэл бүтээх 48 цагийн оюутны хакатон.',
   '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"[ЖИШЭЭ] Багийн бүртгэл нээлттэй."}]}]}',
   '<p>[ЖИШЭЭ] Багийн бүртгэл нээлттэй.</p>',
-  'Хакатон', '[ЗОХИОН БАЙГУУЛАГЧ]', now() + interval '19 days', now() + interval '21 days',
+  'hackathon', '[ЗОХИОН БАЙГУУЛАГЧ]', now() + interval '19 days', now() + interval '21 days',
   '[БАЙРШИЛ]', '[ҮНЭ]', '[УТАС]', 'https://example.com/hackathon', true,
   'published', now() - interval '2 days'
 );

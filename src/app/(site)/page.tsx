@@ -13,7 +13,7 @@ import {
   SECTOR_CATEGORIES,
   type HomeSections,
 } from "@/lib/articles/home";
-import { getUpcomingEvents } from "@/lib/events";
+import { getUpcomingEvents } from "@/lib/events/queries";
 import { t } from "@/lib/i18n";
 import { siteOpenGraph } from "@/lib/metadata";
 import { CardGridSection } from "./_home/card-grid-section";

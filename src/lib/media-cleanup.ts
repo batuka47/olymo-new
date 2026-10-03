@@ -8,10 +8,11 @@ type Supabase = Awaited<ReturnType<typeof createClient>>;
 const LIST_PAGE_SIZE = 1000;
 const ID_BATCH_SIZE = 100;
 
-/** Image folders named after the row that owns them: articles/{id}/ and ads/{id}/. */
+/** Image folders named after the row that owns them: articles/{id}/, ads/{id}/, events/{id}/. */
 const OWNED_FOLDERS = [
   { prefix: "articles", table: "articles" },
   { prefix: "ads", table: "ads" },
+  { prefix: "events", table: "events" },
 ] as const;
 
 type OwnerTable = (typeof OWNED_FOLDERS)[number]["table"];
@@ -60,9 +61,9 @@ export interface CleanupResult {
 }
 
 /**
- * Deletes articles/{id}/ and ads/{id}/ folders whose row no longer exists (or never did) and with
- * nothing uploaded within `minAgeMs`. The age check protects new items: their images are uploaded
- * before the first save.
+ * Deletes articles/{id}/, ads/{id}/ and events/{id}/ folders whose row no longer exists (or never
+ * did) and with nothing uploaded within `minAgeMs`. The age check protects new items: their
+ * images are uploaded before the first save.
  */
 export async function removeUnusedFolders(
   supabase: Supabase,

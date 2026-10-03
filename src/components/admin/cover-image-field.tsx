@@ -6,41 +6,44 @@ import { TextField } from "@/components/ui/text-field";
 import { t } from "@/lib/i18n";
 import { encodeCoverImage, type EncodedCover } from "@/lib/images/encode";
 import { uploadMedia, uploadVariants } from "@/lib/images/upload";
-import { articleCoverPath, articleSocialImagePath } from "@/lib/media";
+import type { ImageExtension, ImageWidth } from "@/lib/media";
 
 const CAPTION_LIMIT = 200;
 
 interface CoverImageFieldProps {
-  articleId: string;
+  /** Where each width of the cover goes, e.g. articleCoverPath(id, width, extension). */
+  coverPath: (width: ImageWidth, extension: ImageExtension) => string;
+  /** Where the 1200 × 630 share image goes. */
+  socialImagePath: string;
   path: string | null;
   alt: string;
-  caption: string;
   /** Cache buster for the preview; changes after every upload. */
   version: string;
   onUploaded: (path: string, version: string) => void;
   onRemove: () => void;
   onAltChange: (alt: string) => void;
-  onCaptionChange: (caption: string) => void;
+  /** Optional caption shown under the cover (articles). */
+  caption?: { value: string; onChange: (caption: string) => void };
 }
 
+/** Cover of an article or event: three widths plus the share image, alt text and caption. */
 export function CoverImageField({
-  articleId,
+  coverPath,
+  socialImagePath,
   path,
   alt,
-  caption,
   version,
   onUploaded,
   onRemove,
   onAltChange,
-  onCaptionChange,
+  caption,
 }: CoverImageFieldProps) {
-  /** The three widths plus the 1200 × 630 share image; returns the 1600 px path. */
   async function storeCover(image: EncodedCover): Promise<string> {
-    const [coverPath] = await Promise.all([
-      uploadVariants(image, (width, extension) => articleCoverPath(articleId, width, extension)),
-      uploadMedia(articleSocialImagePath(articleId), image.socialImage),
+    const [savedPath] = await Promise.all([
+      uploadVariants(image, coverPath),
+      uploadMedia(socialImagePath, image.socialImage),
     ]);
-    return coverPath;
+    return savedPath;
   }
 
   return (
@@ -50,38 +53,40 @@ export function CoverImageField({
         path={path}
         version={version}
         previewClassName="aspect-video w-full max-w-xl"
-        hint={t("admin.articles.cover.hint")}
+        hint={t("admin.cover.hint")}
         encode={encodeCoverImage}
         store={storeCover}
         onUploaded={onUploaded}
         onRemove={onRemove}
-        removeLabel={t("admin.articles.cover.remove")}
+        removeLabel={t("admin.cover.remove")}
       />
 
       {path && (
         <>
           <TextField
-            label={`${t("admin.articles.cover.alt")} *`}
+            label={`${t("admin.cover.alt")} *`}
             name="coverAlt"
             value={alt}
             onChange={(event) => onAltChange(event.target.value)}
             required
             aria-invalid={!alt.trim()}
-            hint={t("admin.articles.cover.altHint")}
+            hint={t("admin.cover.altHint")}
           />
-          <TextField
-            label={t("admin.articles.cover.caption")}
-            name="coverCaption"
-            value={caption}
-            maxLength={CAPTION_LIMIT}
-            onChange={(event) => onCaptionChange(event.target.value)}
-            hint={
-              <span className="flex flex-wrap justify-between gap-2">
-                {t("admin.articles.cover.captionHint")}
-                <CharacterCount value={caption} limit={CAPTION_LIMIT} />
-              </span>
-            }
-          />
+          {caption && (
+            <TextField
+              label={t("admin.cover.caption")}
+              name="coverCaption"
+              value={caption.value}
+              maxLength={CAPTION_LIMIT}
+              onChange={(event) => caption.onChange(event.target.value)}
+              hint={
+                <span className="flex flex-wrap justify-between gap-2">
+                  {t("admin.cover.captionHint")}
+                  <CharacterCount value={caption.value} limit={CAPTION_LIMIT} />
+                </span>
+              }
+            />
+          )}
         </>
       )}
     </div>

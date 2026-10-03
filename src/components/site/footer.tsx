@@ -3,8 +3,9 @@ import type { ReactNode } from "react";
 import { MailIcon, PhoneIcon } from "@/components/icons";
 import { Container } from "@/components/ui/container";
 import { getCategoryLinks, getPageGroups, type NavGroup } from "@/config/navigation";
-import { siteConfig, type SocialNetwork } from "@/config/site";
+import { isPlaceholder, siteConfig, type SocialNetwork } from "@/config/site";
 import { t } from "@/lib/i18n";
+import { telHref } from "@/lib/phone";
 
 const socialNetworks: { key: SocialNetwork; name: string; shortName: string }[] = [
   { key: "facebook", name: "Facebook", shortName: "FB" },
@@ -20,6 +21,21 @@ interface ContactLink {
   external?: boolean;
 }
 
+function emailLink(): ContactLink | null {
+  if (isPlaceholder(siteConfig.email)) return null;
+  return {
+    href: `mailto:${siteConfig.email}`,
+    label: siteConfig.email,
+    icon: <MailIcon className="size-4.5" />,
+  };
+}
+
+function phoneLink(): ContactLink | null {
+  const href = isPlaceholder(siteConfig.phone) ? null : telHref(siteConfig.phone);
+  if (!href) return null;
+  return { href, label: siteConfig.phone, icon: <PhoneIcon className="size-4.5" /> };
+}
+
 function getContactLinks(): ContactLink[] {
   const socialLinks: ContactLink[] = socialNetworks
     .filter((network) => siteConfig.socials[network.key] !== "")
@@ -30,19 +46,7 @@ function getContactLinks(): ContactLink[] {
       external: true,
     }));
 
-  return [
-    {
-      href: `mailto:${siteConfig.email}`,
-      label: siteConfig.email,
-      icon: <MailIcon className="size-4.5" />,
-    },
-    {
-      href: `tel:${siteConfig.phone}`,
-      label: siteConfig.phone,
-      icon: <PhoneIcon className="size-4.5" />,
-    },
-    ...socialLinks,
-  ];
+  return [emailLink(), phoneLink(), ...socialLinks].filter((link) => link !== null);
 }
 
 const columnTitleClasses =
@@ -69,11 +73,14 @@ function LinkColumn({ group, className }: { group: NavGroup; className?: string 
 }
 
 function ContactColumn({ className }: { className?: string }) {
+  const links = getContactLinks();
+  if (links.length === 0) return null;
+
   return (
     <div className={className}>
       <h2 className={columnTitleClasses}>{t("footer.contact")}</h2>
       <ul className="flex flex-wrap gap-2 lg:flex-col lg:gap-0">
-        {getContactLinks().map((link) => (
+        {links.map((link) => (
           <li key={link.href}>
             <a
               href={link.href}

@@ -7,7 +7,12 @@ import { SelectField } from "@/components/ui/select-field";
 import { Tag } from "@/components/ui/tag";
 import { TextField } from "@/components/ui/text-field";
 import { adminRoutes } from "@/config/admin";
-import { categories, getCategory, isCategorySlug, type CategorySlug } from "@/config/categories";
+import {
+  articleCategories,
+  getCategory,
+  isCategorySlug,
+  type CategorySlug,
+} from "@/config/categories";
 import {
   articlePath,
   articleState,
@@ -139,7 +144,10 @@ export default async function AdminArticlesPage({ searchParams }: PageProps<"/ad
           defaultValue={filters.category ?? ""}
           options={[
             { value: "", label: t("admin.articles.filters.all") },
-            ...categories.map((category) => ({ value: category.slug, label: category.label })),
+            ...articleCategories.map((category) => ({
+              value: category.slug,
+              label: category.label,
+            })),
           ]}
         />
         <div className="flex gap-2">

@@ -18,17 +18,18 @@ import { articleExtensions } from "@/lib/editor/extensions";
 import { t } from "@/lib/i18n";
 import { uploadVariants } from "@/lib/images/upload";
 import { ACCEPTED_IMAGE_TYPES, encodeImageVariants, MAX_SOURCE_BYTES } from "@/lib/images/encode";
-import { articleFolder, responsiveImageSources } from "@/lib/media";
+import { responsiveImageSources } from "@/lib/media";
 
 interface RichTextEditorProps {
-  articleId: string;
+  /** Media bucket folder for images added to the text, e.g. articles/{id}. */
+  imageFolder: string;
   initialContent: JSONContent;
   onChange: (content: JSONContent) => void;
   labelId: string;
 }
 
 export function RichTextEditor({
-  articleId,
+  imageFolder,
   initialContent,
   onChange,
   labelId,
@@ -62,7 +63,7 @@ export function RichTextEditor({
           <LinkDialog editor={editor} open={dialog === "link"} onClose={() => setDialog(null)} />
           <ImageDialog
             editor={editor}
-            articleId={articleId}
+            imageFolder={imageFolder}
             open={dialog === "image"}
             onClose={() => setDialog(null)}
           />
@@ -279,12 +280,12 @@ function LinkDialog({
 
 interface ImageDialogProps {
   editor: Editor;
-  articleId: string;
+  imageFolder: string;
   open: boolean;
   onClose: () => void;
 }
 
-function ImageDialog({ editor, articleId, open, onClose }: ImageDialogProps) {
+function ImageDialog({ editor, imageFolder, open, onClose }: ImageDialogProps) {
   const [working, setWorking] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -310,7 +311,7 @@ function ImageDialog({ editor, articleId, open, onClose }: ImageDialogProps) {
       const name = `body-${Date.now().toString(36)}`;
       const path = await uploadVariants(
         image,
-        (width, extension) => `${articleFolder(articleId)}/${name}-${width}.${extension}`,
+        (width, extension) => `${imageFolder}/${name}-${width}.${extension}`,
       );
       const { src, srcSet } = responsiveImageSources(path);
       editor

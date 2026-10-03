@@ -1,12 +1,13 @@
 import { z } from "zod";
-import { categories, type CategorySlug } from "@/config/categories";
+import { articleCategories, type CategorySlug } from "@/config/categories";
 import { olympiadSubjects } from "@/lib/articles/olympiad";
 import { t } from "@/lib/i18n";
 import { articleCoverPath, IMAGE_EXTENSIONS } from "@/lib/media";
+import { publishInputFields } from "@/lib/publishing";
 import { SLUG_PATTERN } from "@/lib/slug";
 import { isHttpUrl } from "@/lib/url";
 
-const categorySlugs = categories.map((category) => category.slug) as [
+const categorySlugs = articleCategories.map((category) => category.slug) as [
   CategorySlug,
   ...CategorySlug[],
 ];
@@ -45,7 +46,6 @@ export type TagValue = z.infer<typeof tagSchema>;
 export const articleInputSchema = z
   .object({
     id: z.uuid(),
-    intent: z.enum(["draft", "publish"]),
     title: z
       .string()
       .trim()
@@ -55,7 +55,7 @@ export const articleInputSchema = z
       .string()
       .trim()
       .max(120)
-      .regex(SLUG_PATTERN, { error: () => t("admin.articles.errors.slug") }),
+      .regex(SLUG_PATTERN, { error: () => t("admin.slug.invalid") }),
     categorySlug: z.enum(categorySlugs, { error: () => t("admin.articles.errors.category") }),
     tags: z.array(tagSchema).max(15),
     authorName: optionalText(80),
@@ -80,8 +80,7 @@ export const articleInputSchema = z
     specialUntil: optionalDate,
     seoTitle: optionalText(120),
     seoDescription: optionalText(300),
-    publishMode: z.enum(["now", "schedule"]),
-    scheduleAt: z.string(),
+    ...publishInputFields,
   })
   .superRefine((values, context) => {
     // Covers can only point at this article's own folder (see CoverImageField).
@@ -91,14 +90,14 @@ export const articleInputSchema = z
     if (values.coverPath && !allowedCoverPaths.includes(values.coverPath)) {
       context.addIssue({
         code: "custom",
-        message: t("admin.articles.errors.cover"),
+        message: t("admin.cover.invalid"),
         path: ["coverPath"],
       });
     }
     if (values.coverPath && !values.coverAlt) {
       context.addIssue({
         code: "custom",
-        message: t("admin.articles.errors.coverAlt"),
+        message: t("admin.cover.altRequired"),
         path: ["coverAlt"],
       });
     }

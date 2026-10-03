@@ -9,11 +9,11 @@ import { ARTICLES_CACHE_TAG } from "@/lib/articles/public";
 import { articleInputSchema, type ArticleInput, type TagValue } from "@/lib/articles/schema";
 import { articlePath } from "@/lib/articles/status";
 import { requireStaff } from "@/lib/auth/staff";
-import { fromUlaanbaatarInputValue } from "@/lib/dates";
 import { renderArticleHtml } from "@/lib/editor/render-html";
 import { t } from "@/lib/i18n";
 import { articleFolder, MEDIA_BUCKET } from "@/lib/media";
 import { removeFolder } from "@/lib/media-cleanup";
+import { resolvePublishing } from "@/lib/publishing";
 import { SLUG_PATTERN } from "@/lib/slug";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/supabase/types";
@@ -64,32 +64,6 @@ async function isSlugTaken(supabase: Supabase, slug: string, articleId: string):
   return (data?.length ?? 0) > 0;
 }
 
-interface Publishing {
-  status: "draft" | "published" | "scheduled";
-  publishAt: string | null;
-}
-
-function resolvePublishing(
-  input: { intent: "draft" | "publish"; publishMode: "now" | "schedule"; scheduleAt: string },
-  existing: { status: string; publish_at: string | null } | null,
-  now: Date,
-): Publishing | { error: string } {
-  if (input.intent === "draft") {
-    return { status: "draft", publishAt: null };
-  }
-  if (input.publishMode === "schedule") {
-    const scheduledAt = fromUlaanbaatarInputValue(input.scheduleAt);
-    if (!scheduledAt || scheduledAt <= now) {
-      return { error: t("admin.articles.errors.futureRequired") };
-    }
-    return { status: "scheduled", publishAt: scheduledAt.toISOString() };
-  }
-  // Re-saving a live article keeps its original publish time.
-  const alreadyLive =
-    existing?.status !== "draft" && existing?.publish_at && new Date(existing.publish_at) <= now;
-  return { status: "published", publishAt: alreadyLive ? existing.publish_at : now.toISOString() };
-}
-
 async function replaceTags(supabase: Supabase, articleId: string, tags: TagValue[]) {
   if (tags.length > 0) {
     const { error } = await supabase
@@ -137,7 +111,7 @@ export async function saveArticle(input: ArticleInput): Promise<SaveArticleResul
     .maybeSingle();
 
   if (await isSlugTaken(supabase, values.slug, values.id)) {
-    return { ok: false, error: t("admin.articles.errors.slugTaken") };
+    return { ok: false, error: t("admin.slug.taken") };
   }
 
   const publishing = resolvePublishing(values, existing, new Date());
@@ -178,8 +152,11 @@ export async function saveArticle(input: ArticleInput): Promise<SaveArticleResul
     publish_at: publishing.publishAt,
   });
   if (error) {
-    const message = error.code === "23505" ? "slugTaken" : "saveFailed";
-    return { ok: false, error: t(`admin.articles.errors.${message}`) };
+    const slugTaken = error.code === "23505";
+    return {
+      ok: false,
+      error: t(slugTaken ? "admin.slug.taken" : "admin.articles.errors.saveFailed"),
+    };
   }
 
   if (await replaceTags(supabase, values.id, values.tags)) {
