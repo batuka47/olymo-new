@@ -3,10 +3,11 @@ import { BuildingIcon, CalendarIcon, MapPinIcon, PhoneIcon, TicketIcon } from "@
 import { buttonClasses } from "@/components/ui/button";
 import { eventPath } from "@/config/events";
 import { cx } from "@/lib/cx";
-import { formatEventTime, mapsHref } from "@/lib/events/format";
+import { formatEventTime } from "@/lib/events/format";
 import type { EventDetail } from "@/lib/events/queries";
 import { t, type MessageKey } from "@/lib/i18n";
 import { telHref } from "@/lib/phone";
+import { mapsHref } from "@/lib/url";
 
 interface FactRow {
   icon: ComponentType<SVGProps<SVGSVGElement>>;

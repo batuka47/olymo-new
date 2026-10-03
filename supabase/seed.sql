@@ -119,3 +119,12 @@ values (
   now() + interval '30 days',
   false
 );
+
+-- Info pages ----------------------------------------------------------------------------------
+-- Their text comes from migration 20261007000100_info_page_content.sql. The team is local only:
+-- four placeholders to fill in /admin/pages; the site hides "[...]" names.
+insert into public.team_members (name, role, sort_order) values
+  ('[Нэр]', '[Албан тушаал]', 0),
+  ('[Нэр]', '[Албан тушаал]', 1),
+  ('[Нэр]', '[Албан тушаал]', 2),
+  ('[Нэр]', '[Албан тушаал]', 3);

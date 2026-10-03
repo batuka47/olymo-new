@@ -5,6 +5,7 @@ import {
   EditorContent,
   useEditor,
   useEditorState,
+  type Content,
   type Editor,
   type JSONContent,
 } from "@tiptap/react";
@@ -23,9 +24,11 @@ import { responsiveImageSources } from "@/lib/media";
 interface RichTextEditorProps {
   /** Media bucket folder for images added to the text, e.g. articles/{id}. */
   imageFolder: string;
-  initialContent: JSONContent;
+  /** Saved JSON, or HTML for text that has not been through the editor yet (seeded pages). */
+  initialContent: Content;
   onChange: (content: JSONContent) => void;
   labelId: string;
+  placeholder?: string;
 }
 
 export function RichTextEditor({
@@ -33,14 +36,12 @@ export function RichTextEditor({
   initialContent,
   onChange,
   labelId,
+  placeholder = t("admin.articles.editor.bodyPlaceholder"),
 }: RichTextEditorProps) {
   const [dialog, setDialog] = useState<"link" | "image" | null>(null);
 
   const editor = useEditor({
-    extensions: [
-      ...articleExtensions,
-      Placeholder.configure({ placeholder: t("admin.articles.editor.bodyPlaceholder") }),
-    ],
+    extensions: [...articleExtensions, Placeholder.configure({ placeholder })],
     content: initialContent,
     immediatelyRender: false,
     editorProps: {

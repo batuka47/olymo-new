@@ -25,6 +25,8 @@ export function isPlaceholder(value: string): boolean {
 
 export const siteConfig = {
   name: "НЭР",
+  /** The company that runs the site, e.g. the data controller in the privacy policy. */
+  legalName: "[ХУУЛИЙН ЭТГЭЭДИЙН НЭР]",
   tagline: t("site.tagline"),
   url: siteUrl.replace(/\/+$/, ""),
   email: "[ИМЭЙЛ]",

@@ -248,6 +248,30 @@ article category, or `events`), `?tag=` (articles only; the tag chips under arti
 - **Caching:** results are cached for 60 s under the `articles` and `events` tags, so saving
   either in the admin shows in search at once.
 
+### Info pages
+
+`/about`, `/faq`, `/editorial-policy`, `/privacy` and `/partner` are edited in `/admin/pages` (all
+staff): title, lead (also the meta description), body in the article editor, plus each page's own
+parts: Үндэслэл blocks, vision and mission, and the team (photo, name, role) on `/about`; the
+questions on `/faq`; the benefits on `/partner`. Lists can be added to, reordered (↑ ↓) and deleted
+from; the order shown is the order saved. Saving publishes at once (no drafts) and refreshes the
+page. `/advertise`, `/submit` and `/contact` are fixed layouts whose forms come in step 13.
+
+- **Layout:** `InfoPageLayout` (`src/components/site/`): eyebrow, title, lead, an 8-column body and
+  the info pages beside it on desktop.
+- **Names in text:** `{сайтын нэр}` in any page text becomes `siteConfig.name`, and
+  `{компанийн нэр}` becomes `siteConfig.legalName` (the privacy policy's data controller).
+- **Placeholders:** team members named `[...]` and contact details in `siteConfig` that are still
+  `[...]` are not shown. While `legalName` is `[...]`, paragraphs with `{компанийн нэр}` are left
+  out.
+- **FAQ:** native `<details>` accordion and FAQPage JSON-LD. Answers are plain text; a blank line
+  starts a new paragraph.
+- **Redirects:** `/redakts` and `/hamtrah` answer 301 (in `next.config.ts`).
+- **Starting text** comes from migration `…_info_page_content.sql`, so `db push` brings it to the
+  hosted site. It only fills pages, blocks and questions that are still empty, never edited ones.
+  The team placeholders are in `seed.sql` (local only). The privacy policy is a draft and says so
+  at the top; the company fills in `[ХУГАЦАА]` and `siteConfig.legalName` before approving it.
+
 ### Inviting staff and resetting passwords
 
 Both are emailed by Supabase Auth, and both links go to `/admin/auth/confirm`, which signs the

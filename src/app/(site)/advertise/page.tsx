@@ -1,9 +1,25 @@
 import type { Metadata } from "next";
-import { StubPage } from "@/components/site/stub-page";
+import { FormPlaceholder } from "@/components/site/form-placeholder";
+import { InfoPageLayout } from "@/components/site/info-page-layout";
+import { routes } from "@/config/navigation";
 import { t } from "@/lib/i18n";
+import { pageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = { title: t("pages.advertise") };
+// The request form comes in step 13.
+export const metadata: Metadata = pageMetadata({
+  url: routes.advertise,
+  title: t("pages.advertise"),
+  description: t("advertisePage.description"),
+});
 
 export default function AdvertisePage() {
-  return <StubPage title={t("pages.advertise")} />;
+  return (
+    <InfoPageLayout
+      href={routes.advertise}
+      title={t("pages.advertise")}
+      lead={t("advertisePage.description")}
+    >
+      <FormPlaceholder title={t("advertisePage.formTitle")} />
+    </InfoPageLayout>
+  );
 }

@@ -17,8 +17,3 @@ export function formatEventTime(startsAt: string, endsAt: string | null): string
   }
   return `${formatDateTime(startsAt)} – ${formatDateTime(endsAt)}`;
 }
-
-/** Opens the place in Google Maps; works for addresses and names alike. */
-export function mapsHref(location: string): string {
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
-}

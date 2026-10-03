@@ -91,3 +91,20 @@ export function eventCoverPath(
 export function eventSocialImagePath(eventId: string): string {
   return `${eventFolder(eventId)}/cover-og.jpg`;
 }
+
+/** Images added to a site page's text in /admin/pages. */
+export function sitePageFolder(slug: string): string {
+  return `pages/${slug}`;
+}
+
+export function teamFolder(memberId: string): string {
+  return `team/${memberId}`;
+}
+
+export function teamPhotoPath(
+  memberId: string,
+  width: ImageWidth,
+  extension: ImageExtension,
+): string {
+  return `${teamFolder(memberId)}/photo-${width}.${extension}`;
+}

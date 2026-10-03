@@ -420,25 +420,31 @@ export type Database = {
       };
       site_pages: {
         Row: {
+          blocks: NonNullable<Json>;
           body_html: string | null;
           body_json: Json | null;
           created_at: string;
+          description: string;
           slug: string;
           title: string;
           updated_at: string;
         };
         Insert: {
+          blocks?: NonNullable<Json>;
           body_html?: string | null;
           body_json?: Json | null;
           created_at?: string;
+          description?: string;
           slug: string;
           title: string;
           updated_at?: string;
         };
         Update: {
+          blocks?: NonNullable<Json>;
           body_html?: string | null;
           body_json?: Json | null;
           created_at?: string;
+          description?: string;
           slug?: string;
           title?: string;
           updated_at?: string;
@@ -510,6 +516,36 @@ export type Database = {
           created_at?: string;
           label?: string;
           slug?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      team_members: {
+        Row: {
+          created_at: string;
+          id: string;
+          name: string;
+          photo_path: string | null;
+          role: string;
+          sort_order: number;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          name: string;
+          photo_path?: string | null;
+          role?: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          name?: string;
+          photo_path?: string | null;
+          role?: string;
+          sort_order?: number;
           updated_at?: string;
         };
         Relationships: [];
