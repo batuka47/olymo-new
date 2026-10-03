@@ -81,13 +81,19 @@ export async function getLatestArticlePaths(limit: number) {
  * Most viewed articles published in the last 30 days. view_count is a lifetime total, so a
  * rolling window keeps the list current without an empty list at the start of each month.
  */
-export async function getMostReadArticles(excludeId: string, limit = 4): Promise<ArticleSummary[]> {
+export async function getMostReadArticles(
+  excludeId: string | null,
+  limit = 4,
+): Promise<ArticleSummary[]> {
   const since = new Date(Date.now() - MOST_READ_DAYS * DAY_MS).toISOString();
-  const { data, error } = await createPublicClient()
+  let query = createPublicClient()
     .from("articles")
     .select(SUMMARY_COLUMNS)
-    .gte("publish_at", since)
-    .neq("id", excludeId)
+    .gte("publish_at", since);
+  if (excludeId) {
+    query = query.neq("id", excludeId);
+  }
+  const { data, error } = await query
     .order("view_count", { ascending: false })
     .order("publish_at", { ascending: false })
     .limit(limit);

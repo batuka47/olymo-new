@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { draftMode } from "next/headers";
-import Link from "next/link";
 import { notFound, permanentRedirect, redirect } from "next/navigation";
 import { AdSlot } from "@/components/site/ad-slot";
+import { PreviewBanner } from "@/components/site/preview-banner";
+import { TagLinks } from "@/components/site/tag-links";
 import { Container } from "@/components/ui/container";
 import { ResponsiveImage } from "@/components/ui/responsive-image";
-import { routes } from "@/config/navigation";
 import {
   articleTags,
   getArticle,
@@ -22,7 +22,6 @@ import { articleMetadata } from "./article-metadata";
 import { CommentsPlaceholder } from "./comments-placeholder";
 import { hasKeyFacts, KeyFacts } from "./key-facts";
 import { MostRead } from "./most-read";
-import { PreviewBanner } from "@/components/site/preview-banner";
 import { RelatedArticles } from "./related-articles";
 import { ViewBeacon } from "./view-beacon";
 
@@ -66,21 +65,11 @@ function ArticleBody({ article }: { article: Article }) {
       {/* body_html is generated and sanitized on the server when the article is saved. */}
       <div className="article-body" dangerouslySetInnerHTML={{ __html: article.body_html ?? "" }} />
       {tags.length > 0 && (
-        <ul
-          aria-label={t("article.tags")}
+        <TagLinks
+          tags={tags}
+          label={t("article.tags")}
           className="mt-10 flex flex-wrap gap-2 border-t border-line pt-4"
-        >
-          {tags.map((tag) => (
-            <li key={tag.slug}>
-              <Link
-                href={`${routes.search}?tag=${encodeURIComponent(tag.slug)}`}
-                className="inline-flex min-h-11 items-center border border-ink px-3 font-mono text-xs tracking-wider uppercase hover:bg-ink hover:text-paper"
-              >
-                #{tag.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        />
       )}
     </>
   );

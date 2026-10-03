@@ -230,6 +230,24 @@ are entered in Ulaanbaatar time; the type is one of Хурал, Хакатон, 
   `/events` and the event's page at once.
 - **Articles** can no longer use the "Эвентүүд" category: `/events/{slug}` always shows an event.
 
+### Search
+
+`/search` finds published articles and events in one ranked list: `?q=`, `?category=` (an
+article category, or `events`), `?tag=` (articles only; the tag chips under articles link here) and
+`?page=N`, 10 per page. The form is a plain GET form, so it works without JavaScript.
+
+- **Matching** is the Postgres function `search_content()` (migration `…_search.sql`): full-text on
+  title and excerpt (`'simple'` config, the last word as a prefix, so "олимп" finds "Олимпиадын"),
+  then a trigram fallback on the title for typos and word endings ("олимпад", "тэтгэлгийн
+  хөтөлбөр"). Full-text matches rank first. It reads the `published_*` views, so drafts are never
+  found. Tune the typo tolerance with `pg_trgm.word_similarity_threshold` on the function (0.55).
+- **Before anything is typed:** the 5 most read articles (last 30 days) and the popular tags.
+  **No results:** tips, a link without the category or tag filter, and the popular tags.
+- **Pages:** the matched words are marked in lime. Result pages are `noindex`; the bare `/search`
+  is not. The header's search icon lands on `/search` with the input focused.
+- **Caching:** results are cached for 60 s under the `articles` and `events` tags, so saving
+  either in the admin shows in search at once.
+
 ### Inviting staff and resetting passwords
 
 Both are emailed by Supabase Auth, and both links go to `/admin/auth/confirm`, which signs the

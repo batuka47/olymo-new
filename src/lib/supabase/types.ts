@@ -307,6 +307,7 @@ export type Database = {
           price_text: string | null;
           publish_at: string | null;
           registration_url: string | null;
+          search_vector: unknown;
           slug: string;
           starts_at: string;
           status: string;
@@ -330,6 +331,7 @@ export type Database = {
           price_text?: string | null;
           publish_at?: string | null;
           registration_url?: string | null;
+          search_vector?: never;
           slug: string;
           starts_at: string;
           status?: string;
@@ -353,6 +355,7 @@ export type Database = {
           price_text?: string | null;
           publish_at?: string | null;
           registration_url?: string | null;
+          search_vector?: never;
           slug?: string;
           starts_at?: string;
           status?: string;
@@ -647,6 +650,7 @@ export type Database = {
           price_text: string | null;
           publish_at: string | null;
           registration_url: string | null;
+          search_vector: unknown;
           slug: string | null;
           starts_at: string | null;
           status: string | null;
@@ -670,6 +674,7 @@ export type Database = {
           price_text?: string | null;
           publish_at?: string | null;
           registration_url?: string | null;
+          search_vector?: unknown;
           slug?: string | null;
           starts_at?: string | null;
           status?: string | null;
@@ -693,6 +698,7 @@ export type Database = {
           price_text?: string | null;
           publish_at?: string | null;
           registration_url?: string | null;
+          search_vector?: unknown;
           slug?: string | null;
           starts_at?: string | null;
           status?: string | null;
@@ -703,9 +709,51 @@ export type Database = {
       };
     };
     Functions: {
+      popular_tags: {
+        Args: { tag_limit?: number };
+        Returns: {
+          article_count: number;
+          label: string;
+          slug: string;
+        }[];
+      };
       record_ad_click: { Args: { ad_id: string }; Returns: string };
       record_ad_impression: { Args: { ad_id: string }; Returns: undefined };
       record_article_view: { Args: { article_id: string }; Returns: undefined };
+      search_content: {
+        Args: {
+          category?: string;
+          q?: string;
+          result_limit?: number;
+          result_offset?: number;
+          tag?: string;
+        };
+        Returns: {
+          author_name: string;
+          category_slug: string;
+          cover_alt: string;
+          cover_path: string;
+          ends_at: string;
+          event_type: string;
+          excerpt: string;
+          id: string;
+          is_featured: boolean;
+          level_text: string;
+          location: string;
+          price_text: string;
+          publish_at: string;
+          rank: number;
+          registration_deadline: string;
+          slug: string;
+          starts_at: string;
+          subject: string;
+          title: string;
+          total_count: number;
+          type: string;
+          updated_at: string;
+        }[];
+      };
+      search_tsquery: { Args: { q: string }; Returns: unknown };
     };
     Enums: {
       [_ in never]: never;

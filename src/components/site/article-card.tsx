@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Highlight } from "@/components/ui/highlight";
 import { ImagePlaceholder } from "@/components/ui/image-placeholder";
 import { ResponsiveImage } from "@/components/ui/responsive-image";
 import { Tag } from "@/components/ui/tag";
@@ -30,6 +31,8 @@ interface ArticleCardProps {
   readingMinutes?: number;
   /** lead only: h3 when the card sits inside a section that has its own h2. */
   titleLevel?: "h2" | "h3";
+  /** grid and row only: words to mark in the title (search results). */
+  highlight?: readonly string[];
 }
 
 /** Olympiad articles are labelled with their subject, the rest with their category. */
@@ -81,7 +84,13 @@ function OpenDeadline({ date, className }: { date: string; className?: string })
   );
 }
 
-function StackCard({ article, responsive }: { article: ArticleSummary; responsive: boolean }) {
+interface StackCardProps {
+  article: ArticleSummary;
+  responsive: boolean;
+  highlight?: readonly string[];
+}
+
+function StackCard({ article, responsive, highlight }: StackCardProps) {
   return (
     <Link
       href={articlePath(article.category_slug, article.slug)}
@@ -112,7 +121,7 @@ function StackCard({ article, responsive }: { article: ArticleSummary; responsiv
             responsive && "md:col-span-2 md:row-start-2 md:text-[19px] md:leading-[1.35]",
           )}
         >
-          {article.title}
+          <Highlight text={article.title} terms={highlight} />
         </h3>
         {article.publish_at && (
           <span
@@ -277,6 +286,7 @@ export function ArticleCard({
   kicker,
   readingMinutes,
   titleLevel,
+  highlight,
 }: ArticleCardProps) {
   switch (variant) {
     case "banner":
@@ -294,6 +304,6 @@ export function ArticleCard({
     case "olympiad":
       return <OlympiadCard article={article} />;
     default:
-      return <StackCard article={article} responsive={variant === "grid"} />;
+      return <StackCard article={article} responsive={variant === "grid"} highlight={highlight} />;
   }
 }

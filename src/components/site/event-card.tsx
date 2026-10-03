@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Highlight } from "@/components/ui/highlight";
 import { ResponsiveImage } from "@/components/ui/responsive-image";
 import { Tag } from "@/components/ui/tag";
 import { eventPath, eventTypeLabel } from "@/config/events";
@@ -18,9 +19,11 @@ export type EventCardVariant = "row" | "list";
 interface EventCardProps {
   event: EventSummary;
   variant: EventCardVariant;
+  /** Words to mark in the title (search results). */
+  highlight?: readonly string[];
 }
 
-export function EventCard({ event, variant }: EventCardProps) {
+export function EventCard({ event, variant, highlight }: EventCardProps) {
   const card = variant === "list";
   const [, month, day] = ulaanbaatarDate(event.starts_at).split("-");
   const details = [event.location, event.price_text].filter(Boolean);
@@ -58,7 +61,7 @@ export function EventCard({ event, variant }: EventCardProps) {
             </Tag>
           </span>
           <span className="text-base font-semibold group-hover:underline lg:text-xl">
-            {event.title}
+            <Highlight text={event.title} terms={highlight} />
           </span>
           {details.length > 0 && (
             <span className="text-[13px] text-muted lg:hidden">{details.join(" · ")}</span>
