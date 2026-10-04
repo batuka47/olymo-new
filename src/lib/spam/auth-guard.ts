@@ -5,7 +5,7 @@ import { recordAuthAttempt, type AuthAction } from "@/lib/spam/rate-limit";
 import { verifyTurnstile } from "@/lib/spam/turnstile";
 
 /**
- * The checks before a staff sign-in or password reset: Turnstile, then the per-address limit.
+ * The checks before a sign-in, reset or sign-in link: Turnstile, then the per-address limit.
  * Only attempts with a valid token count, so a bot without one cannot lock out an office that
  * shares its address. Returns the message to show, or null to go ahead.
  */

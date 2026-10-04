@@ -366,6 +366,11 @@ export function ArticleEditor({
                 hint={t("admin.articles.flags.specialUntilHint")}
               />
             )}
+            <CheckboxField
+              label={t("admin.articles.flags.commentsClosed")}
+              checked={values.commentsClosed}
+              onChange={(event) => update("commentsClosed", event.target.checked)}
+            />
           </EditorPanel>
 
           <Link href={adminRoutes.articles} className="text-sm underline underline-offset-4">

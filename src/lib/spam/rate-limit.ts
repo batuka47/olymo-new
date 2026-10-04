@@ -6,10 +6,10 @@ const MINUTE_MS = 60_000;
 /** Public forms: 5 per IP an hour, counted from the stored submissions. */
 const SUBMISSIONS = { max: 5, windowMinutes: 60 };
 
-/** Staff sign-in and password reset: 10 attempts per IP in 15 minutes, each form on its own. */
+/** Sign-in, password reset and email sign-in links: 10 per IP in 15 minutes, each on its own. */
 const AUTH_ATTEMPTS = { max: 10, windowMinutes: 15 };
 
-export type AuthAction = "login" | "forgot_password";
+export type AuthAction = "login" | "forgot_password" | "magic_link";
 
 export async function canSubmitForm(ipHash: string): Promise<boolean> {
   const since = new Date(Date.now() - SUBMISSIONS.windowMinutes * MINUTE_MS).toISOString();

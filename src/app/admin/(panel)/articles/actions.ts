@@ -146,6 +146,7 @@ export async function saveArticle(input: ArticleInput): Promise<SaveArticleResul
     is_breaking: values.isBreaking,
     is_special: values.isSpecial,
     special_until: values.isSpecial ? values.specialUntil : null,
+    comments_closed: values.commentsClosed,
     seo_title: values.seoTitle,
     seo_description: values.seoDescription,
     status: publishing.status,

@@ -12,6 +12,7 @@
     "db:types": "supabase gen types typescript --local --schema public > src/lib/supabase/types.ts && prettier --write src/lib/supabase/types.ts",
     "check:categories": "node scripts/check-categories.mjs",
     "db:test": "supabase test db",
+    "test": "vitest run",
     "admin:create": "tsx scripts/create-admin.ts"
   },
   "dependencies": {
@@ -44,6 +45,7 @@
     "supabase": "^2.118.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.11"
   }
 }

@@ -33,6 +33,8 @@ export interface ArticleFormValues extends PublishFormFields {
   isSpecial: boolean;
   /** Last day on the home banner (YYYY-MM-DD); "" for no end. */
   specialUntil: string;
+  /** "Сэтгэгдэл хаах": no new comments; existing ones stay. */
+  commentsClosed: boolean;
   seoTitle: string;
   seoDescription: string;
 }
@@ -65,6 +67,7 @@ export function emptyArticleValues(): ArticleFormValues {
     isBreaking: false,
     isSpecial: false,
     specialUntil: "",
+    commentsClosed: false,
     seoTitle: "",
     seoDescription: "",
     publishMode: "now",
@@ -102,6 +105,7 @@ export function articleRowToValues(
     isBreaking: row.is_breaking,
     isSpecial: row.is_special,
     specialUntil: row.special_until ?? "",
+    commentsClosed: row.comments_closed,
     seoTitle: row.seo_title ?? "",
     seoDescription: row.seo_description ?? "",
     ...publishFieldsFromRow(row, now),

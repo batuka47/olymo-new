@@ -294,6 +294,39 @@ in the server action. Phones are stored as `+976XXXXXXXX`; a phone or an email i
   server's address, not the visitor's.
 - **Local testing:** Cloudflare's test keys (in `.env.example`) always pass.
 
+### Reader accounts and comments
+
+Readers sign in only to comment, at `/login` ("Google-ээр нэвтрэх" or a one-time link by email,
+which also creates the account) and come back through `/auth/callback?next=<page>` to the article
+they came from. The page travels in the link itself, so an emailed link opened in another browser
+or a mail app still lands on the article; Google keeps the PKCE flow. Staff keep signing in at
+`/admin/login`. New readers get the role `reader` and a display name from Google or the email
+address; `/account` changes it once, signs out, and deletes the account.
+
+- **Comments** load in the browser when the section nears the screen, so article pages stay
+  cached. Newest first, 20 at a time ("Цааш унших"), one level of replies. Authors edit or
+  delete their own for 15 minutes; others can "Мэдэгдэх" (report) once.
+- **Deleting keeps replies:** a comment others answered becomes "Устгагдсан сэтгэгдэл" (no text,
+  no author, no actions) instead of disappearing, whether its author deletes it or deletes their
+  account; comments without replies are deleted, and a tombstone goes once its last reply does
+  (migration `…_comment_tombstones.sql`). Staff deleting in `/admin/comments` remove the thread.
+- **The rules live in the database** (migration `…_comments.sql`), because readers can call the
+  API with their own token: 1 comment per 30 seconds, banned readers and closed articles refused,
+  status and counts set by the database, and a word list (`comment_needs_review`) that holds a
+  comment hidden for review. To change the list, replace that function in a new migration.
+- **`/admin/comments`** (all staff): newest, most reported, hidden; hide or show, delete, and ban
+  or unban the author (readers only). "Сэтгэгдэл хаах" in the article editor closes an article.
+- **Tests:** `npm test` (Vitest) checks the server actions' permission rules; `npm run db:test`
+  checks the database rules.
+- **Hosted setup:** paste `supabase/templates/magic-link.html` ("Magic link") and
+  `confirmation.html` ("Confirm signup") into Authentication → Emails; their links are
+  `{{ .RedirectTo }}&token_hash=…`, so they only work with the site's sign-in form, which always
+  sends `/auth/callback?next=…`. Under URL Configuration, set the Site URL to the site and add
+  `https://<your-domain>/**` to Redirect URLs; enable Google under Authentication → Providers (Google Cloud OAuth client, redirect URI
+  `https://<project-ref>.supabase.co/auth/v1/callback`). Locally Google is off: set
+  `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and `…_SECRET` and `enabled = true` in
+  `supabase/config.toml` to try it.
+
 ### Inviting staff and resetting passwords
 
 Both are emailed by Supabase Auth, and both links go to `/admin/auth/confirm`, which signs the

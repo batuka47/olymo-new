@@ -68,11 +68,11 @@ select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000
 
 select ok((select count(*) from public.articles) = 7, 'reader: only published/scheduled, due articles');
 select ok((select count(*) from public.profiles) = 1, 'reader: sees only own profile');
-insert into public.comments (article_id, user_id, body)
-  select id, '00000000-0000-0000-0000-00000000000a', 'Сайхан мэдээ' from public.articles where slug = 'esh-2027-shalgaltyn-huvaar';
+insert into public.comments (article_id, user_id, body, status, report_count)
+  select id, '00000000-0000-0000-0000-00000000000a', 'Сайхан мэдээ', 'hidden', 5 from public.articles where slug = 'esh-2027-shalgaltyn-huvaar';
 select ok((select count(*) from public.comments) = 1, 'reader: comments as self');
 select throws_ok($$insert into public.comments (article_id, user_id, body) select id, '00000000-0000-0000-0000-00000000000b', 'x' from public.articles limit 1$$, '42501', null, 'reader: cannot comment as someone else');
-select throws_ok($$insert into public.comments (article_id, user_id, body, status) select id, '00000000-0000-0000-0000-00000000000a', 'x', 'hidden' from public.articles limit 1$$, '42501', null, 'reader: cannot insert with a custom status');
+select ok((select status = 'visible' and report_count = 0 from public.comments limit 1), 'reader: a custom status or count on insert is replaced by the database');
 select throws_ok(format($$insert into public.comments (article_id, user_id, body) values (%L, '00000000-0000-0000-0000-00000000000a', 'x')$$, :'draft_id'), '42501', null, 'reader: cannot comment on a draft');
 update public.comments set body = 'Засварласан' where user_id = '00000000-0000-0000-0000-00000000000a';
 select ok((select body from public.comments limit 1) = 'Засварласан', 'reader: edits own comment');

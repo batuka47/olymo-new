@@ -1,0 +1,12 @@
+<!-- Reader sign-in link. Copy this into Supabase Dashboard → Authentication → Emails → "Magic link"
+     for the hosted project. {{ .RedirectTo }} is the site's /auth/callback?next=<page> address,
+     so the token hash and the page to return to travel in the link: it works in any browser or
+     mail app, not only the one that asked for it.
+     Subject: Нэвтрэх холбоос -->
+<h2>Нэвтрэх холбоос</h2>
+<p>{{ .SiteURL }} сайтад нэвтрэхийн тулд доорх холбоос дээр дарна уу.</p>
+<p>
+  <a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email">Нэвтрэх</a>
+</p>
+<p>Холбоос нэг удаа, богино хугацаанд хүчинтэй.</p>
+<p>Хэрэв та нэвтрэх хүсэлт гаргаагүй бол энэ имэйлийг үл тоомсорлоно уу.</p>

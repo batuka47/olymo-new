@@ -12,6 +12,10 @@ export const routes = {
   advertise: "/advertise",
   partner: "/partner",
   contact: "/contact",
+  /** Readers (commenting only); staff sign in at /admin/login. */
+  login: "/login",
+  account: "/account",
+  authCallback: "/auth/callback",
 } as const;
 
 export interface NavLink {

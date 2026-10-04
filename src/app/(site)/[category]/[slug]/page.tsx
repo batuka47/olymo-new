@@ -19,7 +19,7 @@ import { cx } from "@/lib/cx";
 import { t } from "@/lib/i18n";
 import { ArticleHeader } from "./article-header";
 import { articleMetadata } from "./article-metadata";
-import { CommentsPlaceholder } from "./comments-placeholder";
+import { CommentsSection } from "./comments-section";
 import { hasKeyFacts, KeyFacts } from "./key-facts";
 import { MostRead } from "./most-read";
 import { RelatedArticles } from "./related-articles";
@@ -129,7 +129,7 @@ export default async function ArticlePage({ params }: PageProps<"/[category]/[sl
             </div>
           </article>
 
-          <CommentsPlaceholder />
+          <CommentsSection articleId={article.id} closed={article.comments_closed} path={path} />
           {related.length > 0 && <RelatedArticles articles={related} />}
         </div>
       </Container>

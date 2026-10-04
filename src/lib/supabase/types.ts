@@ -98,6 +98,7 @@ export type Database = {
           body_html: string | null;
           body_json: Json | null;
           category_slug: string;
+          comments_closed: boolean;
           cover_alt: string | null;
           cover_caption: string | null;
           cover_path: string | null;
@@ -133,6 +134,7 @@ export type Database = {
           body_html?: string | null;
           body_json?: Json | null;
           category_slug: string;
+          comments_closed?: boolean;
           cover_alt?: string | null;
           cover_caption?: string | null;
           cover_path?: string | null;
@@ -168,6 +170,7 @@ export type Database = {
           body_html?: string | null;
           body_json?: Json | null;
           category_slug?: string;
+          comments_closed?: boolean;
           cover_alt?: string | null;
           cover_caption?: string | null;
           cover_path?: string | null;
@@ -255,36 +258,84 @@ export type Database = {
         };
         Relationships: [];
       };
-      comments: {
+      comment_reports: {
         Row: {
-          article_id: string;
-          body: string;
+          comment_id: string;
           created_at: string;
-          id: string;
-          report_count: number;
-          status: string;
-          updated_at: string;
           user_id: string;
         };
         Insert: {
-          article_id: string;
-          body: string;
+          comment_id: string;
           created_at?: string;
-          id?: string;
-          report_count?: number;
-          status?: string;
-          updated_at?: string;
           user_id: string;
         };
         Update: {
-          article_id?: string;
-          body?: string;
+          comment_id?: string;
           created_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "comment_reports_comment_id_fkey";
+            columns: ["comment_id"];
+            isOneToOne: false;
+            referencedRelation: "comments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "comment_reports_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      comments: {
+        Row: {
+          article_id: string;
+          author_name: string;
+          body: string;
+          created_at: string;
+          deleted_at: string | null;
+          edited_at: string | null;
+          held: boolean;
+          id: string;
+          parent_id: string | null;
+          report_count: number;
+          status: string;
+          updated_at: string;
+          user_id: string | null;
+        };
+        Insert: {
+          article_id: string;
+          author_name?: string;
+          body: string;
+          created_at?: string;
+          deleted_at?: string | null;
+          edited_at?: string | null;
+          held?: boolean;
           id?: string;
+          parent_id?: string | null;
           report_count?: number;
           status?: string;
           updated_at?: string;
-          user_id?: string;
+          user_id?: string | null;
+        };
+        Update: {
+          article_id?: string;
+          author_name?: string;
+          body?: string;
+          created_at?: string;
+          deleted_at?: string | null;
+          edited_at?: string | null;
+          held?: boolean;
+          id?: string;
+          parent_id?: string | null;
+          report_count?: number;
+          status?: string;
+          updated_at?: string;
+          user_id?: string | null;
         };
         Relationships: [
           {
@@ -299,6 +350,13 @@ export type Database = {
             columns: ["article_id"];
             isOneToOne: false;
             referencedRelation: "published_articles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "comments_parent_id_fkey";
+            columns: ["parent_id"];
+            isOneToOne: false;
+            referencedRelation: "comments";
             referencedColumns: ["id"];
           },
           {
@@ -415,25 +473,31 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null;
+          banned: boolean;
           created_at: string;
           display_name: string | null;
           id: string;
+          name_changed_at: string | null;
           role: string;
           updated_at: string;
         };
         Insert: {
           avatar_url?: string | null;
+          banned?: boolean;
           created_at?: string;
           display_name?: string | null;
           id: string;
+          name_changed_at?: string | null;
           role?: string;
           updated_at?: string;
         };
         Update: {
           avatar_url?: string | null;
+          banned?: boolean;
           created_at?: string;
           display_name?: string | null;
           id?: string;
+          name_changed_at?: string | null;
           role?: string;
           updated_at?: string;
         };
@@ -772,6 +836,28 @@ export type Database = {
       };
     };
     Functions: {
+      article_comment_count: { Args: { target_article: string }; Returns: number };
+      article_comments: {
+        Args: {
+          before_created_at?: string;
+          before_id?: string;
+          page_size?: number;
+          target_article: string;
+        };
+        Returns: {
+          author_name: string;
+          body: string;
+          created_at: string;
+          deleted: boolean;
+          edited_at: string;
+          hidden: boolean;
+          id: string;
+          is_own: boolean;
+          parent_id: string;
+          reported: boolean;
+        }[];
+      };
+      comment_needs_review: { Args: { body: string }; Returns: boolean };
       popular_tags: {
         Args: { tag_limit?: number };
         Returns: {

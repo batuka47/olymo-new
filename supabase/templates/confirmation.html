@@ -1,0 +1,13 @@
+<!-- First sign-in of a new reader (creates the account). Copy this into Supabase Dashboard →
+     Authentication → Emails → "Confirm signup" for the hosted project. Same link as magic-link.html
+     ({{ .RedirectTo }} is the site's /auth/callback?next=<page> address).
+     Subject: Бүртгэлээ баталгаажуулах -->
+<h2>Бүртгэлээ баталгаажуулах</h2>
+<p>{{ .SiteURL }} сайтад сэтгэгдэл бичих бүртгэл үүсгэхийн тулд доорх холбоос дээр дарна уу.</p>
+<p>
+  <a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email"
+    >Бүртгэлээ баталгаажуулж нэвтрэх</a
+  >
+</p>
+<p>Холбоос нэг удаа, богино хугацаанд хүчинтэй.</p>
+<p>Хэрэв та бүртгэл үүсгэх хүсэлт гаргаагүй бол энэ имэйлийг үл тоомсорлоно уу.</p>

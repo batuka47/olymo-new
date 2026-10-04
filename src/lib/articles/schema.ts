@@ -78,6 +78,7 @@ export const articleInputSchema = z
     isBreaking: z.boolean(),
     isSpecial: z.boolean(),
     specialUntil: optionalDate,
+    commentsClosed: z.boolean(),
     seoTitle: optionalText(120),
     seoDescription: optionalText(300),
     ...publishInputFields,
