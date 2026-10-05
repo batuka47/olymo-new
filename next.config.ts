@@ -42,6 +42,14 @@ const nextConfig: NextConfig = {
       { source: "/hamtrah", destination: "/partner", statusCode: 301 },
     ];
   },
+  // Until launch every response, images and feeds included, tells search engines not to index it
+  // (siteConfig.allowIndexing does the same for robots.txt and the page metadata).
+  async headers() {
+    if (process.env.NEXT_PUBLIC_ALLOW_INDEXING === "1") {
+      return [];
+    }
+    return [{ source: "/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] }];
+  },
   async rewrites() {
     return {
       beforeFiles: [

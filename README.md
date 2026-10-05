@@ -77,7 +77,8 @@ npx supabase db push                             # apply pending migrations
 ```
 
 `db push` applies migrations only. It does not run `seed.sql`, so sample content never reaches the
-hosted database. After the first push, add the hosted URL and keys to Vercel (see Environment
+hosted database. Never add `--include-seed`: it would send the samples too. `npm run lint`
+checks that no migration carries sample content (`check:samples`). After the first push, add the hosted URL and keys to Vercel (see Environment
 variables).
 
 ## Admin area
@@ -341,12 +342,16 @@ address; `/account` changes it once, signs out, and deletes the account.
 
 ### SEO and performance
 
+- **Indexing switch:** until `NEXT_PUBLIC_ALLOW_INDEXING=1` is set, robots.txt disallows
+  everything and every response says `noindex, nofollow` (an `X-Robots-Tag` header and the page's
+  robots meta), so a deployment with test content, such as `olymo-new.vercel.app`, never shows up
+  in Google. Set it for Production only, at launch, and redeploy; Preview deployments stay hidden.
 - **Sitemap:** `/sitemap-index.xml` lists `/sitemap/0.xml`, `/sitemap/1.xml`, …: the home page,
   categories, info pages, then every published article and event with its last change, 5000 URLs
   to a file (`src/lib/sitemap.ts`). New files appear by themselves as the site grows. Give
   `https://<domain>/sitemap-index.xml` to Google Search Console. (`/sitemap.xml` is reserved by
   Next.js and answers 404.)
-- **robots.txt** allows everything except `/admin`, `/account`, `/search`, `/auth`, the ad click
+- **robots.txt**, once indexing is on, allows everything except `/admin`, `/account`, `/search`, `/auth`, the ad click
   redirects (`/r/`) and the internal `/list-views/`, and points to the sitemap index.
 - **RSS:** `/rss.xml`, the 50 newest articles; the home page links it.
 - **Share images:** `app/opengraph-image.tsx` draws the default 1200 × 630 card (paper, the name
@@ -369,6 +374,42 @@ address; `/account` changes it once, signs out, and deletes the account.
   article all score 93 Performance, 100 Accessibility, 100 SEO, 100 Best Practices.
 - **Vercel Analytics and Speed Insights** load only when `VERCEL_ANALYTICS=1` and
   `VERCEL_SPEED_INSIGHTS=1` are set (see Deploy).
+
+### Errors, 404 and loading
+
+- **404:** `(site)/not-found.tsx` shows "404", "Хуудас олдсонгүй", a search box and the 4 newest
+  articles inside the site's header and footer, with a real 404 status. Missing articles,
+  categories and events check before the page streams (`[category]/layout.tsx`,
+  `[category]/[slug]/layout.tsx`), because a status cannot change once streaming starts. Admin
+  addresses get their own 404 inside the admin menu (`admin/(panel)/not-found.tsx`).
+- **Errors:** `error.tsx` (site, admin, root) and `global-error.tsx` show "Алдаа гарлаа" with
+  "Дахин оролдох" and an error code. The server logs every error with that code
+  (`src/instrumentation.ts` → `src/lib/error-reporting.ts`) and, when `SENTRY_DSN` is set, sends
+  it to Sentry (server errors only, a minimal reporter without the Sentry SDK).
+- **Loading:** home, category, article and search pages show the page's outline with striped
+  placeholders while they load (`loading.tsx`, `components/site/skeleton.tsx`).
+- **Accessibility:** skip link, 2 px focus ring (lime on dark sections), alerts for form errors,
+  reduced motion respected. `e2e/a11y.spec.ts` runs axe on every public page.
+
+### Browser tests
+
+`e2e/` holds Playwright tests that run against a production build and the local Supabase with
+its sample content:
+
+- `smoke.spec.ts`: home, an article, search, the contact form (Turnstile test keys), staff sign-in
+  and a draft article. Test rows are deleted afterwards.
+- `a11y.spec.ts`: axe (WCAG 2.1 AA and best practices) on every public page.
+- `layout.spec.ts`: no page scrolls sideways at 360, 390, 768, 1024 or 1440 px.
+
+```bash
+npx playwright install chromium        # once
+npm run build                          # with the Turnstile test keys in .env.local
+E2E_ADMIN_EMAIL=… E2E_ADMIN_PASSWORD=… npm run test:e2e
+```
+
+`E2E_ADMIN_*` is a local staff account (`npm run admin:create`). GitHub Actions
+(`.github/workflows/ci.yml`) runs lint, typecheck, unit and database tests, the build and these
+browser tests on every pull request, against a fresh local Supabase.
 
 ### Inviting staff and resetting passwords
 
@@ -405,12 +446,14 @@ configures all of this for local development.
 | `npm run start`            | Serve the production build (run `build` first)               |
 | `npm run analyze`          | Webpack build that opens a map of every JS bundle            |
 | `npm run test`             | Unit tests (Vitest)                                          |
+| `npm run test:e2e`         | Browser tests (Playwright; see Browser tests)                |
 | `npm run lint`             | ESLint, then `check:categories`                              |
 | `npm run typecheck`        | Generate Next.js route types, then `tsc --noEmit`            |
 | `npm run format`           | Format all files with Prettier (sorts Tailwind classes)      |
 | `npm run db:types`         | Regenerate Supabase types from the local database            |
 | `npm run db:test`          | Run the database tests (local Supabase must be running)      |
 | `npm run check:categories` | Check `categories.ts` and the migrations list the same slugs |
+| `npm run check:samples`    | Check that no migration carries sample content               |
 | `npm run admin:create`     | Create or promote an admin (see Admin area)                  |
 
 Before merging, `lint`, `typecheck` and `build` must all pass.
@@ -420,21 +463,23 @@ Before merging, `lint`, `typecheck` and `build` must all pass.
 All configuration comes from env vars. `.env.example` lists every variable with a comment. Copy it to
 `.env.local` for local work. `.env*.local` files are git-ignored.
 
-| Variable                               | Required | Description                                                  |
-| -------------------------------------- | -------- | ------------------------------------------------------------ |
-| `NEXT_PUBLIC_SITE_URL`                 | yes      | Public base URL, no trailing slash. The build fails if unset |
-| `NEXT_PUBLIC_SUPABASE_URL`             | yes      | Supabase API URL                                             |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | yes      | Publishable key; safe in the browser, RLS applies            |
-| `SUPABASE_SECRET_KEY`                  | yes      | Secret (service role) key; server only, bypasses RLS         |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`       | yes      | Cloudflare Turnstile site key (forms, staff sign-in)         |
-| `TURNSTILE_SECRET_KEY`                 | yes      | Cloudflare Turnstile secret key; server only                 |
-| `IP_HASH_SALT`                         | yes      | Secret salt for hashing visitor IPs (rate limits)            |
-| `RESEND_API_KEY`                       | no       | Resend key for new-submission emails                         |
-| `NOTIFY_EMAIL`                         | no       | Who gets those emails                                        |
-| `EMAIL_FROM`                           | no       | Sender once a domain is verified in Resend                   |
-| `NEXT_PUBLIC_FACEBOOK_APP_ID`          | no       | Facebook app ID: Messenger button on desktop, `fb:app_id`    |
-| `VERCEL_ANALYTICS`                     | no       | `1` turns on Vercel Web Analytics                            |
-| `VERCEL_SPEED_INSIGHTS`                | no       | `1` turns on Vercel Speed Insights                           |
+| Variable                               | Required  | Description                                                  |
+| -------------------------------------- | --------- | ------------------------------------------------------------ |
+| `NEXT_PUBLIC_SITE_URL`                 | yes       | Public base URL, no trailing slash. The build fails if unset |
+| `NEXT_PUBLIC_ALLOW_INDEXING`           | at launch | `1` lets search engines index the site (Production only)     |
+| `NEXT_PUBLIC_SUPABASE_URL`             | yes       | Supabase API URL                                             |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | yes       | Publishable key; safe in the browser, RLS applies            |
+| `SUPABASE_SECRET_KEY`                  | yes       | Secret (service role) key; server only, bypasses RLS         |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`       | yes       | Cloudflare Turnstile site key (forms, staff sign-in)         |
+| `TURNSTILE_SECRET_KEY`                 | yes       | Cloudflare Turnstile secret key; server only                 |
+| `IP_HASH_SALT`                         | yes       | Secret salt for hashing visitor IPs (rate limits)            |
+| `RESEND_API_KEY`                       | no        | Resend key for new-submission emails                         |
+| `NOTIFY_EMAIL`                         | no        | Who gets those emails                                        |
+| `EMAIL_FROM`                           | no        | Sender once a domain is verified in Resend                   |
+| `NEXT_PUBLIC_FACEBOOK_APP_ID`          | no        | Facebook app ID: Messenger button on desktop, `fb:app_id`    |
+| `VERCEL_ANALYTICS`                     | no        | `1` turns on Vercel Web Analytics                            |
+| `VERCEL_SPEED_INSIGHTS`                | no        | `1` turns on Vercel Speed Insights                           |
+| `SENTRY_DSN`                           | no        | Sends server errors to Sentry                                |
 
 ## Project layout
 
@@ -462,3 +507,15 @@ supabase/            CLI config, migrations/ and seed.sql
    a free tier), then set `VERCEL_ANALYTICS=1` and `VERCEL_SPEED_INSIGHTS=1` for Production and
    redeploy.
 7. In Google Search Console, add the domain and submit `https://<domain>/sitemap-index.xml`.
+
+### Launch checklist
+
+1. Fill in `siteConfig` in `src/config/site.ts`: the name (now "НЭР"), the legal name, email,
+   phone and address (placeholders in brackets are hidden on the site until replaced).
+2. In `/admin/pages`, finish the privacy policy (the `[ХУГАЦАА]` marks and the draft note) and add
+   the team.
+3. If test content was ever added to the hosted database, review and run
+   `supabase/launch/remove-sample-content.sql` in its SQL editor (it removes only rows still marked
+   `[ЖИШЭЭ]` and `[Нэр]` placeholders), and delete other test articles in `/admin`.
+4. Set `NEXT_PUBLIC_ALLOW_INDEXING=1` for Production and redeploy, then submit the sitemap
+   (step 7 above).

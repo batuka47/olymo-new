@@ -15,6 +15,8 @@ export const adminRoutes = {
   inbox: "/admin/inbox",
   comments: "/admin/comments",
   users: "/admin/users",
+  /** The generated share card for the editors' preview (title, label and date in the query). */
+  sharePreview: "/admin/share-preview",
 } as const;
 
 /** Admin paths reachable without a staff session. */

@@ -7,13 +7,15 @@
     "build": "next build",
     "start": "next start",
     "analyze": "next build --webpack",
-    "lint": "eslint && npm run check:categories",
+    "lint": "eslint && npm run check:categories && npm run check:samples",
     "typecheck": "next typegen && tsc --noEmit",
     "format": "prettier --write .",
     "db:types": "supabase gen types typescript --local --schema public > src/lib/supabase/types.ts && prettier --write src/lib/supabase/types.ts",
     "check:categories": "node scripts/check-categories.mjs",
+    "check:samples": "node scripts/check-sample-content.mjs",
     "db:test": "supabase test db",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "admin:create": "tsx scripts/create-admin.ts"
   },
   "dependencies": {
@@ -35,7 +37,9 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@next/bundle-analyzer": "^16.3.7",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

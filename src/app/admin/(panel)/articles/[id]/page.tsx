@@ -5,7 +5,7 @@ import { articleRowToValues, emptyArticleValues } from "@/lib/articles/form";
 import { requireStaff } from "@/lib/auth/staff";
 import { t } from "@/lib/i18n";
 import { ArticleEditor } from "../article-editor";
-import { getArticleForEditing, getAvailableTags, siteHost } from "../data";
+import { getArticleForEditing, getAvailableTags } from "../data";
 
 export async function generateMetadata({
   searchParams,
@@ -51,7 +51,6 @@ export default async function EditArticlePage({
           : { exists: false, status: "draft", publishAt: null, slug: "", categorySlug: "" }
       }
       availableTags={availableTags}
-      siteHost={siteHost()}
     />
   );
 }

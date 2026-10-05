@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { articleCategories } from "@/config/categories";
-import { CategoryList, categoryListMetadata, findListCategory } from "./category-list";
-import { DEFAULT_LIST_VIEW } from "./list-view";
+import { CategoryList, categoryListMetadata, findListCategory } from "../category-list";
+import { DEFAULT_LIST_VIEW } from "../list-view";
 
 // The plain address (/olympiad) is static and revalidated like every public page. Addresses with
 // ?subject=, ?sort= or ?page= are rewritten to ../list-views/[category] (see next.config.ts).

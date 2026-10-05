@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import type { ReactElement, ReactNode } from "react";
-import { siteConfig } from "@/config/site";
+import { siteConfig, siteHost } from "@/config/site";
 import { SOCIAL_IMAGE_SIZE } from "@/lib/media";
 
 /** The palette of design/style-system, written out: share images cannot read Tailwind tokens. */
@@ -33,8 +33,6 @@ async function loadFonts() {
 }
 
 let fonts: ReturnType<typeof loadFonts> | undefined;
-
-const siteHost = () => new URL(siteConfig.url).host;
 
 /** Long names and titles get smaller type so they still fit the card. */
 function fitFontSize(text: string, steps: [maxLength: number, size: number][], smallest: number) {
@@ -189,11 +187,14 @@ interface ContentShareImage {
   date?: string;
 }
 
-/**
- * Share image of an article or event without a cover: its title in the site's style. The URL
- * carries the row's updated_at, so it may be cached for a year.
- */
-export function contentShareImage({ title, label, date }: ContentShareImage) {
+/** Public share images: their URL carries the row's updated_at, so they may be cached for a year. */
+const CACHED_FOR_A_YEAR = "public, max-age=31536000, s-maxage=31536000, immutable";
+
+/** Share image of an article or event without a cover: its title in the site's style. */
+export function contentShareImage(
+  { title, label, date }: ContentShareImage,
+  cacheControl = CACHED_FOR_A_YEAR,
+) {
   const shown = truncate(title, 140);
   const titleSize = fitFontSize(
     shown,
@@ -238,6 +239,6 @@ export function contentShareImage({ title, label, date }: ContentShareImage) {
         {date ? <Label>{date}</Label> : <div style={{ display: "flex" }} />}
       </div>
     </Frame>,
-    { cacheControl: "public, max-age=31536000, s-maxage=31536000, immutable" },
+    { cacheControl },
   );
 }

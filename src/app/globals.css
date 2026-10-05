@@ -69,6 +69,33 @@
     outline-offset: 2px;
   }
 
+  /* On dark surfaces the accent ring is too faint (2.7:1 on ink); lime stands out (13.5:1). */
+  .bg-ink :focus-visible {
+    outline-color: var(--color-lime);
+  }
+
+  /* Long Mongolian words in titles break onto the next line instead of pushing the page sideways.
+     Only words of 10+ letters are hyphenated (at least 4 on each side); shorter ones wrap whole. */
+  h1,
+  h2,
+  h3 {
+    overflow-wrap: anywhere;
+    hyphens: auto;
+    hyphenate-limit-chars: 10 4 4;
+  }
+
+  /* Components switch their own motion off too; this also covers anything they missed. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
   html:has(dialog[open]:modal) {
     overflow: hidden;
   }

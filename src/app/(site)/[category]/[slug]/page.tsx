@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { draftMode } from "next/headers";
-import { notFound, permanentRedirect, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/json-ld";
 import { AdSlot } from "@/components/site/ad-slot";
 import { PreviewBanner } from "@/components/site/preview-banner";
@@ -78,18 +78,14 @@ function ArticleBody({ article }: { article: Article }) {
 }
 
 export default async function ArticlePage({ params }: PageProps<"/[category]/[slug]">) {
-  const { category, slug } = await params;
+  const { slug } = await params;
   const { isEnabled: preview } = await draftMode();
+  // The layout has already answered 404 or 308 where needed; this only narrows the type.
   const article = await getArticle(slug, preview);
   if (!article) {
     notFound();
   }
-
   const path = articlePath(article.category_slug, article.slug);
-  if (article.category_slug !== category) {
-    // Wrong or outdated category in the link (it was changed after publishing): 308 to the right one.
-    (preview ? redirect : permanentRedirect)(path);
-  }
 
   const [mostRead, related] = await Promise.all([
     getMostReadArticles(article.id),

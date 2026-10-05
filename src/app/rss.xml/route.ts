@@ -1,28 +1,12 @@
-import { unstable_cache } from "next/cache";
 import { getCategory } from "@/config/categories";
 import { routes } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
-import { LIST_CACHE, SUMMARY_COLUMNS } from "@/lib/articles/public";
+import { getLatestArticles } from "@/lib/articles/public";
 import { articlePath } from "@/lib/articles/status";
-import { createPublicClient } from "@/lib/supabase/server";
 
 export const revalidate = 60;
 
 const FEED_SIZE = 50;
-
-const getFeedArticles = unstable_cache(
-  async () => {
-    const { data, error } = await createPublicClient()
-      .from("articles")
-      .select(SUMMARY_COLUMNS)
-      .order("publish_at", { ascending: false })
-      .limit(FEED_SIZE);
-    if (error) throw error;
-    return data;
-  },
-  ["feed-articles"],
-  LIST_CACHE,
-);
 
 function escapeXml(text: string): string {
   return text
@@ -38,7 +22,7 @@ const rssDate = (value: string) => new Date(value).toUTCString();
 
 /** The 50 newest published articles for feed readers. */
 export async function GET() {
-  const articles = await getFeedArticles();
+  const articles = await getLatestArticles(FEED_SIZE);
   const items = articles.map((article) => {
     const url = `${siteConfig.url}${articlePath(article.category_slug, article.slug)}`;
     const category = getCategory(article.category_slug)?.label;

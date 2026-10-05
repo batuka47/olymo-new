@@ -20,10 +20,11 @@ import { SelectField } from "@/components/ui/select-field";
 import { fieldLabelClasses, TextField } from "@/components/ui/text-field";
 import { TextAreaField } from "@/components/ui/textarea-field";
 import { adminRoutes } from "@/config/admin";
-import { articleCategories } from "@/config/categories";
+import { articleCategories, getCategory } from "@/config/categories";
 import { toArticleInput, type ArticleFormValues } from "@/lib/articles/form";
 import type { TagValue } from "@/lib/articles/schema";
 import { articlePath, articleState } from "@/lib/articles/status";
+import { formatDate } from "@/lib/dates";
 import { useLeaveGuard } from "@/lib/hooks/use-leave-guard";
 import { t } from "@/lib/i18n";
 import { articleCoverPath, articleFolder } from "@/lib/media";
@@ -49,7 +50,6 @@ interface ArticleEditorProps {
   initialValues: ArticleFormValues;
   saved: Omit<SavedState, "snapshot">;
   availableTags: TagValue[];
-  siteHost: string;
 }
 
 function canAutosave(values: ArticleFormValues): boolean {
@@ -66,7 +66,6 @@ export function ArticleEditor({
   initialValues,
   saved: initialSaved,
   availableTags,
-  siteHost,
 }: ArticleEditorProps) {
   const bodyLabelId = useId();
   const [values, setValues] = useState(initialValues);
@@ -281,7 +280,8 @@ export function ArticleEditor({
               seoTitle={values.seoTitle}
               seoDescription={values.seoDescription}
               coverPath={values.coverPath}
-              siteHost={siteHost}
+              cardLabel={getCategory(values.categorySlug)?.label ?? ""}
+              cardDate={saved.publishAt ? formatDate(saved.publishAt) : ""}
               onSeoTitleChange={(value) => update("seoTitle", value)}
               onSeoDescriptionChange={(value) => update("seoDescription", value)}
             />

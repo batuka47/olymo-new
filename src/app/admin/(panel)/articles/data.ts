@@ -1,6 +1,5 @@
 import "server-only";
 import type { TagValue } from "@/lib/articles/schema";
-import { siteConfig } from "@/config/site";
 import { createClient } from "@/lib/supabase/server";
 
 export async function getAvailableTags(): Promise<TagValue[]> {
@@ -23,8 +22,4 @@ export async function getArticleForEditing(id: string) {
   const { article_tags: links, ...row } = data;
   const tags = links.flatMap((link) => (link.tags ? [link.tags] : []));
   return { row, tags };
-}
-
-export function siteHost(): string {
-  return new URL(siteConfig.url).host;
 }

@@ -4,13 +4,14 @@ import { Container } from "@/components/ui/container";
 import { routes } from "@/config/navigation";
 import { loginHref } from "@/lib/auth/reader";
 import { t } from "@/lib/i18n";
+import { noindex } from "@/lib/metadata";
 import { createClient } from "@/lib/supabase/server";
 import { DeleteAccountButton, DisplayNameForm, SignOutButton } from "./account-forms";
 
 export const metadata: Metadata = {
   title: t("account.title"),
   alternates: { canonical: routes.account },
-  robots: { index: false, follow: false },
+  robots: noindex,
 };
 
 const sectionClasses = "flex flex-col gap-4 border-t border-line pt-6";

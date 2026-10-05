@@ -1,0 +1,68 @@
+# Every pull request: lint, types, unit tests, database tests, a production build, then the
+# browser tests (smoke, accessibility, layout) against that build and a local Supabase.
+# Only throwaway values here: Cloudflare's Turnstile test keys and a local-only admin.
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+      TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
+      IP_HASH_SALT: ci-only-salt-not-a-secret
+      E2E_ADMIN_EMAIL: ci-admin@example.com
+      E2E_ADMIN_PASSWORD: ci-admin-password-1234
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # The CLI version pinned in package.json. Runs the migrations and seed.sql (the [ЖИШЭЭ]
+      # sample content the browser tests read).
+      - name: Start Supabase
+        run: npx supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
+
+      - name: Point the app at the local Supabase
+        run: |
+          npx supabase status -o env | tr -d '"' | sed -n \
+            -e 's/^API_URL=/NEXT_PUBLIC_SUPABASE_URL=/p' \
+            -e 's/^PUBLISHABLE_KEY=/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=/p' \
+            -e 's/^SECRET_KEY=/SUPABASE_SECRET_KEY=/p' >> "$GITHUB_ENV"
+
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run db:test
+      - run: npm run build
+
+      - name: Create the test admin
+        run: npm run admin:create
+        env:
+          ADMIN_EMAIL: ${{ env.E2E_ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ env.E2E_ADMIN_PASSWORD }}
+
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+
+      - name: Keep the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

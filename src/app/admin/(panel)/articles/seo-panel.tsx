@@ -1,8 +1,8 @@
 "use client";
 
+import { SharePreview } from "@/components/admin/share-preview";
 import { CharacterCount } from "@/components/ui/character-count";
-import { ResponsiveImage } from "@/components/ui/responsive-image";
-import { fieldLabelClasses, TextField } from "@/components/ui/text-field";
+import { TextField } from "@/components/ui/text-field";
 import { TextAreaField } from "@/components/ui/textarea-field";
 import { t } from "@/lib/i18n";
 
@@ -16,7 +16,9 @@ interface SeoPanelProps {
   seoTitle: string;
   seoDescription: string;
   coverPath: string | null;
-  siteHost: string;
+  /** Category and date for the card drawn when there is no cover. */
+  cardLabel: string;
+  cardDate: string;
   onSeoTitleChange: (value: string) => void;
   onSeoDescriptionChange: (value: string) => void;
 }
@@ -27,7 +29,8 @@ export function SeoPanel({
   seoTitle,
   seoDescription,
   coverPath,
-  siteHost,
+  cardLabel,
+  cardDate,
   onSeoTitleChange,
   onSeoDescriptionChange,
 }: SeoPanelProps) {
@@ -64,28 +67,12 @@ export function SeoPanel({
         <p className="text-xs text-muted">{t("admin.articles.seo.hint")}</p>
       </div>
 
-      <figure className="flex flex-col gap-2">
-        <figcaption className={fieldLabelClasses}>{t("admin.articles.seo.preview")}</figcaption>
-        <div className="max-w-md border border-line bg-white">
-          {coverPath ? (
-            <ResponsiveImage
-              path={coverPath}
-              alt=""
-              sizes="448px"
-              className="aspect-[1.91/1] w-full"
-            />
-          ) : (
-            <div className="aspect-[1.91/1] w-full stripe-pattern" />
-          )}
-          <div className="border-t border-line bg-paper px-3 py-2.5">
-            <p className="text-xs text-muted uppercase">{siteHost}</p>
-            <p className="line-clamp-2 font-semibold">{shownTitle || "—"}</p>
-            {shownDescription && (
-              <p className="line-clamp-1 text-sm text-muted">{shownDescription}</p>
-            )}
-          </div>
-        </div>
-      </figure>
+      <SharePreview
+        coverPath={coverPath}
+        title={shownTitle}
+        description={shownDescription}
+        card={{ title: title.trim(), label: cardLabel, date: cardDate }}
+      />
     </div>
   );
 }

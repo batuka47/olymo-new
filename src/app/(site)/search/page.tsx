@@ -5,7 +5,7 @@ import { SearchForm } from "@/components/site/search-form";
 import { Container } from "@/components/ui/container";
 import { routes } from "@/config/navigation";
 import { t } from "@/lib/i18n";
-import { siteOpenGraph } from "@/lib/metadata";
+import { pageRobots, siteOpenGraph } from "@/lib/metadata";
 import { hasSearch, parseSearchView, searchHref, type SearchView } from "@/lib/search/params";
 import {
   getPopularTags,
@@ -61,7 +61,7 @@ export async function generateMetadata({ searchParams }: PageProps<"/search">): 
     description,
     alternates: { canonical: url },
     // Result pages are endless word combinations: crawlers may follow their links, not index them.
-    robots: url === routes.search ? undefined : { index: false, follow: true },
+    robots: pageRobots(url === routes.search ? undefined : { index: false, follow: true }),
     openGraph: { ...siteOpenGraph, type: "website", url, title, description },
   };
 }
