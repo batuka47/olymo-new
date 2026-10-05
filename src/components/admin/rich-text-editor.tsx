@@ -309,10 +309,9 @@ function ImageDialog({ editor, imageFolder, open, onClose }: ImageDialogProps) {
     setError(undefined);
     try {
       const image = await encodeImageVariants(file);
-      const name = `body-${Date.now().toString(36)}`;
       const path = await uploadVariants(
         image,
-        (width, extension) => `${imageFolder}/${name}-${width}.${extension}`,
+        (token, width, extension) => `${imageFolder}/body-${token}-${width}.${extension}`,
       );
       const { src, srcSet } = responsiveImageSources(path);
       editor
@@ -320,7 +319,15 @@ function ImageDialog({ editor, imageFolder, open, onClose }: ImageDialogProps) {
         .focus()
         .insertContent({
           type: "image",
-          attrs: { src, srcset: srcSet, sizes: "(min-width: 1024px) 760px, 100vw", alt },
+          attrs: {
+            src,
+            srcset: srcSet,
+            sizes: "(min-width: 1024px) 760px, 100vw",
+            alt,
+            // The page keeps the image's space while it loads, so the text does not jump.
+            width: image.size.width,
+            height: image.size.height,
+          },
         })
         .run();
       onClose();

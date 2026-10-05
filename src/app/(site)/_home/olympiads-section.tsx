@@ -14,6 +14,7 @@ export function OlympiadsSection({ index, articles }: OlympiadsSectionProps) {
   return (
     <section className="bg-ink py-10 text-paper lg:pt-18 lg:pb-20">
       <HorizontalScroller
+        labels={{ previous: t("scroller.previous"), next: t("scroller.next") }}
         header={
           <>
             <SectionHeader index={index} title={t("home.olympiads.title")} onInk />

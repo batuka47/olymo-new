@@ -108,7 +108,6 @@ export default async function AdminAdsPage() {
                     <td className={cellClasses}>
                       <ResponsiveImage
                         path={ad.image_path}
-                        version={ad.updated_at}
                         alt=""
                         sizes="160px"
                         className={

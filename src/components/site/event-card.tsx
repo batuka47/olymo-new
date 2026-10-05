@@ -39,7 +39,6 @@ export function EventCard({ event, variant, highlight }: EventCardProps) {
       {card && event.cover_path && (
         <ResponsiveImage
           path={event.cover_path}
-          version={event.updated_at}
           alt=""
           sizes="100vw"
           className="aspect-video w-full lg:hidden"

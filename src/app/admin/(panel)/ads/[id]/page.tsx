@@ -33,12 +33,7 @@ export default async function EditAdPage({ params, searchParams }: PageProps<"/a
   return (
     <>
       <AdminPageHeader title={t(ad ? "admin.ads.form.editTitle" : "admin.ads.form.newTitle")} />
-      <AdForm
-        key={id}
-        adId={id}
-        initialValues={ad ? adRowToValues(ad) : emptyAdValues()}
-        imageVersion={ad?.updated_at ?? "new"}
-      />
+      <AdForm key={id} adId={id} initialValues={ad ? adRowToValues(ad) : emptyAdValues()} />
     </>
   );
 }

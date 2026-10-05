@@ -57,7 +57,6 @@ function Cover({ article, sizes, preload, className }: CoverProps) {
   return (
     <ResponsiveImage
       path={article.cover_path}
-      version={article.updated_at}
       // The title next to it already names the link; describing the image again adds noise.
       alt=""
       sizes={sizes}

@@ -110,12 +110,15 @@ is a shortcut for the same script.
 `/admin/articles` lists, filters and searches articles; `/admin/articles/new` opens the editor.
 
 - **Images** are resized in the browser to 1600, 800 and 400 px and uploaded to
-  `media/articles/{id}/` as `cover-{width}.webp`. Browsers that cannot create WebP (Safari) upload
-  JPEG instead (`cover-{width}.jpg`); the saved path keeps the extension, so the site always asks
-  for the files that exist. The cover also gets a 1200 × 630 JPEG crop, `cover-og.jpg`, used as
-  the share image on Facebook, Messenger and X. `next/image` uses a custom loader
-  (`src/lib/images/loader.ts`) that only picks one of the stored widths; nothing is resized on the
-  server.
+  `media/articles/{id}/` as `cover-{token}-{width}.webp`, where the token is new for every upload.
+  Browsers that cannot create WebP (Safari) upload JPEG instead (`.jpg`); the saved path keeps the
+  extension, so the site always asks for the files that exist. The cover also gets a 1200 × 630
+  JPEG crop, `cover-{token}-og.jpg`, used as the share image on Facebook, Messenger and X.
+  `next/image` uses a custom loader (`src/lib/images/loader.ts`) that only picks one of the stored
+  widths; nothing is resized on the server, so Vercel's image optimization is never used.
+- **Caching images:** a stored file never changes (replacing a cover uploads new names), so every
+  upload is served with `Cache-Control: max-age=31536000` (a year). Images uploaded before this
+  (`cover-1600.webp`, no token) keep working with their old one-hour setting.
 - **Body text** is saved as Tiptap JSON. The server builds the HTML from that JSON and cleans it
   with an allow-list; HTML sent by a browser is never stored.
 - **Publishing:** "Нийтлэх" publishes now, or at the chosen Ulaanbaatar time when "Огноо товлох" is
@@ -124,9 +127,11 @@ is a shortcut for the same script.
   will. The yellow bar at the top has a link to leave preview.
 - **Unpublishing** ("Ноорог болгох" on a live article) asks for confirmation first.
 - **Deleting** an article also deletes its images; **duplicating** copies them.
-- **Unused images:** images uploaded to an article that was never saved stay in storage. Admins can
-  remove them with "Ашиглагдаагүй зураг цэвэрлэх" on the dashboard: it deletes `articles/{id}/`
-  folders that have no article and nothing uploaded in the last 24 hours.
+- **Unused images:** images uploaded to an article that was never saved, and the old files of a
+  replaced cover or of an image taken out of the text, stay in storage. Admins can remove them with
+  "Ашиглагдаагүй зураг цэвэрлэх" on the dashboard: it deletes `articles/{id}/` folders that have no
+  article, and files that their article (or event, ad, team member) no longer points at, leaving
+  anything uploaded in the last 24 hours.
 
 ### Public article page
 
@@ -139,12 +144,14 @@ page immediately. A link with the wrong category answers 308 with the right addr
 - **Most read** ("Их уншсан"): the 4 most viewed articles published in the last 30 days.
 - **Related** ("Холбоотой мэдээ"): 3 articles, the ones sharing the most tags first, then the newest
   in the same category.
-- **Views:** the page asks the server once per browser session (a `sessionStorage` flag, no cookie)
-  to add one to `view_count`. Only the server can do that, through the `record_article_view`
+- **Views:** once the page has loaded and the browser is idle, it asks the server once per browser
+  session (a `sessionStorage` flag, no cookie) to add one to `view_count`. Only the server can do that, through the `record_article_view`
   database function, and a view does not change `updated_at`. No reader data is stored.
 - **Sharing:** Facebook, Messenger (`fb-messenger://` on phones, Facebook's send dialog on
   computers, which needs `NEXT_PUBLIC_FACEBOOK_APP_ID`), copy link, and the phone's own share sheet
-  where the browser has one.
+  where the browser has one. CSS (`pointer: coarse`) picks the phone or computer buttons, so the
+  row never moves after loading.
+- **Comments** load their code only when the section nears the screen (see Reader accounts).
 
 ### Category pages
 
@@ -156,10 +163,13 @@ page immediately. A link with the wrong category answers 308 with the right addr
   the rest, newest first). Values the page does not offer answer 404, so each view has one address.
 - **Cards** come from `src/components/site/article-card.tsx` (`grid`, `row`, `banner`); use it for
   every article list.
-- **Caching:** reading `?page=` makes the page render on each request, so the database reads are
-  cached instead (60 s, tag `articles`, in `src/lib/articles/category.ts`). Saving or deleting an
-  article in the admin expires the tag, so changes show at once. Changes made directly in the
-  database show within 60 seconds.
+- **Caching:** the plain address (`/olympiad`) is a static page (ISR, 60 s). Addresses with
+  `?subject=`, `?sort=` or `?page=` are rewritten in `next.config.ts` to
+  `app/(site)/list-views/[category]`, which renders them on request; both share
+  `[category]/category-list.tsx`. `/events` works the same way (`?when=`, `?featured=`,
+  `?page=`). The database reads are cached for 60 s under the `articles` tag
+  (`src/lib/articles/category.ts`). Saving or deleting an article in the admin expires the tag and
+  the pages, so changes show at once. Changes made directly in the database show within 60 seconds.
 
 ### Home page
 
@@ -197,7 +207,8 @@ and switches them on and off. The dashboard lists ads that end within 3 days.
 - **Slots:** `<AdSlot placement="…" />` shows one running ad (active and inside its dates), at random
   when several share a placement, and renders nothing when there is none. The running ads are cached
   for 60 s under the `ads` tag; saving in the admin refreshes every page at once. On pages cached
-  as a whole (home, articles) the random choice changes when the page is rebuilt, not per reader.
+  as a whole (home, category pages, articles) the random choice changes when the page is
+  rebuilt (at most once a minute), not per reader.
 - **Counting:** links go through `/r/ad/[id]`, which counts the click and answers 302 to the
   advertiser (`rel="sponsored"`). An impression is counted once per page view, when half of the ad
   is on screen. Only the server can count (`record_ad_click`, `record_ad_impression`); no reader
@@ -224,7 +235,8 @@ are entered in Ulaanbaatar time; the type is one of Хурал, Хакатон, 
   without an end) has passed, so running events stay listed. Rows on desktop, cards on phones.
 - **`/events/{slug}`:** facts box (organizer, time, place with a Google Maps link, price, phone as a
   `tel:` link, registration), "Календарт нэмэх" (an `.ics` file from `/events/{slug}/calendar`),
-  share row, related events, Open Graph like articles and schema.org `Event` JSON-LD.
+  share row, related events, Open Graph like articles and schema.org `Event` and
+  `BreadcrumbList` JSON-LD.
 - **Home page:** section 05 and the "Эвентүүд" tile of section 04 read the same events.
 - **Refreshing:** saving or deleting an event expires the `events` cache and the home page,
   `/events` and the event's page at once.
@@ -327,6 +339,37 @@ address; `/account` changes it once, signs out, and deletes the account.
   `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and `…_SECRET` and `enabled = true` in
   `supabase/config.toml` to try it.
 
+### SEO and performance
+
+- **Sitemap:** `/sitemap-index.xml` lists `/sitemap/0.xml`, `/sitemap/1.xml`, …: the home page,
+  categories, info pages, then every published article and event with its last change, 5000 URLs
+  to a file (`src/lib/sitemap.ts`). New files appear by themselves as the site grows. Give
+  `https://<domain>/sitemap-index.xml` to Google Search Console. (`/sitemap.xml` is reserved by
+  Next.js and answers 404.)
+- **robots.txt** allows everything except `/admin`, `/account`, `/search`, `/auth`, the ad click
+  redirects (`/r/`) and the internal `/list-views/`, and points to the sitemap index.
+- **RSS:** `/rss.xml`, the 50 newest articles; the home page links it.
+- **Share images:** `app/opengraph-image.tsx` draws the default 1200 × 630 card (paper, the name
+  in Unbounded, the accent square, the tagline). Articles and events use their cover crop, or
+  without a cover a card with their title from `/og/articles/{slug}` and `/og/events/{slug}`
+  (cached for a year; the URL changes with every save). The fonts for these images are the TTF
+  files in `assets/fonts/` (SIL Open Font License, see the OFL files there), since the site's
+  woff2 files cannot be used. `app/icon.tsx` and `app/apple-icon.tsx` draw the brand mark.
+- **Structured data:** `Organization` and `WebSite` with a search box on the home page,
+  `NewsArticle` and `BreadcrumbList` on articles, `Event` and `BreadcrumbList` on events,
+  `FAQPage` on `/faq` (`src/lib/json-ld.ts`, `<JsonLd>`).
+- **Meta:** every page has a canonical URL built from `NEXT_PUBLIC_SITE_URL`, `og:locale`
+  `mn_MN`, and `fb:app_id` when `NEXT_PUBLIC_FACEBOOK_APP_ID` is set.
+- **JavaScript:** public pages load little of it. The account menu and Supabase's browser client
+  load only when a session cookie exists, the comments only near the comment section, and client
+  components get their labels as props instead of the whole `messages/mn.json`. Tiptap loads in
+  `/admin` only. `npm run analyze` opens a map of every bundle.
+- **Fonts:** `src/lib/fonts.ts` loads only the weights in use, with `display: swap`.
+- **Lighthouse** (mobile, local production build, median of 3, step 15): `/`, `/olympiad` and an
+  article all score 93 Performance, 100 Accessibility, 100 SEO, 100 Best Practices.
+- **Vercel Analytics and Speed Insights** load only when `VERCEL_ANALYTICS=1` and
+  `VERCEL_SPEED_INSIGHTS=1` are set (see Deploy).
+
 ### Inviting staff and resetting passwords
 
 Both are emailed by Supabase Auth, and both links go to `/admin/auth/confirm`, which signs the
@@ -360,6 +403,8 @@ configures all of this for local development.
 | `npm run dev`              | Start the dev server with hot reload                         |
 | `npm run build`            | Production build                                             |
 | `npm run start`            | Serve the production build (run `build` first)               |
+| `npm run analyze`          | Webpack build that opens a map of every JS bundle            |
+| `npm run test`             | Unit tests (Vitest)                                          |
 | `npm run lint`             | ESLint, then `check:categories`                              |
 | `npm run typecheck`        | Generate Next.js route types, then `tsc --noEmit`            |
 | `npm run format`           | Format all files with Prettier (sorts Tailwind classes)      |
@@ -381,7 +426,15 @@ All configuration comes from env vars. `.env.example` lists every variable with 
 | `NEXT_PUBLIC_SUPABASE_URL`             | yes      | Supabase API URL                                             |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | yes      | Publishable key; safe in the browser, RLS applies            |
 | `SUPABASE_SECRET_KEY`                  | yes      | Secret (service role) key; server only, bypasses RLS         |
-| `NEXT_PUBLIC_FACEBOOK_APP_ID`          | no       | Facebook app ID; shows the Messenger share button on desktop |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`       | yes      | Cloudflare Turnstile site key (forms, staff sign-in)         |
+| `TURNSTILE_SECRET_KEY`                 | yes      | Cloudflare Turnstile secret key; server only                 |
+| `IP_HASH_SALT`                         | yes      | Secret salt for hashing visitor IPs (rate limits)            |
+| `RESEND_API_KEY`                       | no       | Resend key for new-submission emails                         |
+| `NOTIFY_EMAIL`                         | no       | Who gets those emails                                        |
+| `EMAIL_FROM`                           | no       | Sender once a domain is verified in Resend                   |
+| `NEXT_PUBLIC_FACEBOOK_APP_ID`          | no       | Facebook app ID: Messenger button on desktop, `fb:app_id`    |
+| `VERCEL_ANALYTICS`                     | no       | `1` turns on Vercel Web Analytics                            |
+| `VERCEL_SPEED_INSIGHTS`                | no       | `1` turns on Vercel Speed Insights                           |
 
 ## Project layout
 
@@ -405,3 +458,7 @@ supabase/            CLI config, migrations/ and seed.sql
    **Production** and **Preview**. Use the real domain for Production.
 4. Deploy. Every push to `main` then deploys to production, and every pull request gets a preview URL.
 5. To add a custom domain, go to **Settings → Domains** and follow the DNS instructions there.
+6. Optional: in the project's **Analytics** and **Speed Insights** tabs click **Enable** (both have
+   a free tier), then set `VERCEL_ANALYTICS=1` and `VERCEL_SPEED_INSIGHTS=1` for Production and
+   redeploy.
+7. In Google Search Console, add the domain and submit `https://<domain>/sitemap-index.xml`.

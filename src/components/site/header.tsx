@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { SearchIcon } from "@/components/icons";
 import { Logo } from "@/components/logo";
-import { AccountMenu } from "@/components/site/account-menu";
+import { AccountMenuLoader } from "@/components/site/account-menu-loader";
 import { CategoryChips } from "@/components/site/category-chips";
 import { CategoryNav } from "@/components/site/category-nav";
 import { HideOnScroll } from "@/components/site/hide-on-scroll";
@@ -40,7 +40,7 @@ export function Header() {
             >
               <SearchIcon className="size-5 lg:size-4.5" />
             </Link>
-            <AccountMenu />
+            <AccountMenuLoader />
             <div className="hidden lg:block">
               <Button href={routes.submit} variant="ink">
                 {t("nav.submit")}

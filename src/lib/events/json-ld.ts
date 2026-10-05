@@ -1,5 +1,5 @@
 import type { EventDetail } from "@/lib/events/queries";
-import { eventSocialImagePath, mediaUrl } from "@/lib/media";
+import { shareImageUrl } from "@/lib/og/share-image-url";
 
 const FREE = /үнэгүй/i;
 
@@ -22,12 +22,9 @@ function offer(event: EventDetail, pageUrl: string) {
   };
 }
 
-/**
- * schema.org Event data for search engines, as a string safe to put inside a <script> element
- * ("<" is escaped, so text from the database cannot close the tag).
- */
-export function eventJsonLd(event: EventDetail, pageUrl: string): string {
-  const data = {
+/** schema.org Event data for search engines; render it with <JsonLd>. */
+export function eventJsonLd(event: EventDetail, pageUrl: string) {
+  return {
     "@context": "https://schema.org",
     "@type": "Event",
     name: event.title,
@@ -40,11 +37,8 @@ export function eventJsonLd(event: EventDetail, pageUrl: string): string {
     location: event.location
       ? { "@type": "Place", name: event.location, address: event.location }
       : undefined,
-    image: event.cover_path
-      ? [mediaUrl(eventSocialImagePath(event.id), event.updated_at)]
-      : undefined,
+    image: [shareImageUrl("events", event)],
     organizer: event.organizer ? { "@type": "Organization", name: event.organizer } : undefined,
     offers: offer(event, pageUrl),
   };
-  return JSON.stringify(data).replace(/</g, "\\u003c");
 }

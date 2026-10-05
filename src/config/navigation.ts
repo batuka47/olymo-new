@@ -16,6 +16,10 @@ export const routes = {
   login: "/login",
   account: "/account",
   authCallback: "/auth/callback",
+  /** The 50 newest articles for feed readers. */
+  rss: "/rss.xml",
+  /** Lists the numbered sitemaps; the one to give Search Console. */
+  sitemapIndex: "/sitemap-index.xml",
 } as const;
 
 export interface NavLink {

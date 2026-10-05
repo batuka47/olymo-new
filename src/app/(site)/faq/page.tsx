@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { JsonLd } from "@/components/json-ld";
 import { InfoPageBody, InfoPageLayout } from "@/components/site/info-page-layout";
 import { routes } from "@/config/navigation";
 import { faqJsonLd } from "@/lib/site-pages/json-ld";
@@ -27,11 +28,7 @@ export default async function FaqPage() {
       {items.length > 0 && (
         <>
           <FaqList items={items} />
-          <script
-            type="application/ld+json"
-            // Escaped by faqJsonLd: text from the database cannot close the tag.
-            dangerouslySetInnerHTML={{ __html: faqJsonLd(items) }}
-          />
+          <JsonLd data={faqJsonLd(items)} />
         </>
       )}
     </InfoPageLayout>

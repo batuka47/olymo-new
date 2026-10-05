@@ -1,6 +1,4 @@
-"use client";
-
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { CopyLinkButton, NativeShareButton } from "@/components/site/share-actions";
 import { buttonClasses } from "@/components/ui/button";
 import { t } from "@/lib/i18n";
 
@@ -12,122 +10,59 @@ interface ShareButtonsProps {
   facebookAppId: string;
 }
 
-type CopyState = "idle" | "copied" | "failed";
-
-const TOUCH_QUERY = "(pointer: coarse)";
-const COPY_FEEDBACK_MS = 2000;
-
-function subscribeToTouch(onChange: () => void) {
-  const query = window.matchMedia(TOUCH_QUERY);
-  query.addEventListener("change", onChange);
-  return () => query.removeEventListener("change", onChange);
-}
-
-function subscribeToNothing() {
-  return () => {};
-}
-
-/** Phones and tablets. The server renders the desktop buttons; phones switch after hydration. */
-function useIsTouchDevice(): boolean {
-  return useSyncExternalStore(
-    subscribeToTouch,
-    () => window.matchMedia(TOUCH_QUERY).matches,
-    () => false,
-  );
-}
-
-function useCanShareNatively(): boolean {
-  return useSyncExternalStore(
-    subscribeToNothing,
-    () => typeof navigator.share === "function",
-    () => false,
-  );
-}
-
-function messengerUrl(url: string, facebookAppId: string, touch: boolean): string | null {
-  const link = encodeURIComponent(url);
-  if (touch) {
-    return `fb-messenger://share/?link=${link}${facebookAppId ? `&app_id=${facebookAppId}` : ""}`;
-  }
-  if (!facebookAppId) {
-    return null;
-  }
-  return `https://www.facebook.com/dialog/send?app_id=${facebookAppId}&link=${link}&redirect_uri=${link}`;
-}
-
+/**
+ * Touch screens (pointer: coarse) get the share sheet and the Messenger app; computers a label and
+ * Facebook's send dialog. CSS picks between them, so the row never changes after loading.
+ */
 export function ShareButtons({ url, title, facebookAppId }: ShareButtonsProps) {
-  const touch = useIsTouchDevice();
-  const canShareNatively = useCanShareNatively();
-  const [copyState, setCopyState] = useState<CopyState>("idle");
-  const resetTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  useEffect(() => () => clearTimeout(resetTimer.current), []);
-
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopyState("copied");
-    } catch {
-      setCopyState("failed");
-    }
-    clearTimeout(resetTimer.current);
-    resetTimer.current = setTimeout(() => setCopyState("idle"), COPY_FEEDBACK_MS);
-  }
-
-  async function shareNatively() {
-    try {
-      await navigator.share({ title, url });
-    } catch {
-      // Closing the share sheet rejects too; there is nothing to report.
-    }
-  }
-
-  const messenger = messengerUrl(url, facebookAppId, touch);
-  const copyLabel = {
-    idle: t("article.share.copy"),
-    copied: t("article.share.copied"),
-    failed: t("article.share.copyFailed"),
-  }[copyState];
+  const link = encodeURIComponent(url);
+  const appId = facebookAppId ? `&app_id=${facebookAppId}` : "";
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {touch && canShareNatively ? (
-        <button type="button" onClick={shareNatively} className={buttonClasses({})}>
-          {t("article.share.native")}
-        </button>
-      ) : (
-        <span className="mr-1.5 font-mono text-[11px] tracking-label text-muted uppercase">
-          {t("article.share.label")}
-        </span>
-      )}
+      <span className="mr-1.5 font-mono text-[11px] tracking-label text-muted uppercase pointer-coarse:hidden">
+        {t("article.share.label")}
+      </span>
+      <NativeShareButton
+        url={url}
+        title={title}
+        label={t("article.share.native")}
+        className="pointer-fine:hidden"
+      />
       <a
-        href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`}
+        href={`https://www.facebook.com/sharer/sharer.php?u=${link}`}
         target="_blank"
         rel="noopener noreferrer"
         className={buttonClasses({ variant: "ink" })}
       >
         {t("article.share.facebook")}
       </a>
-      {messenger && (
+      <a
+        href={`fb-messenger://share/?link=${link}${appId}`}
+        rel="noopener noreferrer"
+        className={buttonClasses({ variant: "outline", className: "pointer-fine:hidden" })}
+      >
+        {t("article.share.messenger")}
+      </a>
+      {facebookAppId && (
         <a
-          href={messenger}
-          target={touch ? undefined : "_blank"}
+          href={`https://www.facebook.com/dialog/send?app_id=${facebookAppId}&link=${link}&redirect_uri=${link}`}
+          target="_blank"
           rel="noopener noreferrer"
-          className={buttonClasses({ variant: "outline" })}
+          className={buttonClasses({ variant: "outline", className: "pointer-coarse:hidden" })}
         >
           {t("article.share.messenger")}
         </a>
       )}
-      <button
-        type="button"
-        onClick={copyLink}
-        className={buttonClasses({ variant: "outline", className: "min-w-40" })}
-      >
-        {copyLabel}
-      </button>
-      <span role="status" className="sr-only">
-        {copyState === "copied" ? t("article.share.copiedStatus") : ""}
-      </span>
+      <CopyLinkButton
+        url={url}
+        labels={{
+          idle: t("article.share.copy"),
+          copied: t("article.share.copied"),
+          failed: t("article.share.copyFailed"),
+          copiedStatus: t("article.share.copiedStatus"),
+        }}
+      />
     </div>
   );
 }

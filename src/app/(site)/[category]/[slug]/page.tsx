@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { draftMode } from "next/headers";
 import { notFound, permanentRedirect, redirect } from "next/navigation";
+import { JsonLd } from "@/components/json-ld";
 import { AdSlot } from "@/components/site/ad-slot";
 import { PreviewBanner } from "@/components/site/preview-banner";
 import { TagLinks } from "@/components/site/tag-links";
 import { Container } from "@/components/ui/container";
 import { ResponsiveImage } from "@/components/ui/responsive-image";
+import { siteConfig } from "@/config/site";
+import { articleBreadcrumbJsonLd, articleJsonLd } from "@/lib/articles/json-ld";
 import {
   articleTags,
   getArticle,
@@ -51,7 +54,6 @@ function ArticleBody({ article }: { article: Article }) {
         <figure className="mb-8">
           <ResponsiveImage
             path={article.cover_path}
-            version={article.updated_at}
             alt={article.cover_alt ?? ""}
             sizes="(min-width: 1024px) 780px, 100vw"
             preload
@@ -98,6 +100,8 @@ export default async function ArticlePage({ params }: PageProps<"/[category]/[sl
   return (
     <>
       {preview ? <PreviewBanner path={path} /> : <ViewBeacon articleId={article.id} />}
+      <JsonLd data={articleJsonLd(article, `${siteConfig.url}${path}`)} />
+      <JsonLd data={articleBreadcrumbJsonLd(article)} />
 
       <Container className="pb-16 lg:pb-24">
         <div className="border-b border-line lg:border-x">

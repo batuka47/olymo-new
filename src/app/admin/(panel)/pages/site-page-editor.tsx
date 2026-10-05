@@ -48,8 +48,6 @@ interface SitePageEditorProps {
   initialValues: SitePageFormValues;
   /** Saved JSON, or the seeded HTML before the body was first edited. */
   initialBody: Content;
-  /** Cache busters for the team photos, by member id. */
-  photoVersions: Record<string, string>;
 }
 
 const tokensHint = t("admin.pages.tokensHint", {
@@ -97,16 +95,10 @@ function BlockList({
   );
 }
 
-export function SitePageEditor({
-  slug,
-  initialValues,
-  initialBody,
-  photoVersions: initialPhotoVersions,
-}: SitePageEditorProps) {
+export function SitePageEditor({ slug, initialValues, initialBody }: SitePageEditorProps) {
   const bodyLabelId = useId();
   const [values, setValues] = useState(initialValues);
   const [snapshot, setSnapshot] = useState(() => JSON.stringify(initialValues));
-  const [photoVersions, setPhotoVersions] = useState(initialPhotoVersions);
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<LastSave | null>(null);
   const [error, setError] = useState<string>();
@@ -301,19 +293,15 @@ export function SitePageEditor({
                   <ImageDropZone
                     name={`team-${member.id}-photo`}
                     path={member.photoPath}
-                    version={photoVersions[member.id] ?? ""}
                     previewClassName="aspect-square w-full max-w-40"
                     hint={t("admin.pages.team.photoHint")}
                     encode={encodeImageVariants}
                     store={(image) =>
-                      uploadVariants(image, (width, extension) =>
-                        teamPhotoPath(member.id, width, extension),
+                      uploadVariants(image, (token, width, extension) =>
+                        teamPhotoPath(member.id, token, width, extension),
                       )
                     }
-                    onUploaded={(path, version) => {
-                      change({ photoPath: path });
-                      setPhotoVersions((current) => ({ ...current, [member.id]: version }));
-                    }}
+                    onUploaded={(path) => change({ photoPath: path })}
                     onRemove={() => change({ photoPath: null })}
                     removeLabel={t("admin.pages.team.removePhoto")}
                   />

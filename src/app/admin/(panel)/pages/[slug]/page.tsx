@@ -47,7 +47,6 @@ export default async function EditSitePagePage({ params }: PageProps<"/admin/pag
       slug={slug}
       initialValues={initialValues}
       initialBody={(page.body_json as JSONContent | null) ?? page.body_html ?? ""}
-      photoVersions={Object.fromEntries(team.map((member) => [member.id, member.updated_at]))}
     />
   );
 }

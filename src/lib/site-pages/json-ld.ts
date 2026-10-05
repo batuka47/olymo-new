@@ -5,12 +5,9 @@ interface FaqEntry {
   answer: string;
 }
 
-/**
- * schema.org FAQPage data for search engines, as a string safe to put inside a <script> element
- * ("<" is escaped, so text from the database cannot close the tag).
- */
-export function faqJsonLd(items: FaqEntry[]): string {
-  const data = {
+/** schema.org FAQPage data for search engines; render it with <JsonLd>. */
+export function faqJsonLd(items: FaqEntry[]) {
+  return {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     mainEntity: items.map((item) => ({
@@ -19,5 +16,4 @@ export function faqJsonLd(items: FaqEntry[]): string {
       acceptedAnswer: { "@type": "Answer", text: fillTokens(item.answer) },
     })),
   };
-  return JSON.stringify(data).replace(/</g, "\\u003c");
 }

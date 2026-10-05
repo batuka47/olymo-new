@@ -20,8 +20,6 @@ interface ImageDropZoneProps<T extends EncodedImage> {
   name: string;
   /** Saved path of the 1600 px variant, or null. */
   path: string | null;
-  /** Cache buster for the preview; changes after every upload. */
-  version: string;
   /** Sizes the preview with the proportions the site uses, e.g. "aspect-video w-full". */
   previewClassName: string;
   hint: string;
@@ -29,7 +27,7 @@ interface ImageDropZoneProps<T extends EncodedImage> {
   encode: (file: File) => Promise<T>;
   /** Uploads the encoded image and returns the path to save. */
   store: (image: T) => Promise<string>;
-  onUploaded: (path: string, version: string) => void;
+  onUploaded: (path: string) => void;
   onRemove?: () => void;
   removeLabel?: string;
 }
@@ -41,7 +39,6 @@ interface ImageDropZoneProps<T extends EncodedImage> {
 export function ImageDropZone<T extends EncodedImage>({
   name,
   path,
-  version,
   previewClassName,
   hint,
   encode,
@@ -79,7 +76,7 @@ export function ImageDropZone<T extends EncodedImage>({
         format: image.format.label,
         sizes: image.variants.map(({ width, blob }) => `${width}px · ${formatFileSize(blob.size)}`),
       });
-      onUploaded(uploadedPath, Date.now().toString(36));
+      onUploaded(uploadedPath);
     } catch {
       setError(t("admin.image.failed"));
     } finally {
@@ -113,7 +110,6 @@ export function ImageDropZone<T extends EncodedImage>({
         {path && (
           <ResponsiveImage
             path={path}
-            version={version}
             alt=""
             sizes="(min-width: 1024px) 640px, 100vw"
             className={cx("mb-3", previewClassName)}

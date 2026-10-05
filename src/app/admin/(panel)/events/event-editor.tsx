@@ -23,7 +23,7 @@ import { articleState } from "@/lib/articles/status";
 import { toEventInput, type EventFormValues } from "@/lib/events/form";
 import { useLeaveGuard } from "@/lib/hooks/use-leave-guard";
 import { t } from "@/lib/i18n";
-import { eventCoverPath, eventFolder, eventSocialImagePath } from "@/lib/media";
+import { eventCoverPath, eventFolder } from "@/lib/media";
 import type { PublishIntent } from "@/lib/publishing";
 import { SLUG_PATTERN, slugify } from "@/lib/slug";
 import { checkEventSlugAvailability, saveEvent } from "./actions";
@@ -53,15 +53,9 @@ interface EventEditorProps {
   eventId: string;
   initialValues: EventFormValues;
   saved: Omit<SavedState, "snapshot">;
-  coverVersion: string;
 }
 
-export function EventEditor({
-  eventId,
-  initialValues,
-  saved: initialSaved,
-  coverVersion: initialCoverVersion,
-}: EventEditorProps) {
+export function EventEditor({ eventId, initialValues, saved: initialSaved }: EventEditorProps) {
   const bodyLabelId = useId();
   const [values, setValues] = useState(initialValues);
   const [saved, setSaved] = useState<SavedState>({
@@ -69,7 +63,6 @@ export function EventEditor({
     snapshot: JSON.stringify(initialValues),
   });
   const [slugEdited, setSlugEdited] = useState(initialSaved.exists);
-  const [coverVersion, setCoverVersion] = useState(initialCoverVersion);
   const [saving, setSaving] = useState<SavingKind>(null);
   const [lastSaved, setLastSaved] = useState<LastSave | null>(null);
   const [error, setError] = useState<string>();
@@ -292,15 +285,12 @@ export function EventEditor({
 
           <EditorPanel title={t("admin.cover.title")}>
             <CoverImageField
-              coverPath={(width, extension) => eventCoverPath(eventId, width, extension)}
-              socialImagePath={eventSocialImagePath(eventId)}
+              coverPath={(token, width, extension) =>
+                eventCoverPath(eventId, token, width, extension)
+              }
               path={values.coverPath}
               alt={values.coverAlt}
-              version={coverVersion}
-              onUploaded={(path, version) => {
-                update("coverPath", path);
-                setCoverVersion(version);
-              }}
+              onUploaded={(path) => update("coverPath", path)}
               onRemove={() => update("coverPath", null)}
               onAltChange={(alt) => update("coverAlt", alt)}
             />

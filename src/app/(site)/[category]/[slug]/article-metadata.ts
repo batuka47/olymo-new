@@ -3,23 +3,22 @@ import { getCategory } from "@/config/categories";
 import { siteConfig } from "@/config/site";
 import { articleTags, type Article } from "@/lib/articles/public";
 import { articlePath } from "@/lib/articles/status";
-import { articleSocialImagePath, mediaUrl, SOCIAL_IMAGE_SIZE } from "@/lib/media";
+import { SOCIAL_IMAGE_SIZE } from "@/lib/media";
 import { siteOpenGraph } from "@/lib/metadata";
+import { shareImageUrl } from "@/lib/og/share-image-url";
 
 export function articleMetadata(article: Article, preview: boolean): Metadata {
   const title = article.seo_title || article.title;
   const description = article.seo_description || article.excerpt || undefined;
   const url = articlePath(article.category_slug, article.slug);
-  // Cropped to 1200 × 630 from the cover when the cover is uploaded (see encodeCoverImage).
-  const images = article.cover_path
-    ? [
-        {
-          url: mediaUrl(articleSocialImagePath(article.id), article.updated_at),
-          ...SOCIAL_IMAGE_SIZE,
-          alt: article.cover_alt ?? "",
-        },
-      ]
-    : undefined;
+  // Cropped from the cover on upload (see encodeCoverImage), or drawn from the title without one.
+  const images = [
+    {
+      url: shareImageUrl("articles", article),
+      ...SOCIAL_IMAGE_SIZE,
+      alt: (article.cover_path && article.cover_alt) || title,
+    },
+  ];
 
   return {
     title: { absolute: `${title} | ${siteConfig.name}` },
@@ -38,7 +37,7 @@ export function articleMetadata(article: Article, preview: boolean): Metadata {
       tags: articleTags(article).map((tag) => tag.label),
     },
     twitter: {
-      card: images ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title,
       description,
       images,

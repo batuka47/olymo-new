@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { SignInPanel } from "@/components/site/sign-in-panel";
 import { Container } from "@/components/ui/container";
+import { routes } from "@/config/navigation";
 import { safeReturnPath } from "@/lib/auth/reader";
 import { t, type MessageKey } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: t("signIn.title"),
+  alternates: { canonical: routes.login },
   robots: { index: false, follow: false },
 };
 

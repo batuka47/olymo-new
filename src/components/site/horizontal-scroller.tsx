@@ -11,13 +11,14 @@ import {
 } from "react";
 import { Container } from "@/components/ui/container";
 import { cx } from "@/lib/cx";
-import { t } from "@/lib/i18n";
 
 interface HorizontalScrollerProps {
   /** Left side of the row above the cards; the prev/next buttons sit on the right. */
   header: ReactNode;
   /** The <li> cards. Give them a width and snap-start. */
   children: ReactNode;
+  /** Names of the prev/next buttons. */
+  labels: { previous: string; next: string };
 }
 
 /** A mouse has to move this far before a press becomes a drag (and the click is cancelled). */
@@ -35,7 +36,7 @@ interface Drag {
  * Cards in a row that scroll sideways: swipe on touch screens, drag with the mouse, or use the
  * buttons. The first card lines up with the page content; the row runs to the right edge.
  */
-export function HorizontalScroller({ header, children }: HorizontalScrollerProps) {
+export function HorizontalScroller({ header, children, labels }: HorizontalScrollerProps) {
   const listRef = useRef<HTMLUListElement>(null);
   const drag = useRef<Drag | null>(null);
   const suppressClick = useRef(false);
@@ -137,7 +138,7 @@ export function HorizontalScroller({ header, children }: HorizontalScrollerProps
           <div className="hidden shrink-0 gap-2 lg:flex">
             <button
               type="button"
-              aria-label={t("scroller.previous")}
+              aria-label={labels.previous}
               disabled={edges.atStart}
               onClick={() => scrollByPage(-1)}
               className={cx(buttonClasses, "border border-paper text-paper")}
@@ -146,7 +147,7 @@ export function HorizontalScroller({ header, children }: HorizontalScrollerProps
             </button>
             <button
               type="button"
-              aria-label={t("scroller.next")}
+              aria-label={labels.next}
               disabled={edges.atEnd}
               onClick={() => scrollByPage(1)}
               className={cx(buttonClasses, "bg-lime text-ink")}

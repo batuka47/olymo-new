@@ -9,6 +9,7 @@ import { DeleteAccountButton, DisplayNameForm, SignOutButton } from "./account-f
 
 export const metadata: Metadata = {
   title: t("account.title"),
+  alternates: { canonical: routes.account },
   robots: { index: false, follow: false },
 };
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { GoogleSignInButton } from "@/components/site/sign-in-panel";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -69,7 +69,7 @@ function SignInPrompt({ returnTo }: { returnTo: string }) {
   );
 }
 
-interface CommentsProps {
+export interface CommentsProps {
   articleId: string;
   /** "Сэтгэгдэл хаах" in the article editor: the list stays, new comments are refused. */
   closed: boolean;
@@ -78,15 +78,13 @@ interface CommentsProps {
 }
 
 /**
- * "Сэтгэгдэл (n)". Loaded in the browser when the section nears the screen, so the article HTML
- * stays cacheable and the comments never compete with the article for the first paint.
+ * "Сэтгэгдэл (n)", loaded in the browser so the article HTML stays cacheable. LazyComments mounts
+ * it when the section nears the screen.
  */
 export function Comments({ articleId, closed, returnTo }: CommentsProps) {
   const readerState = useReader();
   const signedIn = readerState.status === "signed-in";
   const readerId = signedIn ? readerState.reader.id : null;
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [near, setNear] = useState(false);
   const [items, setItems] = useState<CommentItem[] | null>(null);
   const [count, setCount] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState(false);
@@ -94,22 +92,6 @@ export function Comments({ articleId, closed, returnTo }: CommentsProps) {
   const [failed, setFailed] = useState(false);
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setNear(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "800px 0px" },
-    );
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, []);
 
   // "5 минутын өмнө" and the 15 minutes to edit move on while the page stays open.
   useEffect(() => {
@@ -119,7 +101,7 @@ export function Comments({ articleId, closed, returnTo }: CommentsProps) {
 
   // The first page, and again after signing in or out: a reader also sees their own unpublished
   // comments and what they reported.
-  const ready = near && readerState.status !== "loading";
+  const ready = readerState.status !== "loading";
   useEffect(() => {
     if (!ready) return;
     let active = true;
@@ -201,7 +183,7 @@ export function Comments({ articleId, closed, returnTo }: CommentsProps) {
   });
 
   return (
-    <div ref={containerRef} className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5">
       <h2 id="comments-title" className="font-display text-[22px] font-bold lg:text-2xl">
         {t("comments.title")}{" "}
         {count !== null && (

@@ -9,6 +9,8 @@ export interface FakeQuery {
 export interface FakeResult {
   data?: unknown;
   error?: { message: string; code?: string } | null;
+  /** For select(…, { count: "exact" }). */
+  count?: number;
 }
 
 interface FakeOptions {

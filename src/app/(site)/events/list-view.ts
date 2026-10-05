@@ -1,6 +1,13 @@
 import { categoryPath } from "@/config/categories";
 import type { EventListQuery } from "@/lib/events/queries";
 
+/** The plain /events: upcoming, all of them, page 1. */
+export const DEFAULT_EVENT_LIST_VIEW: EventListQuery = {
+  when: "upcoming",
+  featuredOnly: false,
+  page: 1,
+};
+
 type SearchParams = Record<string, string | string[] | undefined>;
 
 const PAGE_PATTERN = /^[1-9]\d{0,4}$/;

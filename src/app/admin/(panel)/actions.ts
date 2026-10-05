@@ -25,7 +25,7 @@ export async function cleanUnusedImages(): Promise<FormState> {
     const { folders, files } = await removeUnusedFolders(supabase, UNUSED_IMAGE_MIN_AGE_MS);
     return {
       success:
-        folders > 0 ? t("admin.cleanup.removed", { folders, files }) : t("admin.cleanup.nothing"),
+        files > 0 ? t("admin.cleanup.removed", { folders, files }) : t("admin.cleanup.nothing"),
     };
   } catch (error) {
     console.error("Unused image cleanup failed", error);

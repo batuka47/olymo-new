@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { adFormat, adPlacements } from "@/config/ads";
 import { t } from "@/lib/i18n";
-import { adImagePath, IMAGE_EXTENSIONS } from "@/lib/media";
+import { adFolder, isUploadedImagePath, type AdImageKind } from "@/lib/media";
 import { isHttpUrl } from "@/lib/url";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -33,16 +33,16 @@ export const adInputSchema = z
   })
   .superRefine((values, context) => {
     // Images can only point at this ad's own folder (see the admin ad form).
-    const allowed = (kind: "desktop" | "mobile") =>
-      IMAGE_EXTENSIONS.map((extension) => adImagePath(values.id, kind, 1600, extension));
-    if (!allowed("desktop").includes(values.imagePath)) {
+    const isOwn = (path: string, kind: AdImageKind) =>
+      isUploadedImagePath(path, adFolder(values.id), kind);
+    if (!isOwn(values.imagePath, "desktop")) {
       context.addIssue({
         code: "custom",
         message: t("admin.ads.errors.image"),
         path: ["imagePath"],
       });
     }
-    if (values.imagePathMobile && !allowed("mobile").includes(values.imagePathMobile)) {
+    if (values.imagePathMobile && !isOwn(values.imagePathMobile, "mobile")) {
       context.addIssue({
         code: "custom",
         message: t("admin.ads.errors.image"),

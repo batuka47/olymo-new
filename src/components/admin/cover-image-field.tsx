@@ -6,20 +6,16 @@ import { TextField } from "@/components/ui/text-field";
 import { t } from "@/lib/i18n";
 import { encodeCoverImage, type EncodedCover } from "@/lib/images/encode";
 import { uploadMedia, uploadVariants } from "@/lib/images/upload";
-import type { ImageExtension, ImageWidth } from "@/lib/media";
+import { socialImagePath, type VariantPathBuilder } from "@/lib/media";
 
 const CAPTION_LIMIT = 200;
 
 interface CoverImageFieldProps {
-  /** Where each width of the cover goes, e.g. articleCoverPath(id, width, extension). */
-  coverPath: (width: ImageWidth, extension: ImageExtension) => string;
-  /** Where the 1200 × 630 share image goes. */
-  socialImagePath: string;
+  /** Where each width of the cover goes, e.g. articleCoverPath(id, token, width, extension). */
+  coverPath: VariantPathBuilder;
   path: string | null;
   alt: string;
-  /** Cache buster for the preview; changes after every upload. */
-  version: string;
-  onUploaded: (path: string, version: string) => void;
+  onUploaded: (path: string) => void;
   onRemove: () => void;
   onAltChange: (alt: string) => void;
   /** Optional caption shown under the cover (articles). */
@@ -29,20 +25,17 @@ interface CoverImageFieldProps {
 /** Cover of an article or event: three widths plus the share image, alt text and caption. */
 export function CoverImageField({
   coverPath,
-  socialImagePath,
   path,
   alt,
-  version,
   onUploaded,
   onRemove,
   onAltChange,
   caption,
 }: CoverImageFieldProps) {
   async function storeCover(image: EncodedCover): Promise<string> {
-    const [savedPath] = await Promise.all([
-      uploadVariants(image, coverPath),
-      uploadMedia(socialImagePath, image.socialImage),
-    ]);
+    const savedPath = await uploadVariants(image, coverPath);
+    // The 1200 × 630 share image sits next to the cover: cover-{token}-og.jpg.
+    await uploadMedia(socialImagePath(savedPath), image.socialImage);
     return savedPath;
   }
 
@@ -51,7 +44,6 @@ export function CoverImageField({
       <ImageDropZone
         name="coverImage"
         path={path}
-        version={version}
         previewClassName="aspect-video w-full max-w-xl"
         hint={t("admin.cover.hint")}
         encode={encodeCoverImage}

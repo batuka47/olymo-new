@@ -16,7 +16,6 @@ interface SeoPanelProps {
   seoTitle: string;
   seoDescription: string;
   coverPath: string | null;
-  coverVersion: string;
   siteHost: string;
   onSeoTitleChange: (value: string) => void;
   onSeoDescriptionChange: (value: string) => void;
@@ -28,7 +27,6 @@ export function SeoPanel({
   seoTitle,
   seoDescription,
   coverPath,
-  coverVersion,
   siteHost,
   onSeoTitleChange,
   onSeoDescriptionChange,
@@ -72,7 +70,6 @@ export function SeoPanel({
           {coverPath ? (
             <ResponsiveImage
               path={coverPath}
-              version={coverVersion}
               alt=""
               sizes="448px"
               className="aspect-[1.91/1] w-full"

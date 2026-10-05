@@ -48,7 +48,7 @@ export function sanitizeArticleHtml(html: string): string {
     allowedAttributes: {
       a: ["href", "rel"],
       ol: ["start"],
-      img: ["src", "srcset", "sizes", "alt", "loading", "decoding"],
+      img: ["src", "srcset", "sizes", "alt", "width", "height", "loading", "decoding"],
     },
     allowedSchemes: ["https", "http", "mailto"],
     allowedSchemesByTag: { img: ["https", "http"] },

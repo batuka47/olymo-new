@@ -1,0 +1,160 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { AdSlot, adBandClasses } from "@/components/site/ad-slot";
+import { ArticleCard } from "@/components/site/article-card";
+import { ArticleGrid } from "@/components/site/article-grid";
+import { CategoryHeader } from "@/components/site/category-header";
+import { Pagination } from "@/components/site/pagination";
+import { Container } from "@/components/ui/container";
+import { getCategory, isCategorySlug } from "@/config/categories";
+import {
+  CATEGORY_PAGE_SIZE,
+  getCategoryArticles,
+  getFeaturedArticle,
+} from "@/lib/articles/category";
+import { t } from "@/lib/i18n";
+import { siteOpenGraph } from "@/lib/metadata";
+import { hasOlympiadFilters, listViewHref, type ListView } from "./list-view";
+import { SortToggle } from "./sort-toggle";
+import { SubjectFilter } from "./subject-filter";
+
+/** category_2 sits in the list after this many cards (two rows on desktop). */
+const MID_LIST_AD_AFTER = 6;
+
+export type ListCategory = NonNullable<ReturnType<typeof getCategory>>;
+
+/** The category behind a URL segment, or undefined (for a 404). */
+export function findListCategory(slug: string): ListCategory | undefined {
+  return isCategorySlug(slug) ? getCategory(slug) : undefined;
+}
+
+function pageTitle(label: string, view: ListView): string {
+  const title = view.subject ? `${label}: ${t(`olympiad.subjects.${view.subject}`)}` : label;
+  return view.page > 1 ? t("categoryPage.pageTitle", { title, page: view.page }) : title;
+}
+
+export function categoryListMetadata(category: ListCategory, view: ListView): Metadata {
+  const title = pageTitle(category.label, view);
+  // The sort order is a reading preference, not a different page.
+  const url = listViewHref(category.slug, { ...view, sort: "newest" });
+  return {
+    title,
+    description: category.description,
+    alternates: { canonical: url },
+    openGraph: {
+      ...siteOpenGraph,
+      type: "website",
+      url,
+      title,
+      description: category.description,
+    },
+  };
+}
+
+function EmptyState({ filteredHref }: { filteredHref: string | null }) {
+  return (
+    <div className="flex flex-col items-center gap-4 border-t border-line px-4 py-16 text-center lg:py-24">
+      <p className="font-display text-xl font-bold lg:text-2xl">{t("categoryPage.empty")}</p>
+      {filteredHref && (
+        <Link
+          href={filteredHref}
+          className="inline-flex min-h-11 items-center font-mono text-xs tracking-label uppercase underline underline-offset-4"
+        >
+          {t("categoryPage.showAll")}
+        </Link>
+      )}
+    </div>
+  );
+}
+
+interface CategoryListProps {
+  category: ListCategory;
+  view: ListView;
+}
+
+/**
+ * A category page: its featured article, then the list for `view`. The plain address is static
+ * (./page.tsx); filtered and later pages render on request (../list-views/[category]/page.tsx).
+ * The database reads are cached for 60 s (see lib/articles/category.ts) and expired when an
+ * article is saved.
+ */
+export async function CategoryList({ category, view }: CategoryListProps) {
+  const featured = await getFeaturedArticle(category.slug);
+  const { articles, total } = await getCategoryArticles({
+    category: category.slug,
+    subject: view.subject,
+    sort: view.sort,
+    page: view.page,
+    excludeId: featured?.id ?? null,
+  });
+  const pageCount = Math.ceil(total / CATEGORY_PAGE_SIZE);
+  if (view.page > Math.max(pageCount, 1)) {
+    notFound();
+  }
+  // When the only article is in the banner, "no news yet" under it would contradict it.
+  const showList = articles.length > 0 || !featured || view.subject !== null;
+
+  return (
+    <Container className="pb-16 lg:pb-24">
+      <div className="border-b border-line lg:border-x">
+        <CategoryHeader title={category.label} description={category.description}>
+          {hasOlympiadFilters(category.slug) && (
+            <SubjectFilter category={category.slug} view={view} />
+          )}
+        </CategoryHeader>
+
+        {featured && (
+          <section aria-label={t("categoryPage.featured")} className="border-t border-line">
+            <ArticleCard article={featured} variant="banner" preload />
+          </section>
+        )}
+
+        <AdSlot placement="category_1" className={adBandClasses} />
+
+        {showList && (
+          <section aria-labelledby="all-news-title" className="border-t border-line">
+            <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 pt-8 pb-4 lg:px-8 lg:pt-10 lg:pb-6">
+              <h2
+                id="all-news-title"
+                className="font-display text-2xl font-bold tracking-[-0.02em] lg:text-[32px]"
+              >
+                {t("categoryPage.allNews")}
+              </h2>
+              {hasOlympiadFilters(category.slug) && (
+                <SortToggle category={category.slug} view={view} />
+              )}
+            </div>
+
+            {articles.length > 0 ? (
+              <>
+                <ArticleGrid articles={articles.slice(0, MID_LIST_AD_AFTER)} />
+                {articles.length > MID_LIST_AD_AFTER && (
+                  <>
+                    <AdSlot placement="category_2" className={adBandClasses} />
+                    <ArticleGrid articles={articles.slice(MID_LIST_AD_AFTER)} />
+                  </>
+                )}
+              </>
+            ) : (
+              <EmptyState
+                filteredHref={
+                  view.subject
+                    ? listViewHref(category.slug, { ...view, subject: null, page: 1 })
+                    : null
+                }
+              />
+            )}
+
+            <Pagination
+              page={view.page}
+              pageCount={pageCount}
+              hrefFor={(page) => listViewHref(category.slug, { ...view, page })}
+            />
+          </section>
+        )}
+        {showList && <AdSlot placement="category_3" className={adBandClasses} />}
+      </div>
+    </Container>
+  );
+}

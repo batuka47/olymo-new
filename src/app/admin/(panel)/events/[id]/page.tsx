@@ -42,7 +42,6 @@ export default async function EditEventPage({
           ? { exists: true, status: event.status, publishAt: event.publish_at, slug: event.slug }
           : { exists: false, status: "draft", publishAt: null, slug: "" }
       }
-      coverVersion={event?.updated_at ?? "new"}
     />
   );
 }

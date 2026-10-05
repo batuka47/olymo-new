@@ -26,6 +26,8 @@ const JPEG: OutputFormat = {
 export interface EncodedImage {
   format: OutputFormat;
   variants: { width: ImageWidth; blob: Blob }[];
+  /** Pixel size of the largest file, for the width and height attributes of <img>. */
+  size: { width: number; height: number };
 }
 
 export interface EncodedCover extends EncodedImage {
@@ -99,6 +101,14 @@ function centredCrop(bitmap: ImageBitmap, width: number, height: number): Source
   };
 }
 
+/** Size of a `width` px wide copy, never larger than the original. */
+function scaledSize(bitmap: ImageBitmap, width: number) {
+  const scaledWidth = Math.min(width, bitmap.width);
+  return { width: scaledWidth, height: Math.round((bitmap.height * scaledWidth) / bitmap.width) };
+}
+
+const LARGEST_WIDTH = IMAGE_WIDTHS[IMAGE_WIDTHS.length - 1];
+
 /** Images are never enlarged: a 900 px photo produces 400, 800 and 900 px files. */
 function encodeWidths(
   bitmap: ImageBitmap,
@@ -106,9 +116,8 @@ function encodeWidths(
 ): Promise<EncodedImage["variants"]> {
   return Promise.all(
     IMAGE_WIDTHS.map(async (width) => {
-      const targetWidth = Math.min(width, bitmap.width);
-      const targetHeight = Math.round((bitmap.height * targetWidth) / bitmap.width);
-      const blob = await encode(bitmap, wholeImage(bitmap), targetWidth, targetHeight, format);
+      const target = scaledSize(bitmap, width);
+      const blob = await encode(bitmap, wholeImage(bitmap), target.width, target.height, format);
       return { width, blob };
     }),
   );
@@ -134,7 +143,11 @@ async function outputFormat(): Promise<OutputFormat> {
 export function encodeImageVariants(file: File): Promise<EncodedImage> {
   return withBitmap(file, async (bitmap) => {
     const format = await outputFormat();
-    return { format, variants: await encodeWidths(bitmap, format) };
+    return {
+      format,
+      variants: await encodeWidths(bitmap, format),
+      size: scaledSize(bitmap, LARGEST_WIDTH),
+    };
   });
 }
 
@@ -147,7 +160,7 @@ export function encodeCoverImage(file: File): Promise<EncodedCover> {
       encodeWidths(bitmap, format),
       encode(bitmap, centredCrop(bitmap, width, height), width, height, JPEG),
     ]);
-    return { format, variants, socialImage };
+    return { format, variants, size: scaledSize(bitmap, LARGEST_WIDTH), socialImage };
   });
 }
 

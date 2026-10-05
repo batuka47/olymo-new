@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { JsonLd } from "@/components/json-ld";
 import { AdSlot, adBandClasses } from "@/components/site/ad-slot";
 import { Container } from "@/components/ui/container";
+import { routes } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
 import {
   arrangeHomeSections,
@@ -15,6 +17,7 @@ import {
 } from "@/lib/articles/home";
 import { getUpcomingEvents } from "@/lib/events/queries";
 import { t } from "@/lib/i18n";
+import { homeJsonLd } from "@/lib/json-ld";
 import { siteOpenGraph } from "@/lib/metadata";
 import { CardGridSection } from "./_home/card-grid-section";
 import { EventsSection } from "./_home/events-section";
@@ -28,11 +31,14 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: { absolute: siteConfig.name },
   description: siteConfig.tagline,
-  alternates: { canonical: "/" },
+  alternates: {
+    canonical: routes.home,
+    types: { "application/rss+xml": [{ url: routes.rss, title: siteConfig.name }] },
+  },
   openGraph: {
     ...siteOpenGraph,
     type: "website",
-    url: "/",
+    url: routes.home,
     title: siteConfig.name,
     description: siteConfig.tagline,
   },
@@ -87,6 +93,7 @@ export default async function HomePage() {
   // Each ad slot follows a section and hides with it, so two ads never meet.
   return (
     <>
+      <JsonLd data={homeJsonLd()} />
       <Container>
         <div className="lg:border-x lg:border-line">
           <HomeHero lead={sections.lead} />

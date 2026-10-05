@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { sitePageSlugs } from "@/config/site-pages";
 import { t } from "@/lib/i18n";
-import { IMAGE_EXTENSIONS, teamPhotoPath } from "@/lib/media";
+import { isUploadedImagePath, TEAM_PHOTO_NAME, teamFolder } from "@/lib/media";
 import { sitePageBlocksSchema } from "@/lib/site-pages/blocks";
 
 export const TITLE_MAX = 200;
@@ -42,9 +42,7 @@ const teamMemberSchema = z
   .refine(
     (member) =>
       member.photoPath === null ||
-      IMAGE_EXTENSIONS.some(
-        (extension) => member.photoPath === teamPhotoPath(member.id, 1600, extension),
-      ),
+      isUploadedImagePath(member.photoPath, teamFolder(member.id), TEAM_PHOTO_NAME),
     { error: () => t("admin.pages.errors.photo") },
   );
 

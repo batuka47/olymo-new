@@ -17,7 +17,6 @@ export function TeamGrid({ members }: { members: TeamMember[] }) {
           {member.photo_path ? (
             <ResponsiveImage
               path={member.photo_path}
-              version={member.updated_at}
               // The name is written right under the photo.
               alt=""
               sizes="(min-width: 1024px) 180px, (min-width: 640px) 25vw, 50vw"

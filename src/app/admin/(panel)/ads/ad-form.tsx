@@ -14,29 +14,24 @@ import type { AdFormValues } from "@/lib/ads/form";
 import { t } from "@/lib/i18n";
 import { encodeImageVariants, type EncodedImage } from "@/lib/images/encode";
 import { uploadVariants } from "@/lib/images/upload";
-import { adImagePath } from "@/lib/media";
+import { adImagePath, type AdImageKind } from "@/lib/media";
 import { saveAd } from "./actions";
 
 interface AdFormProps {
   adId: string;
   initialValues: AdFormValues;
-  /** Cache buster for the image previews. */
-  imageVersion: string;
 }
 
-type ImageKind = "desktop" | "mobile";
-
 /** The previews use the proportions the site shows, so a crop is visible before saving. */
-function previewClasses(placement: AdPlacement, kind: ImageKind): string {
+function previewClasses(placement: AdPlacement, kind: AdImageKind): string {
   if (kind === "mobile") {
     return "aspect-358/100 w-full max-w-sm";
   }
   return adFormat(placement).mobile ? "aspect-1248/140 w-full" : "aspect-300/250 w-full max-w-xs";
 }
 
-export function AdForm({ adId, initialValues, imageVersion }: AdFormProps) {
+export function AdForm({ adId, initialValues }: AdFormProps) {
   const [values, setValues] = useState(initialValues);
-  const [versions, setVersions] = useState({ desktop: imageVersion, mobile: imageVersion });
   const [error, setError] = useState<string>();
   const [saving, startSaving] = useTransition();
   const format = adFormat(values.placement);
@@ -45,12 +40,14 @@ export function AdForm({ adId, initialValues, imageVersion }: AdFormProps) {
     setValues((current) => ({ ...current, [key]: value }));
   }
 
-  function storeImage(kind: ImageKind) {
+  function storeImage(kind: AdImageKind) {
     return (image: EncodedImage) =>
-      uploadVariants(image, (width, extension) => adImagePath(adId, kind, width, extension));
+      uploadVariants(image, (token, width, extension) =>
+        adImagePath(adId, kind, token, width, extension),
+      );
   }
 
-  function imageField(kind: ImageKind) {
+  function imageField(kind: AdImageKind) {
     const size = kind === "desktop" ? format.desktop : format.mobile;
     const pathKey = kind === "desktop" ? "imagePath" : "imagePathMobile";
     if (!size) {
@@ -66,15 +63,11 @@ export function AdForm({ adId, initialValues, imageVersion }: AdFormProps) {
         <ImageDropZone
           name={kind === "desktop" ? "adDesktopImage" : "adMobileImage"}
           path={values[pathKey]}
-          version={versions[kind]}
           previewClassName={previewClasses(values.placement, kind)}
           hint={t("admin.ads.form.recommended", { width: size.width, height: size.height })}
           encode={encodeImageVariants}
           store={storeImage(kind)}
-          onUploaded={(path, version) => {
-            update(pathKey, path);
-            setVersions((current) => ({ ...current, [kind]: version }));
-          }}
+          onUploaded={(path) => update(pathKey, path)}
           onRemove={() => update(pathKey, null)}
           removeLabel={t("admin.ads.form.removeImage")}
         />

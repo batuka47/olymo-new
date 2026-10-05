@@ -30,7 +30,7 @@ export async function AdSlot({ placement, className }: AdSlotProps) {
 
   const format = adFormat(placement);
   const { props: desktop } = getImageProps({
-    src: mediaUrl(ad.image_path, ad.updated_at),
+    src: mediaUrl(ad.image_path),
     alt: ad.title,
     width: format.desktop.width,
     height: format.desktop.height,
@@ -39,7 +39,7 @@ export async function AdSlot({ placement, className }: AdSlotProps) {
   const mobileSrcSet =
     format.mobile && ad.image_path_mobile
       ? getImageProps({
-          src: mediaUrl(ad.image_path_mobile, ad.updated_at),
+          src: mediaUrl(ad.image_path_mobile),
           alt: ad.title,
           width: format.mobile.width,
           height: format.mobile.height,

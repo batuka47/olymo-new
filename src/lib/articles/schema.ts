@@ -2,7 +2,7 @@ import { z } from "zod";
 import { articleCategories, type CategorySlug } from "@/config/categories";
 import { olympiadSubjects } from "@/lib/articles/olympiad";
 import { t } from "@/lib/i18n";
-import { articleCoverPath, IMAGE_EXTENSIONS } from "@/lib/media";
+import { articleFolder, COVER_NAME, isUploadedImagePath } from "@/lib/media";
 import { publishInputFields } from "@/lib/publishing";
 import { SLUG_PATTERN } from "@/lib/slug";
 import { isHttpUrl } from "@/lib/url";
@@ -85,10 +85,10 @@ export const articleInputSchema = z
   })
   .superRefine((values, context) => {
     // Covers can only point at this article's own folder (see CoverImageField).
-    const allowedCoverPaths = IMAGE_EXTENSIONS.map((extension) =>
-      articleCoverPath(values.id, 1600, extension),
-    );
-    if (values.coverPath && !allowedCoverPaths.includes(values.coverPath)) {
+    if (
+      values.coverPath &&
+      !isUploadedImagePath(values.coverPath, articleFolder(values.id), COVER_NAME)
+    ) {
       context.addIssue({
         code: "custom",
         message: t("admin.cover.invalid"),

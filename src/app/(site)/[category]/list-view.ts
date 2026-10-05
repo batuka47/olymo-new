@@ -9,6 +9,9 @@ export interface ListView {
   page: number;
 }
 
+/** The plain address: every subject, newest first, page 1. */
+export const DEFAULT_LIST_VIEW: ListView = { subject: null, sort: "newest", page: 1 };
+
 type SearchParams = Record<string, string | string[] | undefined>;
 
 const PAGE_PATTERN = /^[1-9]\d{0,4}$/;

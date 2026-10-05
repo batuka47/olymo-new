@@ -9,8 +9,10 @@ export interface Crumb {
   href?: string;
 }
 
-// py-3.5 on inline links widens the tap target to 44 px without changing the line height.
-const linkClasses = "py-3.5 hover:underline";
+// py-3.5 on inline links widens the tap target to 44 px without changing the line height. A faint
+// underline marks links for readers who cannot tell the accent from the grey around it.
+const linkClasses =
+  "py-3.5 underline decoration-current/30 underline-offset-4 hover:decoration-current";
 
 /** "Нүүр / Олимпиад / Физик": the first link plain, later links in the accent colour. */
 export function Breadcrumb({ items }: { items: Crumb[] }) {

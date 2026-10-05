@@ -26,7 +26,7 @@ import type { TagValue } from "@/lib/articles/schema";
 import { articlePath, articleState } from "@/lib/articles/status";
 import { useLeaveGuard } from "@/lib/hooks/use-leave-guard";
 import { t } from "@/lib/i18n";
-import { articleCoverPath, articleFolder, articleSocialImagePath } from "@/lib/media";
+import { articleCoverPath, articleFolder } from "@/lib/media";
 import { SLUG_PATTERN, slugify } from "@/lib/slug";
 import { checkSlugAvailability, saveArticle } from "./actions";
 import { OlympiadFields } from "./olympiad-fields";
@@ -48,7 +48,6 @@ interface ArticleEditorProps {
   articleId: string;
   initialValues: ArticleFormValues;
   saved: Omit<SavedState, "snapshot">;
-  coverVersion: string;
   availableTags: TagValue[];
   siteHost: string;
 }
@@ -66,7 +65,6 @@ export function ArticleEditor({
   articleId,
   initialValues,
   saved: initialSaved,
-  coverVersion: initialCoverVersion,
   availableTags,
   siteHost,
 }: ArticleEditorProps) {
@@ -78,7 +76,6 @@ export function ArticleEditor({
   });
   const [slugEdited, setSlugEdited] = useState(initialSaved.exists);
   const [showOlympiad, setShowOlympiad] = useState(false);
-  const [coverVersion, setCoverVersion] = useState(initialCoverVersion);
   const [saving, setSaving] = useState<SavingKind>(null);
   const [lastSaved, setLastSaved] = useState<LastSave | null>(null);
   const [error, setError] = useState<string>();
@@ -245,15 +242,12 @@ export function ArticleEditor({
 
           <EditorPanel title={t("admin.cover.title")}>
             <CoverImageField
-              coverPath={(width, extension) => articleCoverPath(articleId, width, extension)}
-              socialImagePath={articleSocialImagePath(articleId)}
+              coverPath={(token, width, extension) =>
+                articleCoverPath(articleId, token, width, extension)
+              }
               path={values.coverPath}
               alt={values.coverAlt}
-              version={coverVersion}
-              onUploaded={(path, version) => {
-                update("coverPath", path);
-                setCoverVersion(version);
-              }}
+              onUploaded={(path) => update("coverPath", path)}
               onRemove={() => update("coverPath", null)}
               onAltChange={(alt) => update("coverAlt", alt)}
               caption={{
@@ -287,7 +281,6 @@ export function ArticleEditor({
               seoTitle={values.seoTitle}
               seoDescription={values.seoDescription}
               coverPath={values.coverPath}
-              coverVersion={coverVersion}
               siteHost={siteHost}
               onSeoTitleChange={(value) => update("seoTitle", value)}
               onSeoDescriptionChange={(value) => update("seoDescription", value)}

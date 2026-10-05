@@ -43,17 +43,60 @@ export async function removeFolder(supabase: Supabase, folder: string) {
   return files.length;
 }
 
-async function existingIds(supabase: Supabase, table: OwnerTable, ids: string[]) {
-  const found = new Set<string>();
+/** The rows that still exist, whole: whatever column or text points at an image counts. */
+async function existingRows(supabase: Supabase, table: OwnerTable, ids: string[]) {
+  const rows = new Map<string, string>();
   for (let start = 0; start < ids.length; start += ID_BATCH_SIZE) {
     const { data, error } = await supabase
       .from(table)
-      .select("id")
+      .select("*")
       .in("id", ids.slice(start, start + ID_BATCH_SIZE));
     if (error) throw error;
-    for (const row of data) found.add(row.id);
+    for (const row of data) rows.set(row.id, JSON.stringify(row));
   }
-  return found;
+  return rows;
+}
+
+/** Name shared by every file of one upload: cover-ab12cd34-800.webp → cover-ab12cd34. */
+function uploadName(fileName: string): string {
+  return fileName.replace(/-(?:\d+|og)\.(?:webp|jpg)$/, "");
+}
+
+/** Uploads a row points at, by uploadName, found in any of its columns (paths, body HTML). */
+function usedUploads(folder: string, rowText: string): Set<string> {
+  const pattern = new RegExp(`${folder}/([a-z0-9-]+\\.(?:webp|jpg))`, "g");
+  return new Set([...rowText.matchAll(pattern)].map((match) => uploadName(match[1])));
+}
+
+type StoredFile = Awaited<ReturnType<typeof listAll>>[number];
+
+/** A file of unknown age counts as new: when in doubt, keep it. */
+function isRecent(files: StoredFile[], minAgeMs: number, now: number) {
+  const uploadTimes = files.map((file) => Date.parse(file.updated_at ?? file.created_at ?? ""));
+  return uploadTimes.some(Number.isNaN) || now - Math.max(...uploadTimes) < minAgeMs;
+}
+
+/** Files of a row's earlier uploads: a replaced cover, or an image taken out of the text. */
+async function removeReplacedFiles(
+  supabase: Supabase,
+  folder: string,
+  rowText: string,
+  minAgeMs: number,
+  now: number,
+) {
+  const used = usedUploads(folder, rowText);
+  const replaced = (await listAll(supabase, folder)).filter(
+    (file) =>
+      file.id !== null && !used.has(uploadName(file.name)) && !isRecent([file], minAgeMs, now),
+  );
+  if (replaced.length === 0) {
+    return 0;
+  }
+  const { error } = await supabase.storage
+    .from(MEDIA_BUCKET)
+    .remove(replaced.map((file) => `${folder}/${file.name}`));
+  if (error) throw error;
+  return replaced.length;
 }
 
 export interface CleanupResult {
@@ -62,9 +105,10 @@ export interface CleanupResult {
 }
 
 /**
- * Deletes articles/{id}/, ads/{id}/, events/{id}/ and team/{id}/ folders whose row no longer exists (or never
- * did) and with nothing uploaded within `minAgeMs`. The age check protects new items: their
- * images are uploaded before the first save.
+ * Deletes articles/{id}/, ads/{id}/, events/{id}/ and team/{id}/ folders whose row no longer exists
+ * (or never did), and files in the other folders that their row no longer points at (uploads are
+ * never overwritten, so a replaced image leaves its files behind). Nothing uploaded within
+ * `minAgeMs` is deleted: images are uploaded before the save that points at them.
  */
 export async function removeUnusedFolders(
   supabase: Supabase,
@@ -78,15 +122,17 @@ export async function removeUnusedFolders(
       // Folders are listed without an id; they are named after the row id.
       .filter((entry) => entry.id === null && z.uuid().safeParse(entry.name).success)
       .map((entry) => entry.name);
-    const usedIds = await existingIds(supabase, table, folderIds);
+    const rows = await existingRows(supabase, table, folderIds);
 
-    for (const id of folderIds.filter((folderId) => !usedIds.has(folderId))) {
+    for (const id of folderIds) {
       const folder = `${prefix}/${id}`;
+      const rowText = rows.get(id);
+      if (rowText !== undefined) {
+        result.files += await removeReplacedFiles(supabase, folder, rowText, minAgeMs, now);
+        continue;
+      }
       const files = await listAll(supabase, folder);
-      const uploadTimes = files.map((file) => Date.parse(file.updated_at ?? file.created_at ?? ""));
-      // A file of unknown age counts as new: when in doubt, keep the folder.
-      const tooRecent = uploadTimes.some(Number.isNaN) || now - Math.max(...uploadTimes) < minAgeMs;
-      if (files.length === 0 || tooRecent) {
+      if (files.length === 0 || isRecent(files, minAgeMs, now)) {
         continue;
       }
       result.files += await removeFolder(supabase, folder);

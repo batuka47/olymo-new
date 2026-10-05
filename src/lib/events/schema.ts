@@ -2,7 +2,7 @@ import { z } from "zod";
 import { eventTypes } from "@/config/events";
 import { fromUlaanbaatarInputValue } from "@/lib/dates";
 import { t } from "@/lib/i18n";
-import { eventCoverPath, IMAGE_EXTENSIONS } from "@/lib/media";
+import { COVER_NAME, eventFolder, isUploadedImagePath } from "@/lib/media";
 import { publishInputFields } from "@/lib/publishing";
 import { SLUG_PATTERN } from "@/lib/slug";
 import { isHttpUrl } from "@/lib/url";
@@ -83,10 +83,10 @@ export const eventInputSchema = z
       });
     }
     // Covers can only point at this event's own folder (see CoverImageField).
-    const allowedCoverPaths = IMAGE_EXTENSIONS.map((extension) =>
-      eventCoverPath(values.id, 1600, extension),
-    );
-    if (values.coverPath && !allowedCoverPaths.includes(values.coverPath)) {
+    if (
+      values.coverPath &&
+      !isUploadedImagePath(values.coverPath, eventFolder(values.id), COVER_NAME)
+    ) {
       context.addIssue({ code: "custom", message: t("admin.cover.invalid"), path: ["coverPath"] });
     }
     if (values.coverPath && !values.coverAlt) {

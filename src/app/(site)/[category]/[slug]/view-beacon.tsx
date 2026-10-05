@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { runWhenIdle } from "@/lib/run-when-idle";
 import { recordArticleView } from "./actions";
 
 /** True the first time this browser session asks; storage is per tab session and never sent. */
@@ -17,14 +18,19 @@ function isFirstViewThisSession(articleId: string): boolean {
   return true;
 }
 
+/** Counts the view once the article has loaded, so the request never delays the page itself. */
 export function ViewBeacon({ articleId }: { articleId: string }) {
-  useEffect(() => {
-    if (isFirstViewThisSession(articleId)) {
-      recordArticleView(articleId).catch(() => {
-        // A lost view is not worth bothering the reader about.
-      });
-    }
-  }, [articleId]);
+  useEffect(
+    () =>
+      runWhenIdle(() => {
+        if (isFirstViewThisSession(articleId)) {
+          recordArticleView(articleId).catch(() => {
+            // A lost view is not worth bothering the reader about.
+          });
+        }
+      }),
+    [articleId],
+  );
 
   return null;
 }

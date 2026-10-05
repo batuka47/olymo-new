@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { draftMode } from "next/headers";
 import { notFound } from "next/navigation";
+import { JsonLd } from "@/components/json-ld";
 import { Breadcrumb } from "@/components/site/breadcrumb";
 import { EventCard } from "@/components/site/event-card";
 import { PreviewBanner } from "@/components/site/preview-banner";
@@ -10,11 +11,13 @@ import { ResponsiveImage } from "@/components/ui/responsive-image";
 import { Tag } from "@/components/ui/tag";
 import { categoryPath, requireCategory } from "@/config/categories";
 import { eventPath, eventTypeLabel } from "@/config/events";
+import { routes } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
 import { formatEventTime } from "@/lib/events/format";
 import { eventJsonLd } from "@/lib/events/json-ld";
 import { getEvent, getLatestEventSlugs, getRelatedEvents } from "@/lib/events/queries";
 import { t } from "@/lib/i18n";
+import { breadcrumbJsonLd } from "@/lib/json-ld";
 import { EventFacts } from "./event-facts";
 import { eventMetadata } from "./event-metadata";
 
@@ -50,9 +53,13 @@ export default async function EventPage({ params }: PageProps<"/events/[slug]">)
   return (
     <>
       {preview && <PreviewBanner path={path} />}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: eventJsonLd(event, pageUrl) }}
+      <JsonLd data={eventJsonLd(event, pageUrl)} />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: t("article.home"), path: routes.home },
+          { name: section.label, path: categoryPath("events") },
+          { name: event.title },
+        ])}
       />
 
       <Container className="pb-16 lg:pb-24">
@@ -61,7 +68,7 @@ export default async function EventPage({ params }: PageProps<"/events/[slug]">)
             <header className="flex flex-col gap-6 py-8 lg:px-12 lg:pt-14 lg:pb-10">
               <Breadcrumb
                 items={[
-                  { label: t("article.home"), href: "/" },
+                  { label: t("article.home"), href: routes.home },
                   { label: section.label, href: categoryPath("events") },
                   { label: eventTypeLabel(event.event_type) },
                 ]}
@@ -105,7 +112,6 @@ export default async function EventPage({ params }: PageProps<"/events/[slug]">)
                 {event.cover_path && (
                   <ResponsiveImage
                     path={event.cover_path}
-                    version={event.updated_at}
                     alt={event.cover_alt ?? ""}
                     sizes="(min-width: 1024px) 780px, 100vw"
                     preload

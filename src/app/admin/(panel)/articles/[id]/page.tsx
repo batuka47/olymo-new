@@ -50,7 +50,6 @@ export default async function EditArticlePage({
             }
           : { exists: false, status: "draft", publishAt: null, slug: "", categorySlug: "" }
       }
-      coverVersion={article?.row.updated_at ?? "new"}
       availableTags={availableTags}
       siteHost={siteHost()}
     />
