@@ -121,7 +121,43 @@ is a shortcut for the same script.
   upload is served with `Cache-Control: max-age=31536000` (a year). Images uploaded before this
   (`cover-1600.webp`, no token) keep working with their old one-hour setting.
 - **Body text** is saved as Tiptap JSON. The server builds the HTML from that JSON and cleans it
-  with an allow-list; HTML sent by a browser is never stored.
+  with an allow-list (`src/lib/editor/render-html.ts`); HTML sent by a browser is never stored.
+  Articles written before the block editor open and render as before.
+- **Block editor** (articles, events and info pages): "/" on an empty line opens a searchable
+  block menu (Mongolian or Latin words, ↑↓ and Enter); hovering a block shows "+" (add a block
+  below) and a grip to drag it elsewhere. The fixed toolbar does the same for people who don't use
+  "/". Blocks: Гарчиг 1–3 (h2–h4; the title is the page's only h1), Энгийн / Жижиг текст,
+  alignment, bold, italic, underline, strikethrough, links, lists, Эшлэл with an optional author,
+  Хуваах зураас, Зураг, Зургийн слайдер, Хүснэгт, YouTube, Сошиал пост and Embed. The block types
+  live in `src/lib/editor/nodes.ts` (what readers get) and `src/components/admin/body-editor/`
+  (how they are edited).
+- **Images in the text** can be uploaded, pasted or dropped, of any size: the browser resizes them
+  to at most 2400 px wide (WebP, JPEG where WebP can't be made) as `body-{token}-{width}.webp`,
+  with a progress bar. Only files that aren't images are refused. Each has a caption, a credit,
+  alt text and a width: text, full, left or right (left and right are full width on phones).
+- **No image fails on size** (text, covers, ads, team photos): a file still over 4.5 MB after
+  resizing is re-encoded at lower quality (down to 0.6), then narrower (down to 1600 px), and no
+  copy is larger than 16 million pixels, the most an iPhone can draw. The `media` bucket allows
+  10 MB as a margin (`src/lib/images/fit.ts`).
+- **YouTube** shows a thumbnail and play button; the youtube-nocookie.com player loads only on
+  click. **Social posts** (Facebook, Instagram, X, TikTok) use each platform's own embed; its
+  script loads only on pages with such a post, when the post nears the screen.
+- **Embed:** a single iframe from an address in `src/config/embeds.ts` (Google Maps, Forms, Docs,
+  Calendar, Drive, Canva, Vimeo, Spotify, SoundCloud, Facebook plugins) is shown as it is. Any
+  other code runs in a sandboxed frame (`srcdoc`, `sandbox="allow-scripts allow-popups
+allow-forms"`, never `allow-same-origin`) that reports its height to the page, so pasted code
+  can't reach the site or the reader's session. To allow a new service, add its host and path to
+  `allowedIframeSources`.
+- **Cover position** ("Нүүр зургийн байрлал"): over the title, under it (the default, and every
+  older article), or beside it on desktop (stacked under the excerpt on phones).
+- **Богино тайлбар** (the excerpt) is required to publish, 50–200 characters; drafts save without
+  it. The card beside it shows the link preview live: image, SEO title or title, SEO description
+  or excerpt, and the domain.
+- **The link** (slug) is the title in Latin letters and never contains Cyrillic; the full address
+  shows under the title. While it follows the title, a taken link gets a number on save
+  (`...-2`); one typed by hand is kept as typed, and a taken one is an error.
+- **"Сайтыг шинэчлэх"** on the articles list rebuilds every public page (home, categories,
+  articles, events) on its next visit, for when something changed outside the editors.
 - **Publishing:** "Нийтлэх" publishes now, or at the chosen Ulaanbaatar time when "Огноо товлох" is
   selected. Drafts autosave every 30 seconds; published articles are only saved on "Шинэчлэх".
 - **Preview** opens the public page in Next.js Draft Mode, so staff see drafts exactly as readers
@@ -400,6 +436,9 @@ its sample content:
   and a draft article. Test rows are deleted afterwards.
 - `a11y.spec.ts`: axe (WCAG 2.1 AA and best practices) on every public page.
 - `layout.spec.ts`: no page scrolls sideways at 360, 390, 768, 1024 or 1440 px.
+- `article-editor.spec.ts`: inserts every block type through "/" and the toolbar, publishes, and
+  checks the article page at 390 and 1440 px (YouTube, X and Google Maps requests are answered
+  locally). The test article and its images are deleted afterwards.
 
 ```bash
 npx playwright install chromium        # once

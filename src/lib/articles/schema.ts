@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { articleCategories, type CategorySlug } from "@/config/categories";
+import { COVER_POSITIONS } from "@/lib/articles/cover";
 import { olympiadSubjects } from "@/lib/articles/olympiad";
 import { t } from "@/lib/i18n";
 import { articleFolder, COVER_NAME, isUploadedImagePath } from "@/lib/media";
@@ -36,6 +37,12 @@ const optionalUrl = z
   })
   .transform((value) => value || null);
 
+/** "Богино тайлбар": the line under the title in lists and link previews. */
+export const EXCERPT_LENGTH = { min: 50, max: 200 } as const;
+
+const excerptError = () =>
+  t("admin.articles.errors.excerpt", { min: EXCERPT_LENGTH.min, max: EXCERPT_LENGTH.max });
+
 export const tagSchema = z.object({
   slug: z.string().regex(SLUG_PATTERN).max(60),
   label: z.string().trim().min(1).max(60),
@@ -56,14 +63,21 @@ export const articleInputSchema = z
       .trim()
       .max(120)
       .regex(SLUG_PATTERN, { error: () => t("admin.slug.invalid") }),
+    /** Made from the title, not typed: the server may add "-2" to keep it unique. */
+    slugFollowsTitle: z.boolean(),
     categorySlug: z.enum(categorySlugs, { error: () => t("admin.articles.errors.category") }),
     tags: z.array(tagSchema).max(15),
     authorName: optionalText(80),
-    excerpt: optionalText(200),
+    excerpt: z
+      .string()
+      .trim()
+      .max(EXCERPT_LENGTH.max, { error: excerptError })
+      .transform((value) => value || null),
     bodyJson: z.object({ type: z.literal("doc") }).loose(),
     coverPath: z.string().nullable(),
     coverAlt: optionalText(200),
     coverCaption: optionalText(200),
+    coverPosition: z.enum(COVER_POSITIONS),
     subject: z.enum(olympiadSubjects).nullable(),
     levelText: optionalText(100),
     registrationDeadline: optionalDate,
@@ -84,6 +98,10 @@ export const articleInputSchema = z
     ...publishInputFields,
   })
   .superRefine((values, context) => {
+    // Drafts save with any excerpt (autosave runs while it is being written); going live needs one.
+    if (values.intent === "publish" && (values.excerpt?.length ?? 0) < EXCERPT_LENGTH.min) {
+      context.addIssue({ code: "custom", message: excerptError(), path: ["excerpt"] });
+    }
     // Covers can only point at this article's own folder (see CoverImageField).
     if (
       values.coverPath &&

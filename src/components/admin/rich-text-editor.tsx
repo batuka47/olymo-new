@@ -1,25 +1,28 @@
 "use client";
 
-import { Placeholder } from "@tiptap/extensions";
 import {
   EditorContent,
   useEditor,
-  useEditorState,
   type Content,
   type Editor,
   type JSONContent,
 } from "@tiptap/react";
-import { useState, type FormEvent } from "react";
-import { Modal } from "@/components/admin/modal";
-import { Button } from "@/components/ui/button";
+import { useEffect, useRef, useState } from "react";
+import { BlockHandle } from "@/components/admin/body-editor/block-handle";
+import type { BlockDialog } from "@/components/admin/body-editor/blocks";
+import { EmbedDialog, LinkDialog, PostLinkDialog } from "@/components/admin/body-editor/dialogs";
+import { onDialogRequest, onImageFiles } from "@/components/admin/body-editor/editor-events";
+import { editorExtensions } from "@/components/admin/body-editor/editor-extensions";
+import {
+  ImageUploadsContext,
+  useImageUploads,
+  type UploadedImage,
+} from "@/components/admin/body-editor/image-uploads";
+import { Toolbar } from "@/components/admin/body-editor/toolbar";
+import { galleryImage } from "@/components/admin/body-editor/views/gallery-view";
 import { FormMessage } from "@/components/ui/form-message";
-import { fieldLabelClasses, TextField } from "@/components/ui/text-field";
-import { cx } from "@/lib/cx";
-import { articleExtensions } from "@/lib/editor/extensions";
 import { t } from "@/lib/i18n";
-import { uploadVariants } from "@/lib/images/upload";
-import { ACCEPTED_IMAGE_TYPES, encodeImageVariants, MAX_SOURCE_BYTES } from "@/lib/images/encode";
-import { responsiveImageSources } from "@/lib/media";
+import { IMAGE_INPUT_ACCEPT } from "@/lib/images/encode";
 
 interface RichTextEditorProps {
   /** Media bucket folder for images added to the text, e.g. articles/{id}. */
@@ -31,6 +34,29 @@ interface RichTextEditorProps {
   placeholder?: string;
 }
 
+type Dialog = "link" | "youtube" | "social" | "embed";
+
+function imageNode(image: UploadedImage) {
+  return {
+    type: "image",
+    attrs: {
+      src: image.src,
+      srcset: image.srcset,
+      alt: "",
+      width: image.width,
+      height: image.height,
+    },
+  };
+}
+
+function imageFiles(list: FileList | null | undefined): File[] {
+  return [...(list ?? [])];
+}
+
+/**
+ * The body editor of articles, events and info pages: a block editor ("/" menu, "+" and drag
+ * handle beside each block) with a fixed toolbar on top. Images can also be pasted or dropped.
+ */
 export function RichTextEditor({
   imageFolder,
   initialContent,
@@ -38,15 +64,18 @@ export function RichTextEditor({
   labelId,
   placeholder = t("admin.articles.editor.bodyPlaceholder"),
 }: RichTextEditorProps) {
-  const [dialog, setDialog] = useState<"link" | "image" | null>(null);
+  const [dialog, setDialog] = useState<Dialog | null>(null);
+  const uploads = useImageUploads(imageFolder);
+  const filePicker = useRef<HTMLInputElement>(null);
+  const pickingFor = useRef<"image" | "gallery">("image");
 
   const editor = useEditor({
-    extensions: [...articleExtensions, Placeholder.configure({ placeholder })],
+    extensions: editorExtensions(placeholder),
     content: initialContent,
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: "article-body min-h-96 px-5 py-4",
+        class: "article-body min-h-96 py-4 pr-5 pl-16",
         role: "textbox",
         "aria-multiline": "true",
         "aria-labelledby": labelId,
@@ -55,325 +84,112 @@ export function RichTextEditor({
     onUpdate: ({ editor: current }) => onChange(current.getJSON()),
   });
 
-  return (
-    <div className="border border-ink bg-white">
-      {editor && <Toolbar editor={editor} onOpenDialog={setDialog} />}
-      <EditorContent editor={editor} />
-      {editor && (
-        <>
-          <LinkDialog editor={editor} open={dialog === "link"} onClose={() => setDialog(null)} />
-          <ImageDialog
-            editor={editor}
-            imageFolder={imageFolder}
-            open={dialog === "image"}
-            onClose={() => setDialog(null)}
-          />
-        </>
-      )}
-    </div>
-  );
-}
-
-function Toolbar({
-  editor,
-  onOpenDialog,
-}: {
-  editor: Editor;
-  onOpenDialog: (dialog: "link" | "image") => void;
-}) {
-  const state = useEditorState({
-    editor,
-    selector: ({ editor: current }) => ({
-      h2: current.isActive("heading", { level: 2 }),
-      h3: current.isActive("heading", { level: 3 }),
-      bold: current.isActive("bold"),
-      italic: current.isActive("italic"),
-      link: current.isActive("link"),
-      bulletList: current.isActive("bulletList"),
-      orderedList: current.isActive("orderedList"),
-      blockquote: current.isActive("blockquote"),
-      canUndo: current.can().undo(),
-      canRedo: current.can().redo(),
-    }),
-  });
-  const chain = () => editor.chain().focus();
-
-  return (
-    <div
-      role="toolbar"
-      aria-label={t("admin.articles.toolbar.label")}
-      className="flex flex-wrap gap-1 border-b border-line bg-paper p-2"
-    >
-      <ToolbarButton
-        label={t("admin.articles.toolbar.h2")}
-        active={state.h2}
-        onClick={() => chain().toggleHeading({ level: 2 }).run()}
-      />
-      <ToolbarButton
-        label={t("admin.articles.toolbar.h3")}
-        active={state.h3}
-        onClick={() => chain().toggleHeading({ level: 3 }).run()}
-      />
-      <ToolbarButton
-        label={t("admin.articles.toolbar.bold")}
-        active={state.bold}
-        onClick={() => chain().toggleBold().run()}
-        className="font-bold"
-      />
-      <ToolbarButton
-        label={t("admin.articles.toolbar.italic")}
-        active={state.italic}
-        onClick={() => chain().toggleItalic().run()}
-        className="italic"
-      />
-      <ToolbarButton
-        label={t("admin.articles.toolbar.link")}
-        active={state.link}
-        onClick={() => onOpenDialog("link")}
-      />
-      <ToolbarButton
-        label={t("admin.articles.toolbar.bulletList")}
-        active={state.bulletList}
-        onClick={() => chain().toggleBulletList().run()}
-      />
-      <ToolbarButton
-        label={t("admin.articles.toolbar.orderedList")}
-        active={state.orderedList}
-        onClick={() => chain().toggleOrderedList().run()}
-      />
-      <ToolbarButton
-        label={t("admin.articles.toolbar.blockquote")}
-        active={state.blockquote}
-        onClick={() => chain().toggleBlockquote().run()}
-      />
-      <ToolbarButton
-        label={t("admin.articles.toolbar.image")}
-        onClick={() => onOpenDialog("image")}
-      />
-      <ToolbarButton
-        label={t("admin.articles.toolbar.rule")}
-        onClick={() => chain().setHorizontalRule().run()}
-      />
-      <ToolbarButton
-        label={`↶ ${t("admin.articles.toolbar.undo")}`}
-        disabled={!state.canUndo}
-        onClick={() => chain().undo().run()}
-      />
-      <ToolbarButton
-        label={`↷ ${t("admin.articles.toolbar.redo")}`}
-        disabled={!state.canRedo}
-        onClick={() => chain().redo().run()}
-      />
-    </div>
-  );
-}
-
-interface ToolbarButtonProps {
-  label: string;
-  onClick: () => void;
-  active?: boolean;
-  disabled?: boolean;
-  className?: string;
-}
-
-function ToolbarButton({ label, onClick, active, disabled, className }: ToolbarButtonProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-pressed={active}
-      className={cx(
-        "h-10 cursor-pointer border px-3 text-sm whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-40",
-        active ? "border-ink bg-ink text-paper" : "border-line bg-white hover:border-ink",
-        className,
-      )}
-    >
-      {label}
-    </button>
-  );
-}
-
-/** Accepts http(s) and mailto links; "example.mn" becomes "https://example.mn". */
-function normalizeLink(value: string): string | null {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return null;
+  async function insertImages(editorInstance: Editor, files: File[], at?: number) {
+    const images = await uploads.upload(files);
+    if (images.length === 0) return;
+    const position = Math.min(
+      at ?? editorInstance.state.selection.to,
+      editorInstance.state.doc.content.size,
+    );
+    editorInstance.chain().focus().insertContentAt(position, images.map(imageNode)).run();
   }
-  try {
-    const url = new URL(/^[a-z][a-z+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`);
-    return ["http:", "https:", "mailto:"].includes(url.protocol) ? url.href : null;
-  } catch {
-    return null;
+
+  async function insertGallery(editorInstance: Editor, files: File[]) {
+    const images = await uploads.upload(files);
+    if (images.length === 0) return;
+    editorInstance
+      .chain()
+      .focus()
+      .insertContent({ type: "gallery", attrs: { images: images.map(galleryImage) } })
+      .run();
   }
-}
 
-function LinkDialog({
-  editor,
-  open,
-  onClose,
-}: {
-  editor: Editor;
-  open: boolean;
-  onClose: () => void;
-}) {
-  const [error, setError] = useState<string>();
-  const currentHref = editor.getAttributes("link").href as string | undefined;
-
-  function apply(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const href = normalizeLink(String(new FormData(event.currentTarget).get("href") ?? ""));
-    if (!href) {
-      setError(t("admin.articles.link.invalid"));
-      return;
-    }
-    if (editor.state.selection.empty && !editor.isActive("link")) {
-      editor
-        .chain()
-        .focus()
-        .insertContent({ type: "text", text: href, marks: [{ type: "link", attrs: { href } }] })
-        .run();
+  function openDialog(next: BlockDialog | "link") {
+    if (next === "image" || next === "gallery") {
+      pickingFor.current = next;
+      if (filePicker.current) filePicker.current.multiple = next === "gallery";
+      filePicker.current?.click();
     } else {
-      editor.chain().focus().extendMarkRange("link").setLink({ href }).run();
+      setDialog(next);
     }
-    close();
   }
 
-  function remove() {
-    editor.chain().focus().extendMarkRange("link").unsetLink().run();
-    close();
-  }
-
-  function close() {
-    setError(undefined);
-    onClose();
-  }
+  // The "/" menu and pasted or dropped images reach here as events (see editor-events.ts).
+  useEffect(() => {
+    if (!editor) return;
+    const stopDialogs = onDialogRequest(editor, openDialog);
+    const stopFiles = onImageFiles(editor, ({ files, at }) => void insertImages(editor, files, at));
+    return () => {
+      stopDialogs();
+      stopFiles();
+    };
+  });
 
   return (
-    <Modal open={open} title={t("admin.articles.link.title")} onClose={close}>
-      <form onSubmit={apply} className="flex flex-col gap-4" noValidate>
-        <TextField
-          label={t("admin.articles.link.url")}
-          name="href"
-          type="url"
-          inputMode="url"
-          defaultValue={currentHref ?? "https://"}
-          autoFocus
+    <ImageUploadsContext.Provider value={uploads}>
+      <div className="border border-ink bg-white">
+        {editor && <Toolbar editor={editor} onOpenDialog={openDialog} />}
+        {uploads.progress !== null && (
+          <div
+            role="status"
+            className="flex items-center gap-3 border-b border-line bg-paper px-4 py-2"
+          >
+            <span className="font-mono text-xs">
+              {t("editor.image.progress", { percent: Math.round(uploads.progress * 100) })}
+            </span>
+            <span aria-hidden="true" className="h-1 flex-1 bg-line">
+              <span
+                className="block h-full bg-accent transition-[width]"
+                style={{ width: `${Math.round(uploads.progress * 100)}%` }}
+              />
+            </span>
+          </div>
+        )}
+        <FormMessage state={{ error: uploads.error }} className="mx-4 mt-3" />
+        <div className="relative">
+          <EditorContent editor={editor} />
+          {editor && <BlockHandle editor={editor} />}
+        </div>
+        <input
+          ref={filePicker}
+          type="file"
+          accept={IMAGE_INPUT_ACCEPT}
+          className="sr-only"
+          tabIndex={-1}
+          aria-hidden="true"
+          name="bodyImage"
+          onChange={(event) => {
+            const files = imageFiles(event.target.files);
+            event.target.value = "";
+            if (!editor || files.length === 0) return;
+            void (pickingFor.current === "gallery"
+              ? insertGallery(editor, files)
+              : insertImages(editor, files));
+          }}
         />
-        <FormMessage state={{ error }} />
-        <div className="flex flex-wrap justify-end gap-3">
-          {currentHref && (
-            <Button variant="outline" onClick={remove}>
-              {t("admin.articles.link.remove")}
-            </Button>
-          )}
-          <Button variant="outline" onClick={close}>
-            {t("admin.dialog.cancel")}
-          </Button>
-          <Button type="submit" variant="ink">
-            {t("admin.articles.link.apply")}
-          </Button>
-        </div>
-      </form>
-    </Modal>
-  );
-}
-
-interface ImageDialogProps {
-  editor: Editor;
-  imageFolder: string;
-  open: boolean;
-  onClose: () => void;
-}
-
-function ImageDialog({ editor, imageFolder, open, onClose }: ImageDialogProps) {
-  const [working, setWorking] = useState(false);
-  const [error, setError] = useState<string>();
-
-  async function insert(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const file = form.get("image");
-    const alt = String(form.get("alt") ?? "").trim();
-
-    if (!(file instanceof File) || !ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-      setError(t("admin.image.invalidType"));
-      return;
-    }
-    if (file.size > MAX_SOURCE_BYTES) {
-      setError(t("admin.image.tooLarge"));
-      return;
-    }
-
-    setWorking(true);
-    setError(undefined);
-    try {
-      const image = await encodeImageVariants(file);
-      const path = await uploadVariants(
-        image,
-        (token, width, extension) => `${imageFolder}/body-${token}-${width}.${extension}`,
-      );
-      const { src, srcSet } = responsiveImageSources(path);
-      editor
-        .chain()
-        .focus()
-        .insertContent({
-          type: "image",
-          attrs: {
-            src,
-            srcset: srcSet,
-            sizes: "(min-width: 1024px) 760px, 100vw",
-            alt,
-            // The page keeps the image's space while it loads, so the text does not jump.
-            width: image.size.width,
-            height: image.size.height,
-          },
-        })
-        .run();
-      onClose();
-    } catch {
-      setError(t("admin.image.failed"));
-    } finally {
-      setWorking(false);
-    }
-  }
-
-  return (
-    <Modal
-      open={open}
-      title={t("admin.articles.image.title")}
-      onClose={onClose}
-      dismissible={!working}
-    >
-      <form onSubmit={insert} className="flex flex-col gap-4" noValidate>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="body-image" className={fieldLabelClasses}>
-            {t("admin.articles.image.file")}
-          </label>
-          <input
-            id="body-image"
-            name="image"
-            type="file"
-            accept={ACCEPTED_IMAGE_TYPES.join(",")}
-            className="text-sm file:mr-3 file:h-11 file:cursor-pointer file:border file:border-ink file:bg-white file:px-4"
-            required
-          />
-        </div>
-        <TextField
-          label={t("admin.articles.image.alt")}
-          name="alt"
-          hint={t("admin.articles.image.altHint")}
-        />
-        <FormMessage state={{ error }} />
-        <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={onClose} disabled={working}>
-            {t("admin.dialog.cancel")}
-          </Button>
-          <Button type="submit" variant="ink" disabled={working}>
-            {working ? t("admin.articles.image.working") : t("admin.articles.image.insert")}
-          </Button>
-        </div>
-      </form>
-    </Modal>
+        {editor && (
+          <>
+            <LinkDialog editor={editor} open={dialog === "link"} onClose={() => setDialog(null)} />
+            <PostLinkDialog
+              editor={editor}
+              kind="youtube"
+              open={dialog === "youtube"}
+              onClose={() => setDialog(null)}
+            />
+            <PostLinkDialog
+              editor={editor}
+              kind="social"
+              open={dialog === "social"}
+              onClose={() => setDialog(null)}
+            />
+            <EmbedDialog
+              editor={editor}
+              open={dialog === "embed"}
+              onClose={() => setDialog(null)}
+            />
+          </>
+        )}
+      </div>
+    </ImageUploadsContext.Provider>
   );
 }

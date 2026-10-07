@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { draftMode } from "next/headers";
 import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/json-ld";
+import { ArticleBodyHtml } from "@/components/site/article-body-html";
 import { Breadcrumb } from "@/components/site/breadcrumb";
 import { EventCard } from "@/components/site/event-card";
 import { PreviewBanner } from "@/components/site/preview-banner";
@@ -118,11 +119,7 @@ export default async function EventPage({ params }: PageProps<"/events/[slug]">)
                     className="mb-8 aspect-video w-full"
                   />
                 )}
-                {/* body_html is generated and sanitized on the server when the event is saved. */}
-                <div
-                  className="article-body"
-                  dangerouslySetInnerHTML={{ __html: event.body_html ?? "" }}
-                />
+                <ArticleBodyHtml html={event.body_html ?? ""} />
               </div>
             </div>
           </article>

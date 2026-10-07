@@ -27,6 +27,7 @@ import { formatDateTime } from "@/lib/dates";
 import { t } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/server";
 import { ArticleRowActions } from "./article-row-actions";
+import { RefreshSiteButton } from "./refresh-site-button";
 
 export const metadata: Metadata = { title: t("admin.articles.title") };
 
@@ -109,9 +110,12 @@ export default async function AdminArticlesPage({ searchParams }: PageProps<"/ad
       <AdminPageHeader
         title={t("admin.articles.title")}
         actions={
-          <Link href={`${adminRoutes.articles}/new`} className={buttonClasses({ size: "lg" })}>
-            + {t("admin.articles.new")}
-          </Link>
+          <div className="flex flex-wrap items-start gap-3">
+            <RefreshSiteButton />
+            <Link href={`${adminRoutes.articles}/new`} className={buttonClasses({ size: "lg" })}>
+              + {t("admin.articles.new")}
+            </Link>
+          </div>
         }
       />
 

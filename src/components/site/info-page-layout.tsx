@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { ArticleBodyHtml } from "@/components/site/article-body-html";
 import { Container } from "@/components/ui/container";
 import { getPageGroups } from "@/config/navigation";
 import { cx } from "@/lib/cx";
@@ -89,7 +90,5 @@ export function InfoPageBody({ html }: { html: string | null }) {
   if (!html) {
     return null;
   }
-  return (
-    <div className="article-body" dangerouslySetInnerHTML={{ __html: fillHtmlTokens(html) }} />
-  );
+  return <ArticleBodyHtml html={fillHtmlTokens(html)} />;
 }

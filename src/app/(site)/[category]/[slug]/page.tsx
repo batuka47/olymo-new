@@ -3,11 +3,12 @@ import { draftMode } from "next/headers";
 import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/json-ld";
 import { AdSlot } from "@/components/site/ad-slot";
+import { ArticleBodyHtml } from "@/components/site/article-body-html";
 import { PreviewBanner } from "@/components/site/preview-banner";
 import { TagLinks } from "@/components/site/tag-links";
 import { Container } from "@/components/ui/container";
-import { ResponsiveImage } from "@/components/ui/responsive-image";
 import { siteConfig } from "@/config/site";
+import { toCoverPosition } from "@/lib/articles/cover";
 import { articleBreadcrumbJsonLd, articleJsonLd } from "@/lib/articles/json-ld";
 import {
   articleTags,
@@ -20,6 +21,7 @@ import {
 import { articlePath } from "@/lib/articles/status";
 import { cx } from "@/lib/cx";
 import { t } from "@/lib/i18n";
+import { ArticleCover } from "./article-cover";
 import { ArticleHeader } from "./article-header";
 import { articleMetadata } from "./article-metadata";
 import { CommentsSection } from "./comments-section";
@@ -50,22 +52,10 @@ function ArticleBody({ article }: { article: Article }) {
   const tags = articleTags(article);
   return (
     <>
-      {article.cover_path && (
-        <figure className="mb-8">
-          <ResponsiveImage
-            path={article.cover_path}
-            alt={article.cover_alt ?? ""}
-            sizes="(min-width: 1024px) 780px, 100vw"
-            preload
-            className="aspect-video w-full"
-          />
-          {article.cover_caption && (
-            <figcaption className="mt-2.5 caption">{article.cover_caption}</figcaption>
-          )}
-        </figure>
+      {toCoverPosition(article.cover_position) === "below" && (
+        <ArticleCover article={article} sizes="(min-width: 1024px) 780px, 100vw" className="mb-8" />
       )}
-      {/* body_html is generated and sanitized on the server when the article is saved. */}
-      <div className="article-body" dangerouslySetInnerHTML={{ __html: article.body_html ?? "" }} />
+      <ArticleBodyHtml html={article.body_html ?? ""} />
       {tags.length > 0 && (
         <TagLinks
           tags={tags}

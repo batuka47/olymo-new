@@ -1,4 +1,5 @@
 import type { JSONContent } from "@tiptap/react";
+import { toCoverPosition, type CoverPosition } from "@/lib/articles/cover";
 import type { OlympiadSubject } from "@/lib/articles/olympiad";
 import type { ArticleInput, TagValue } from "@/lib/articles/schema";
 import { publishFieldsFromRow, type PublishFormFields } from "@/lib/publishing";
@@ -18,6 +19,7 @@ export interface ArticleFormValues extends PublishFormFields {
   coverPath: string | null;
   coverAlt: string;
   coverCaption: string;
+  coverPosition: CoverPosition;
   subject: OlympiadSubject | "";
   levelText: string;
   registrationDeadline: string;
@@ -53,6 +55,7 @@ export function emptyArticleValues(): ArticleFormValues {
     coverPath: null,
     coverAlt: "",
     coverCaption: "",
+    coverPosition: "below",
     subject: "",
     levelText: "",
     registrationDeadline: "",
@@ -91,6 +94,7 @@ export function articleRowToValues(
     coverPath: row.cover_path,
     coverAlt: row.cover_alt ?? "",
     coverCaption: row.cover_caption ?? "",
+    coverPosition: toCoverPosition(row.cover_position),
     subject: (row.subject as OlympiadSubject | null) ?? "",
     levelText: row.level_text ?? "",
     registrationDeadline: row.registration_deadline ?? "",
@@ -116,11 +120,13 @@ export function toArticleInput(
   values: ArticleFormValues,
   id: string,
   intent: ArticleInput["intent"],
+  { slugFollowsTitle = false } = {},
 ): ArticleInput {
   return {
     ...values,
     id,
     intent,
+    slugFollowsTitle,
     categorySlug: values.categorySlug as ArticleInput["categorySlug"],
     subject: values.subject || null,
     // ProseMirror builds attrs with Object.create(null); React only sends plain objects to server

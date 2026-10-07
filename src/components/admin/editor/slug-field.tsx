@@ -17,14 +17,18 @@ interface SlugFieldProps {
   onRegenerate: () => void;
   /** true = free, false = taken, null = not a valid slug. */
   checkAvailability: (slug: string) => Promise<boolean | null>;
+  /** Still made from the title: a taken link gets a number on save instead of being an error. */
+  numbersWhenTaken?: boolean;
 }
 
 function SlugStatus({
   slug,
   check,
+  numbersWhenTaken,
 }: {
   slug: string;
   check: { slug: string; available: boolean | null } | null;
+  numbersWhenTaken: boolean;
 }) {
   if (!slug) {
     return <p className="text-xs text-muted">{t("admin.slug.hint")}</p>;
@@ -35,15 +39,24 @@ function SlugStatus({
   if (check?.slug !== slug) {
     return <p className="text-xs text-muted">{t("admin.slug.checking")}</p>;
   }
-  return check.available ? (
-    <p className="text-xs text-muted">✓ {t("admin.slug.available")}</p>
+  if (check.available) {
+    return <p className="text-xs text-muted">✓ {t("admin.slug.available")}</p>;
+  }
+  return numbersWhenTaken ? (
+    <p className="text-xs text-muted">{t("admin.slug.takenAuto")}</p>
   ) : (
     <p className="text-xs text-danger">{t("admin.slug.taken")}</p>
   );
 }
 
 /** The public address part, with a live "is it free?" check. */
-export function SlugField({ value, onEdit, onRegenerate, checkAvailability }: SlugFieldProps) {
+export function SlugField({
+  value,
+  onEdit,
+  onRegenerate,
+  checkAvailability,
+  numbersWhenTaken = false,
+}: SlugFieldProps) {
   const [check, setCheck] = useState<{ slug: string; available: boolean | null } | null>(null);
 
   useEffect(() => {
@@ -71,7 +84,7 @@ export function SlugField({ value, onEdit, onRegenerate, checkAvailability }: Sl
           {t("admin.slug.regenerate")}
         </Button>
       </div>
-      <SlugStatus slug={value} check={check} />
+      <SlugStatus slug={value} check={check} numbersWhenTaken={numbersWhenTaken} />
     </div>
   );
 }

@@ -2,11 +2,14 @@ import { Breadcrumb, type Crumb } from "@/components/site/breadcrumb";
 import { ShareButtons } from "@/components/site/share-buttons";
 import { categoryPath, getCategory } from "@/config/categories";
 import { siteConfig } from "@/config/site";
+import { toCoverPosition } from "@/lib/articles/cover";
 import { isOlympiadSubject } from "@/lib/articles/olympiad";
 import type { Article } from "@/lib/articles/public";
 import { readingMinutes } from "@/lib/articles/reading-time";
+import { cx } from "@/lib/cx";
 import { formatDate } from "@/lib/dates";
 import { t } from "@/lib/i18n";
+import { ArticleCover } from "./article-cover";
 
 function ArticleBreadcrumb({ article }: { article: Article }) {
   const category = getCategory(article.category_slug);
@@ -46,19 +49,52 @@ function Byline({ article }: { article: Article }) {
   );
 }
 
+/**
+ * Breadcrumb, title, excerpt and byline. The cover goes over the title, beside it (stacked under
+ * the excerpt on phones) or, by default, under the header at the top of the text (ArticleBody).
+ */
 export function ArticleHeader({ article, path }: { article: Article; path: string }) {
+  const position = toCoverPosition(article.cover_position);
+  const beside = Boolean(article.cover_path) && position === "beside";
+
   return (
-    <header className="flex flex-col gap-6 py-8 lg:px-12 lg:pt-14 lg:pb-10">
-      <ArticleBreadcrumb article={article} />
-      <h1 className="max-w-260 font-display text-[30px] leading-[1.1] font-bold tracking-display lg:text-[54px] lg:leading-[1.08]">
-        {article.title}
-      </h1>
-      {article.excerpt && (
-        <p className="max-w-205 text-lg leading-normal text-graphite lg:text-[21px]">
-          {article.excerpt}
-        </p>
+    <header
+      className={cx(
+        "grid gap-6 py-8 lg:px-12 lg:pt-14 lg:pb-10",
+        beside && "lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-x-12",
       )}
-      <div className="flex flex-col gap-5 border-t border-line pt-5 lg:flex-row lg:items-center lg:justify-between">
+    >
+      <div className={cx("flex flex-col gap-6", beside && "lg:self-center")}>
+        <ArticleBreadcrumb article={article} />
+        {position === "above" && (
+          <ArticleCover
+            article={article}
+            sizes="(min-width: 1440px) 1214px, (min-width: 1024px) calc(100vw - 226px), 100vw"
+            imageClassName="lg:aspect-[2/1]"
+          />
+        )}
+        <h1 className="max-w-260 font-display text-[30px] leading-[1.1] font-bold tracking-display lg:text-[54px] lg:leading-[1.08]">
+          {article.title}
+        </h1>
+        {article.excerpt && (
+          <p className="max-w-205 text-lg leading-normal text-graphite lg:text-[21px]">
+            {article.excerpt}
+          </p>
+        )}
+      </div>
+      {beside && (
+        <ArticleCover
+          article={article}
+          sizes="(min-width: 1024px) 490px, 100vw"
+          className="lg:self-center"
+        />
+      )}
+      <div
+        className={cx(
+          "flex flex-col gap-5 border-t border-line pt-5 lg:flex-row lg:items-center lg:justify-between",
+          beside && "lg:col-span-2",
+        )}
+      >
         <Byline article={article} />
         <ShareButtons
           url={`${siteConfig.url}${path}`}

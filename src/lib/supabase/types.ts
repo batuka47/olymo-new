@@ -102,6 +102,7 @@ export type Database = {
           cover_alt: string | null;
           cover_caption: string | null;
           cover_path: string | null;
+          cover_position: string;
           created_at: string;
           exam_date: string | null;
           excerpt: string | null;
@@ -138,6 +139,7 @@ export type Database = {
           cover_alt?: string | null;
           cover_caption?: string | null;
           cover_path?: string | null;
+          cover_position?: string;
           created_at?: string;
           exam_date?: string | null;
           excerpt?: string | null;
@@ -174,6 +176,7 @@ export type Database = {
           cover_alt?: string | null;
           cover_caption?: string | null;
           cover_path?: string | null;
+          cover_position?: string;
           created_at?: string;
           exam_date?: string | null;
           excerpt?: string | null;
@@ -650,9 +653,11 @@ export type Database = {
           body_html: string | null;
           body_json: Json | null;
           category_slug: string | null;
+          comments_closed: boolean | null;
           cover_alt: string | null;
           cover_caption: string | null;
           cover_path: string | null;
+          cover_position: string | null;
           created_at: string | null;
           exam_date: string | null;
           excerpt: string | null;
@@ -685,9 +690,11 @@ export type Database = {
           body_html?: string | null;
           body_json?: Json | null;
           category_slug?: string | null;
+          comments_closed?: boolean | null;
           cover_alt?: string | null;
           cover_caption?: string | null;
           cover_path?: string | null;
+          cover_position?: string | null;
           created_at?: string | null;
           exam_date?: string | null;
           excerpt?: string | null;
@@ -720,9 +727,11 @@ export type Database = {
           body_html?: string | null;
           body_json?: Json | null;
           category_slug?: string | null;
+          comments_closed?: boolean | null;
           cover_alt?: string | null;
           cover_caption?: string | null;
           cover_path?: string | null;
+          cover_position?: string | null;
           created_at?: string | null;
           exam_date?: string | null;
           excerpt?: string | null;

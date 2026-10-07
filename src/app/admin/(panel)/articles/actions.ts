@@ -5,11 +5,13 @@ import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { adminRoutes } from "@/config/admin";
+import { ADS_CACHE_TAG } from "@/lib/ads/queries";
 import { ARTICLES_CACHE_TAG } from "@/lib/articles/public";
 import { articleInputSchema, type ArticleInput, type TagValue } from "@/lib/articles/schema";
 import { articlePath } from "@/lib/articles/status";
 import { requireStaff } from "@/lib/auth/staff";
 import { renderArticleHtml } from "@/lib/editor/render-html";
+import { EVENTS_CACHE_TAG } from "@/lib/events/queries";
 import { t } from "@/lib/i18n";
 import { articleFolder, MEDIA_BUCKET } from "@/lib/media";
 import { removeFolder } from "@/lib/media-cleanup";
@@ -110,7 +112,12 @@ export async function saveArticle(input: ArticleInput): Promise<SaveArticleResul
     .eq("id", values.id)
     .maybeSingle();
 
-  if (await isSlugTaken(supabase, values.slug, values.id)) {
+  // A link made from the title gets a number when taken ("...-2"); one typed by hand is kept as
+  // typed, so a taken one is an error the editor can fix.
+  const slug = values.slugFollowsTitle
+    ? await availableSlug(supabase, values.slug, values.id)
+    : values.slug;
+  if (!values.slugFollowsTitle && (await isSlugTaken(supabase, slug, values.id))) {
     return { ok: false, error: t("admin.slug.taken") };
   }
 
@@ -122,7 +129,7 @@ export async function saveArticle(input: ArticleInput): Promise<SaveArticleResul
   const { error } = await supabase.from("articles").upsert({
     id: values.id,
     title: values.title,
-    slug: values.slug,
+    slug,
     category_slug: values.categorySlug,
     author_name: values.authorName,
     excerpt: values.excerpt,
@@ -132,6 +139,7 @@ export async function saveArticle(input: ArticleInput): Promise<SaveArticleResul
     cover_path: values.coverPath,
     cover_alt: values.coverAlt,
     cover_caption: values.coverCaption,
+    cover_position: values.coverPosition,
     subject: values.subject,
     level_text: values.levelText,
     registration_deadline: values.registrationDeadline,
@@ -164,12 +172,12 @@ export async function saveArticle(input: ArticleInput): Promise<SaveArticleResul
     return { ok: false, error: t("admin.articles.errors.saveFailed") };
   }
 
-  revalidateArticlePages([{ category_slug: values.categorySlug, slug: values.slug }, existing]);
+  revalidateArticlePages([{ category_slug: values.categorySlug, slug }, existing]);
   return {
     ok: true,
     status: publishing.status,
     publishAt: publishing.publishAt,
-    slug: values.slug,
+    slug,
     categorySlug: values.categorySlug,
     savedAt: new Date().toISOString(),
   };
@@ -300,4 +308,17 @@ export async function duplicateArticle(articleId: string): Promise<ActionResult>
 
   revalidatePath(adminRoutes.articles);
   redirect(`${adminRoutes.articles}/${copyId}`);
+}
+
+/**
+ * "Сайтыг шинэчлэх": drops every cached public page (home, categories, articles, events) and the
+ * lists behind them, so the next visit to each is built fresh.
+ */
+export async function refreshSite(): Promise<ActionResult> {
+  await requireStaff();
+  for (const tag of [ARTICLES_CACHE_TAG, EVENTS_CACHE_TAG, ADS_CACHE_TAG]) {
+    updateTag(tag);
+  }
+  revalidatePath("/", "layout");
+  return { ok: true };
 }

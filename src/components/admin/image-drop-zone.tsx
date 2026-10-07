@@ -7,9 +7,10 @@ import { ResponsiveImage } from "@/components/ui/responsive-image";
 import { cx } from "@/lib/cx";
 import { t } from "@/lib/i18n";
 import {
-  ACCEPTED_IMAGE_TYPES,
   formatFileSize,
-  MAX_SOURCE_BYTES,
+  IMAGE_INPUT_ACCEPT,
+  isImageFile,
+  UnreadableImageError,
   type EncodedImage,
 } from "@/lib/images/encode";
 
@@ -57,12 +58,9 @@ export function ImageDropZone<T extends EncodedImage>({
     if (!file) {
       return;
     }
-    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+    // Any size: the photo is resized in the browser before it is uploaded.
+    if (!isImageFile(file)) {
       setError(t("admin.image.invalidType"));
-      return;
-    }
-    if (file.size > MAX_SOURCE_BYTES) {
-      setError(t("admin.image.tooLarge"));
       return;
     }
 
@@ -77,8 +75,12 @@ export function ImageDropZone<T extends EncodedImage>({
         sizes: image.variants.map(({ width, blob }) => `${width}px · ${formatFileSize(blob.size)}`),
       });
       onUploaded(uploadedPath);
-    } catch {
-      setError(t("admin.image.failed"));
+    } catch (failure) {
+      setError(
+        failure instanceof UnreadableImageError
+          ? t("admin.image.unreadable")
+          : t("admin.image.failed"),
+      );
     } finally {
       setPhase("idle");
     }
@@ -134,7 +136,7 @@ export function ImageDropZone<T extends EncodedImage>({
           id={inputId}
           name={name}
           type="file"
-          accept={ACCEPTED_IMAGE_TYPES.join(",")}
+          accept={IMAGE_INPUT_ACCEPT}
           className="sr-only"
           disabled={busy}
           onChange={(event) => {
