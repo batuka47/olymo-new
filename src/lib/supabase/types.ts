@@ -51,6 +51,43 @@ export type Database = {
         };
         Relationships: [];
       };
+      article_categories: {
+        Row: {
+          article_id: string;
+          category_slug: string;
+        };
+        Insert: {
+          article_id: string;
+          category_slug: string;
+        };
+        Update: {
+          article_id?: string;
+          category_slug?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "article_categories_article_id_fkey";
+            columns: ["article_id"];
+            isOneToOne: false;
+            referencedRelation: "articles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "article_categories_article_id_fkey";
+            columns: ["article_id"];
+            isOneToOne: false;
+            referencedRelation: "published_articles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "article_categories_category_slug_fkey";
+            columns: ["category_slug"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["slug"];
+          },
+        ];
+      };
       article_tags: {
         Row: {
           article_id: string;
@@ -98,6 +135,7 @@ export type Database = {
           body_html: string | null;
           body_json: Json | null;
           category_slug: string;
+          category_slugs: string[];
           comments_closed: boolean;
           cover_alt: string | null;
           cover_caption: string | null;
@@ -135,6 +173,7 @@ export type Database = {
           body_html?: string | null;
           body_json?: Json | null;
           category_slug: string;
+          category_slugs?: string[];
           comments_closed?: boolean;
           cover_alt?: string | null;
           cover_caption?: string | null;
@@ -172,6 +211,7 @@ export type Database = {
           body_html?: string | null;
           body_json?: Json | null;
           category_slug?: string;
+          category_slugs?: string[];
           comments_closed?: boolean;
           cover_alt?: string | null;
           cover_caption?: string | null;
@@ -238,7 +278,11 @@ export type Database = {
         Row: {
           created_at: string;
           description: string;
+          has_olympiad_fields: boolean;
+          is_active: boolean;
           label: string;
+          show_in_nav: boolean;
+          show_on_home: boolean;
           slug: string;
           sort_order: number;
           updated_at: string;
@@ -246,7 +290,11 @@ export type Database = {
         Insert: {
           created_at?: string;
           description?: string;
+          has_olympiad_fields?: boolean;
+          is_active?: boolean;
           label: string;
+          show_in_nav?: boolean;
+          show_on_home?: boolean;
           slug: string;
           sort_order?: number;
           updated_at?: string;
@@ -254,7 +302,11 @@ export type Database = {
         Update: {
           created_at?: string;
           description?: string;
+          has_olympiad_fields?: boolean;
+          is_active?: boolean;
           label?: string;
+          show_in_nav?: boolean;
+          show_on_home?: boolean;
           slug?: string;
           sort_order?: number;
           updated_at?: string;
@@ -653,6 +705,7 @@ export type Database = {
           body_html: string | null;
           body_json: Json | null;
           category_slug: string | null;
+          category_slugs: string[] | null;
           comments_closed: boolean | null;
           cover_alt: string | null;
           cover_caption: string | null;
@@ -690,6 +743,7 @@ export type Database = {
           body_html?: string | null;
           body_json?: Json | null;
           category_slug?: string | null;
+          category_slugs?: string[] | null;
           comments_closed?: boolean | null;
           cover_alt?: string | null;
           cover_caption?: string | null;
@@ -727,6 +781,7 @@ export type Database = {
           body_html?: string | null;
           body_json?: Json | null;
           category_slug?: string | null;
+          category_slugs?: string[] | null;
           comments_closed?: boolean | null;
           cover_alt?: string | null;
           cover_caption?: string | null;
@@ -845,6 +900,10 @@ export type Database = {
       };
     };
     Functions: {
+      article_category_slugs: {
+        Args: { main_slug: string; target_article: string };
+        Returns: string[];
+      };
       article_comment_count: { Args: { target_article: string }; Returns: number };
       article_comments: {
         Args: {
@@ -867,6 +926,7 @@ export type Database = {
         }[];
       };
       comment_needs_review: { Args: { body: string }; Returns: boolean };
+      delete_category: { Args: { category: string; move_to?: string }; Returns: undefined };
       popular_tags: {
         Args: { tag_limit?: number };
         Returns: {
@@ -882,6 +942,7 @@ export type Database = {
         Args: { attempt_action: string; attempt_ip_hash: string; window_minutes: number };
         Returns: number;
       };
+      reorder_categories: { Args: { slugs: string[] }; Returns: undefined };
       search_content: {
         Args: {
           category?: string;

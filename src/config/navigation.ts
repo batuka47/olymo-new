@@ -1,26 +1,7 @@
-import { categories, categoryPath } from "@/config/categories";
 import { t, type MessageKey } from "@/lib/i18n";
+import { routes } from "./routes";
 
-export const routes = {
-  home: "/",
-  search: "/search",
-  submit: "/submit",
-  about: "/about",
-  faq: "/faq",
-  editorialPolicy: "/editorial-policy",
-  privacy: "/privacy",
-  advertise: "/advertise",
-  partner: "/partner",
-  contact: "/contact",
-  /** Readers (commenting only); staff sign in at /admin/login. */
-  login: "/login",
-  account: "/account",
-  authCallback: "/auth/callback",
-  /** The 50 newest articles for feed readers. */
-  rss: "/rss.xml",
-  /** Lists the numbered sitemaps; the one to give Search Console. */
-  sitemapIndex: "/sitemap-index.xml",
-} as const;
+export { routes } from "./routes";
 
 export interface NavLink {
   href: string;
@@ -56,13 +37,6 @@ const pageGroups = [
     ],
   },
 ] as const satisfies readonly PageGroupConfig[];
-
-export function getCategoryLinks(): NavLink[] {
-  return categories.map((category) => ({
-    href: categoryPath(category.slug),
-    label: category.label,
-  }));
-}
 
 export function getPageGroups(): NavGroup[] {
   return pageGroups.map((group) => ({

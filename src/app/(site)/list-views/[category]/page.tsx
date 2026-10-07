@@ -1,18 +1,15 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import {
-  CategoryList,
-  categoryListMetadata,
-  findListCategory,
-} from "@/app/(site)/[category]/category-list";
+import { CategoryList, categoryListMetadata } from "@/app/(site)/[category]/category-list";
 import { parseListView } from "@/app/(site)/[category]/list-view";
+import { findListCategory } from "@/lib/categories/queries";
 
 // /olympiad?sort=deadline, /education?page=2, …: rewritten here by next.config.ts and rendered on
 // each request because they read the query string. The plain /olympiad stays static.
 
 async function resolve({ params, searchParams }: PageProps<"/list-views/[category]">) {
-  const category = findListCategory((await params).category);
-  const view = category && parseListView(category.slug, await searchParams);
+  const category = await findListCategory((await params).category);
+  const view = category && parseListView(category, await searchParams);
   return category && view ? { category, view } : null;
 }
 

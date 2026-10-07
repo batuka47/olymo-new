@@ -12,6 +12,8 @@ export interface ArticleFormValues extends PublishFormFields {
   title: string;
   slug: string;
   categorySlug: string;
+  /** "Хамаарах категориуд", in menu order as picked. */
+  secondaryCategories: string[];
   tags: TagValue[];
   authorName: string;
   excerpt: string;
@@ -48,6 +50,7 @@ export function emptyArticleValues(): ArticleFormValues {
     title: "",
     slug: "",
     categorySlug: "",
+    secondaryCategories: [],
     tags: [],
     authorName: "",
     excerpt: "",
@@ -81,12 +84,14 @@ export function emptyArticleValues(): ArticleFormValues {
 export function articleRowToValues(
   row: ArticleRow,
   tags: TagValue[],
+  secondaryCategories: string[],
   now = new Date(),
 ): ArticleFormValues {
   return {
     title: row.title,
     slug: row.slug,
     categorySlug: row.category_slug,
+    secondaryCategories,
     tags,
     authorName: row.author_name ?? "",
     excerpt: row.excerpt ?? "",
@@ -127,7 +132,8 @@ export function toArticleInput(
     id,
     intent,
     slugFollowsTitle,
-    categorySlug: values.categorySlug as ArticleInput["categorySlug"],
+    // The main category is never also a secondary one.
+    secondaryCategories: values.secondaryCategories.filter((slug) => slug !== values.categorySlug),
     subject: values.subject || null,
     // ProseMirror builds attrs with Object.create(null); React only sends plain objects to server
     // actions (others arrive as opaque references), so round-trip through JSON first.

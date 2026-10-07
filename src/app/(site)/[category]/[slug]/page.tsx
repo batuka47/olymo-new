@@ -19,6 +19,7 @@ import {
   type Article,
 } from "@/lib/articles/public";
 import { articlePath } from "@/lib/articles/status";
+import { findCategory } from "@/lib/categories/queries";
 import { cx } from "@/lib/cx";
 import { t } from "@/lib/i18n";
 import { ArticleCover } from "./article-cover";
@@ -45,7 +46,9 @@ export async function generateMetadata({
   const { slug } = await params;
   const { isEnabled: preview } = await draftMode();
   const article = await getArticle(slug, preview);
-  return article ? articleMetadata(article, preview) : {};
+  return article
+    ? articleMetadata(article, await findCategory(article.category_slug), preview)
+    : {};
 }
 
 function ArticleBody({ article }: { article: Article }) {
@@ -77,7 +80,8 @@ export default async function ArticlePage({ params }: PageProps<"/[category]/[sl
   }
   const path = articlePath(article.category_slug, article.slug);
 
-  const [mostRead, related] = await Promise.all([
+  const [category, mostRead, related] = await Promise.all([
+    findCategory(article.category_slug),
     getMostReadArticles(article.id),
     getRelatedArticles(article),
   ]);
@@ -86,13 +90,13 @@ export default async function ArticlePage({ params }: PageProps<"/[category]/[sl
   return (
     <>
       {preview ? <PreviewBanner path={path} /> : <ViewBeacon articleId={article.id} />}
-      <JsonLd data={articleJsonLd(article, `${siteConfig.url}${path}`)} />
-      <JsonLd data={articleBreadcrumbJsonLd(article)} />
+      <JsonLd data={articleJsonLd(article, category, `${siteConfig.url}${path}`)} />
+      <JsonLd data={articleBreadcrumbJsonLd(article, category)} />
 
       <Container className="pb-16 lg:pb-24">
         <div className="border-b border-line lg:border-x">
           <article>
-            <ArticleHeader article={article} path={path} />
+            <ArticleHeader article={article} category={category} path={path} />
 
             {/* One column on phones (key facts, body, aside); 8 + 4 columns from lg. */}
             <div className="grid border-t border-line lg:grid-cols-12 lg:grid-rows-[auto_1fr]">

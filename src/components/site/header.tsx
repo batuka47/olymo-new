@@ -8,11 +8,11 @@ import { HideOnScroll } from "@/components/site/hide-on-scroll";
 import { MobileMenu } from "@/components/site/mobile-menu";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
-import { getCategoryLinks, getPageGroups, routes } from "@/config/navigation";
+import { getPageGroups, routes, type NavLink } from "@/config/navigation";
 import { t } from "@/lib/i18n";
 
-export function Header() {
-  const categoryLinks = getCategoryLinks();
+/** categoryLinks: the categories shown in the menu (lib/categories/queries.ts, getNavLinks). */
+export function Header({ categoryLinks }: { categoryLinks: NavLink[] }) {
   const categoriesLabel = t("nav.categories");
 
   return (

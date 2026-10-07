@@ -15,8 +15,14 @@ Built by Anir Agency (4 people). The person publishing content is NOT a programm
 ## Content model (summary)
 articles, categories, tags, events, ads, site_pages, submissions (contact / ad / partner),
 comments, profiles (role: admin | editor | reader).
-Category slugs (single source of truth in src/config/categories.ts, never typed elsewhere):
-education=Боловсрол, olympiad=Олимпиад, world=Дэлхийд, sports=Спорт,
+Categories are data, managed by admins in /admin/categories (table categories: label, slug, description,
+sort_order, show_in_nav, is_active, has_olympiad_fields). The server reads them through
+src/lib/categories/queries.ts (cached, expired on save); src/config/categories.ts holds only types and helpers.
+Code never depends on a particular category slug, except "events" (EVENTS_CATEGORY_SLUG: the /events section).
+Olympiad behaviour follows has_olympiad_fields, never a slug. Slugs may not be a top-level route
+(RESERVED_SLUGS in src/config/routes.ts). Articles have one main category (in their URL) and optional
+secondary ones (article_categories); lists filter on articles.category_slugs, kept by database triggers.
+Initial categories: education=Боловсрол, olympiad=Олимпиад, world=Дэлхийд, sports=Спорт,
 technology=Технологи, science=Шинжлэх ухаан, events=Эвентүүд
 Olympiad subjects: math, physics, chemistry, informatics, biology, other.
 

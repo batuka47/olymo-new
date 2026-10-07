@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 import { articleRowToValues, emptyArticleValues } from "@/lib/articles/form";
 import { requireStaff } from "@/lib/auth/staff";
+import { getCategories } from "@/lib/categories/queries";
 import { t } from "@/lib/i18n";
 import { ArticleEditor } from "../article-editor";
 import { getArticleForEditing, getAvailableTags } from "../data";
@@ -25,9 +26,10 @@ export default async function EditArticlePage({
     notFound();
   }
 
-  const [article, availableTags] = await Promise.all([
+  const [article, availableTags, categories] = await Promise.all([
     getArticleForEditing(id),
     getAvailableTags(),
+    getCategories(),
   ]);
   // ?new=1 comes from /admin/articles/new: the article is created on its first save.
   if (!article && !isNew) {
@@ -38,7 +40,11 @@ export default async function EditArticlePage({
     <ArticleEditor
       key={id}
       articleId={id}
-      initialValues={article ? articleRowToValues(article.row, article.tags) : emptyArticleValues()}
+      initialValues={
+        article
+          ? articleRowToValues(article.row, article.tags, article.secondaryCategories)
+          : emptyArticleValues()
+      }
       saved={
         article
           ? {
@@ -51,6 +57,7 @@ export default async function EditArticlePage({
           : { exists: false, status: "draft", publishAt: null, slug: "", categorySlug: "" }
       }
       availableTags={availableTags}
+      categories={categories}
     />
   );
 }

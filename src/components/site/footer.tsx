@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { MailIcon, PhoneIcon } from "@/components/icons";
 import { Container } from "@/components/ui/container";
-import { getCategoryLinks, getPageGroups, type NavGroup } from "@/config/navigation";
+import { getPageGroups, type NavGroup, type NavLink } from "@/config/navigation";
 import { isPlaceholder, siteConfig, type SocialNetwork } from "@/config/site";
 import { t } from "@/lib/i18n";
 import { telHref } from "@/lib/phone";
@@ -100,7 +100,7 @@ function ContactColumn({ className }: { className?: string }) {
   );
 }
 
-export function Footer() {
+export function Footer({ categoryLinks }: { categoryLinks: NavLink[] }) {
   const year = new Date().getFullYear();
 
   return (
@@ -115,7 +115,7 @@ export function Footer() {
           </div>
 
           <LinkColumn
-            group={{ title: t("nav.categories"), links: getCategoryLinks() }}
+            group={{ title: t("nav.categories"), links: categoryLinks }}
             className="hidden lg:col-span-2 lg:block"
           />
 

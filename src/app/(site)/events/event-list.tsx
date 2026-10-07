@@ -6,15 +6,14 @@ import { EventCard } from "@/components/site/event-card";
 import { FilterLinks } from "@/components/site/filter-links";
 import { Pagination } from "@/components/site/pagination";
 import { Container } from "@/components/ui/container";
-import { requireCategory } from "@/config/categories";
+import type { Category } from "@/config/categories";
+import { getEventsSection } from "@/lib/categories/queries";
 import { EVENTS_PAGE_SIZE, getEventList, type EventListQuery } from "@/lib/events/queries";
 import { t } from "@/lib/i18n";
 import { siteOpenGraph } from "@/lib/metadata";
 import { eventListHref } from "./list-view";
 
-const section = requireCategory("events");
-
-function pageTitle(view: EventListQuery): string {
+function pageTitle(section: Category, view: EventListQuery): string {
   const parts: string[] = [section.label];
   if (view.when === "past") {
     parts.push(t("eventsPage.past"));
@@ -26,8 +25,9 @@ function pageTitle(view: EventListQuery): string {
   return view.page > 1 ? t("categoryPage.pageTitle", { title, page: view.page }) : title;
 }
 
-export function eventListMetadata(view: EventListQuery): Metadata {
-  const title = pageTitle(view);
+export async function eventListMetadata(view: EventListQuery): Promise<Metadata> {
+  const section = await getEventsSection();
+  const title = pageTitle(section, view);
   const url = eventListHref(view);
   return {
     title,
@@ -43,7 +43,7 @@ export function eventListMetadata(view: EventListQuery): Metadata {
  * lib/events/queries.ts) and expired when an event is saved.
  */
 export async function EventList({ view }: { view: EventListQuery }) {
-  const { events, total } = await getEventList(view);
+  const [section, { events, total }] = await Promise.all([getEventsSection(), getEventList(view)]);
   const pageCount = Math.ceil(total / EVENTS_PAGE_SIZE);
   if (view.page > Math.max(pageCount, 1)) {
     notFound();

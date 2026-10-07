@@ -1,4 +1,3 @@
-import { isCategorySlug, type CategorySlug } from "@/config/categories";
 import { routes } from "@/config/navigation";
 import { SLUG_PATTERN } from "@/lib/slug";
 
@@ -9,7 +8,8 @@ export const QUERY_MAX_LENGTH = 100;
 export interface SearchView {
   /** Trimmed; "" when nothing was typed. */
   q: string;
-  category: CategorySlug | null;
+  /** An active category (events too: it searches events only). */
+  category: string | null;
   tag: string | null;
   page: number;
 }
@@ -20,14 +20,18 @@ const PAGE_PATTERN = /^[1-9]\d{0,4}$/;
 
 /**
  * Null when a known parameter has a value the page does not offer (a 404, so every view has one
- * address). An empty ?q= or ?category= (a form submitted as is) means "not set".
+ * address). An empty ?q= or ?category= (a form submitted as is) means "not set". `categories` are
+ * the slugs of the active categories.
  */
-export function parseSearchView(params: SearchParams): SearchView | null {
+export function parseSearchView(
+  params: SearchParams,
+  categories: ReadonlySet<string>,
+): SearchView | null {
   const { q, category, tag, page } = params;
   if (Array.isArray(q) || Array.isArray(category) || Array.isArray(tag) || Array.isArray(page)) {
     return null;
   }
-  if (category && !isCategorySlug(category)) {
+  if (category && !categories.has(category)) {
     return null;
   }
   if (tag !== undefined && !SLUG_PATTERN.test(tag)) {
@@ -38,7 +42,7 @@ export function parseSearchView(params: SearchParams): SearchView | null {
   }
   return {
     q: (q ?? "").replace(/\s+/g, " ").trim().slice(0, QUERY_MAX_LENGTH),
-    category: category && isCategorySlug(category) ? category : null,
+    category: category || null,
     tag: tag ?? null,
     page: page ? Number(page) : 1,
   };

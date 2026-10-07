@@ -7,12 +7,7 @@ import { SelectField } from "@/components/ui/select-field";
 import { Tag } from "@/components/ui/tag";
 import { TextField } from "@/components/ui/text-field";
 import { adminRoutes } from "@/config/admin";
-import {
-  articleCategories,
-  getCategory,
-  isCategorySlug,
-  type CategorySlug,
-} from "@/config/categories";
+import { findCategoryIn, isArticleCategory, type Category } from "@/config/categories";
 import {
   articlePath,
   articleState,
@@ -23,6 +18,7 @@ import {
   type ArticleState,
 } from "@/lib/articles/status";
 import { requireStaff } from "@/lib/auth/staff";
+import { getCategories } from "@/lib/categories/queries";
 import { formatDateTime } from "@/lib/dates";
 import { t } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/server";
@@ -35,12 +31,15 @@ const PAGE_SIZE = 20;
 
 interface ArticleFilters {
   state: ArticleState | null;
-  category: CategorySlug | null;
+  category: string | null;
   query: string;
   page: number;
 }
 
-function readFilters(params: Record<string, string | string[] | undefined>): ArticleFilters {
+function readFilters(
+  params: Record<string, string | string[] | undefined>,
+  categories: Category[],
+): ArticleFilters {
   const value = (key: string) => {
     const param = params[key];
     return typeof param === "string" ? param : "";
@@ -50,7 +49,7 @@ function readFilters(params: Record<string, string | string[] | undefined>): Art
   const page = Number.parseInt(value("page"), 10);
   return {
     state: isArticleState(status) ? status : null,
-    category: isCategorySlug(category) ? category : null,
+    category: findCategoryIn(categories, category) ? category : null,
     query: value("q").trim().slice(0, 100),
     page: Number.isInteger(page) && page > 0 ? page : 1,
   };
@@ -86,7 +85,8 @@ async function getArticles(filters: ArticleFilters) {
     query = query.in("status", publicStatuses).gt("publish_at", now);
   if (filters.state === "published")
     query = query.in("status", publicStatuses).lte("publish_at", now);
-  if (filters.category) query = query.eq("category_slug", filters.category);
+  // Main or secondary, as on the public category page.
+  if (filters.category) query = query.contains("category_slugs", [filters.category]);
   if (filters.query) query = query.ilike("title", likePattern(filters.query));
 
   const from = (filters.page - 1) * PAGE_SIZE;
@@ -100,7 +100,8 @@ const cellClasses = "px-4 py-4 align-top";
 
 export default async function AdminArticlesPage({ searchParams }: PageProps<"/admin/articles">) {
   await requireStaff();
-  const filters = readFilters(await searchParams);
+  const categories = await getCategories();
+  const filters = readFilters(await searchParams, categories);
   const { articles, total } = await getArticles(filters);
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const now = new Date();
@@ -148,7 +149,7 @@ export default async function AdminArticlesPage({ searchParams }: PageProps<"/ad
           defaultValue={filters.category ?? ""}
           options={[
             { value: "", label: t("admin.articles.filters.all") },
-            ...articleCategories.map((category) => ({
+            ...categories.filter(isArticleCategory).map((category) => ({
               value: category.slug,
               label: category.label,
             })),
@@ -214,7 +215,9 @@ export default async function AdminArticlesPage({ searchParams }: PageProps<"/ad
                         {article.slug}
                       </p>
                     </td>
-                    <td className={cellClasses}>{getCategory(article.category_slug)?.label}</td>
+                    <td className={cellClasses}>
+                      {findCategoryIn(categories, article.category_slug)?.label}
+                    </td>
                     <td className={cellClasses}>
                       <ArticleStateBadge state={state} />
                     </td>

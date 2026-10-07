@@ -5,6 +5,7 @@ import { Header } from "@/components/site/header";
 import { Ticker } from "@/components/site/ticker";
 import { getBreakingArticles } from "@/lib/articles/home";
 import { articlePath } from "@/lib/articles/status";
+import { getNavLinks } from "@/lib/categories/queries";
 
 const TICKER_ITEMS = 3;
 
@@ -13,7 +14,10 @@ const TICKER_ITEMS = 3;
  * by the 404 page for addresses that match no route (it renders outside that layout).
  */
 export async function SiteFrame({ children }: { children: ReactNode }) {
-  const breaking = await getBreakingArticles(TICKER_ITEMS);
+  const [breaking, categoryLinks] = await Promise.all([
+    getBreakingArticles(TICKER_ITEMS),
+    getNavLinks(),
+  ]);
   const tickerItems = breaking.map((article) => ({
     href: articlePath(article.category_slug, article.slug),
     label: article.title,
@@ -23,12 +27,12 @@ export async function SiteFrame({ children }: { children: ReactNode }) {
     <>
       <SkipLink />
       <Ticker items={tickerItems} />
-      <Header />
+      <Header categoryLinks={categoryLinks} />
       {/* tabIndex lets the skip link move keyboard focus here, not just scroll. */}
       <main id="main" tabIndex={-1} className="flex-1 outline-none">
         {children}
       </main>
-      <Footer />
+      <Footer categoryLinks={categoryLinks} />
     </>
   );
 }

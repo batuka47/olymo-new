@@ -3,10 +3,10 @@ import { Highlight } from "@/components/ui/highlight";
 import { ImagePlaceholder } from "@/components/ui/image-placeholder";
 import { ResponsiveImage } from "@/components/ui/responsive-image";
 import { Tag } from "@/components/ui/tag";
-import { getCategory } from "@/config/categories";
 import { deadlineStatus, isOlympiadSubject, subjectGlyphs } from "@/lib/articles/olympiad";
 import type { ArticleSummary } from "@/lib/articles/public";
 import { articlePath } from "@/lib/articles/status";
+import { getCategoryLabel } from "@/lib/categories/queries";
 import { cx } from "@/lib/cx";
 import { formatShortDate } from "@/lib/dates";
 import { t } from "@/lib/i18n";
@@ -35,12 +35,12 @@ interface ArticleCardProps {
   highlight?: readonly string[];
 }
 
-/** Olympiad articles are labelled with their subject, the rest with their category. */
-function cardLabel(article: ArticleSummary): string {
+/** Olympiad articles are labelled with their subject, the rest with their (main) category. */
+async function cardLabel(article: ArticleSummary): Promise<string> {
   if (isOlympiadSubject(article.subject)) {
     return t(`olympiad.subjects.${article.subject}`);
   }
-  return getCategory(article.category_slug)?.label ?? "";
+  return getCategoryLabel(article.category_slug);
 }
 
 interface CoverProps {
@@ -85,11 +85,12 @@ function OpenDeadline({ date, className }: { date: string; className?: string })
 
 interface StackCardProps {
   article: ArticleSummary;
+  label: string;
   responsive: boolean;
   highlight?: readonly string[];
 }
 
-function StackCard({ article, responsive, highlight }: StackCardProps) {
+function StackCard({ article, label, responsive, highlight }: StackCardProps) {
   return (
     <Link
       href={articlePath(article.category_slug, article.slug)}
@@ -112,7 +113,7 @@ function StackCard({ article, responsive, highlight }: StackCardProps) {
             responsive && "md:text-[11px]",
           )}
         >
-          {cardLabel(article)}
+          {label}
         </span>
         <h3
           className={cx(
@@ -195,13 +196,21 @@ function BannerCard({ article, preload }: { article: ArticleSummary; preload?: b
 
 interface LeadCardProps {
   article: ArticleSummary;
+  label: string;
   kicker?: string;
   readingMinutes?: number;
   titleLevel?: "h2" | "h3";
   preload?: boolean;
 }
 
-function LeadCard({ article, kicker, readingMinutes, titleLevel = "h2", preload }: LeadCardProps) {
+function LeadCard({
+  article,
+  label,
+  kicker,
+  readingMinutes,
+  titleLevel = "h2",
+  preload,
+}: LeadCardProps) {
   const Title = titleLevel;
   const meta = [
     article.author_name,
@@ -220,7 +229,7 @@ function LeadCard({ article, kicker, readingMinutes, titleLevel = "h2", preload 
       <div className="flex flex-col gap-2.5 px-4 pt-4.5 pb-5 lg:gap-3.5 lg:px-8 lg:pt-7 lg:pb-8">
         <div className="flex flex-wrap gap-2">
           {kicker && <Tag variant="ink">{kicker}</Tag>}
-          <Tag>{cardLabel(article)}</Tag>
+          <Tag>{label}</Tag>
         </div>
         <Title className="font-display text-[19px] leading-[1.25] font-bold tracking-[-0.02em] group-hover:underline lg:text-[26px] lg:leading-[1.2]">
           {article.title}
@@ -233,7 +242,7 @@ function LeadCard({ article, kicker, readingMinutes, titleLevel = "h2", preload 
   );
 }
 
-function OlympiadCard({ article }: { article: ArticleSummary }) {
+function OlympiadCard({ article, label }: { article: ArticleSummary; label: string }) {
   const subject = isOlympiadSubject(article.subject) ? article.subject : null;
   const deadline = article.registration_deadline;
   return (
@@ -242,7 +251,7 @@ function OlympiadCard({ article }: { article: ArticleSummary }) {
       className="group flex h-full flex-col gap-3.5 border border-ink-line p-4.5 text-paper transition-colors hover:border-paper lg:gap-4.5 lg:p-6"
     >
       <div className="flex justify-between gap-3 font-mono text-[10px] tracking-[0.08em] uppercase lg:text-[11px]">
-        <span className="text-lime">{cardLabel(article)}</span>
+        <span className="text-lime">{label}</span>
         {article.level_text && <span className="text-right text-ash">{article.level_text}</span>}
       </div>
       <div
@@ -278,7 +287,7 @@ function OlympiadCard({ article }: { article: ArticleSummary }) {
   );
 }
 
-export function ArticleCard({
+export async function ArticleCard({
   article,
   variant,
   preload,
@@ -287,6 +296,7 @@ export function ArticleCard({
   titleLevel,
   highlight,
 }: ArticleCardProps) {
+  const label = await cardLabel(article);
   switch (variant) {
     case "banner":
       return <BannerCard article={article} preload={preload} />;
@@ -294,6 +304,7 @@ export function ArticleCard({
       return (
         <LeadCard
           article={article}
+          label={label}
           kicker={kicker}
           readingMinutes={readingMinutes}
           titleLevel={titleLevel}
@@ -301,8 +312,15 @@ export function ArticleCard({
         />
       );
     case "olympiad":
-      return <OlympiadCard article={article} />;
+      return <OlympiadCard article={article} label={label} />;
     default:
-      return <StackCard article={article} responsive={variant === "grid"} highlight={highlight} />;
+      return (
+        <StackCard
+          article={article}
+          label={label}
+          responsive={variant === "grid"}
+          highlight={highlight}
+        />
+      );
   }
 }

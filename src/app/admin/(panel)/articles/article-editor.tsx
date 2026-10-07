@@ -17,11 +17,10 @@ import { Button } from "@/components/ui/button";
 import { CharacterCount } from "@/components/ui/character-count";
 import { CheckboxField } from "@/components/ui/checkbox-field";
 import { FormMessage } from "@/components/ui/form-message";
-import { SelectField } from "@/components/ui/select-field";
 import { fieldLabelClasses, TextField } from "@/components/ui/text-field";
 import { TextAreaField } from "@/components/ui/textarea-field";
 import { adminRoutes } from "@/config/admin";
-import { articleCategories, getCategory } from "@/config/categories";
+import { findCategoryIn, type Category } from "@/config/categories";
 import { siteConfig } from "@/config/site";
 import { toArticleInput, type ArticleFormValues } from "@/lib/articles/form";
 import { EXCERPT_LENGTH, type TagValue } from "@/lib/articles/schema";
@@ -32,6 +31,7 @@ import { t } from "@/lib/i18n";
 import { articleCoverPath, articleFolder } from "@/lib/media";
 import { SLUG_PATTERN, slugFromTitle } from "@/lib/slug";
 import { checkSlugAvailability, saveArticle } from "./actions";
+import { ArticleCategoriesField } from "./article-categories-field";
 import { CoverPositionField } from "./cover-position-field";
 import { OlympiadFields } from "./olympiad-fields";
 import { SeoPanel } from "./seo-panel";
@@ -51,6 +51,8 @@ interface ArticleEditorProps {
   initialValues: ArticleFormValues;
   saved: Omit<SavedState, "snapshot">;
   availableTags: TagValue[];
+  /** Every category (lib/categories/queries.ts). */
+  categories: Category[];
 }
 
 function canAutosave(values: ArticleFormValues): boolean {
@@ -67,6 +69,7 @@ export function ArticleEditor({
   initialValues,
   saved: initialSaved,
   availableTags,
+  categories,
 }: ArticleEditorProps) {
   const bodyLabelId = useId();
   const [values, setValues] = useState(initialValues);
@@ -166,9 +169,13 @@ export function ArticleEditor({
   // "…" stands in for the category or link until they are chosen.
   const articleUrl = siteConfig.url + articlePath(values.categorySlug || "…", values.slug || "…");
 
+  // Shown for categories with the olympiad fields (an admin setting), or when any is filled in.
+  const inOlympiadCategory = [values.categorySlug, ...values.secondaryCategories].some(
+    (slug) => findCategoryIn(categories, slug)?.has_olympiad_fields,
+  );
   const showOlympiadFields =
     showOlympiad ||
-    values.categorySlug === "olympiad" ||
+    inOlympiadCategory ||
     [values.subject, values.levelText, values.registrationDeadline, values.registrationUrl].some(
       Boolean,
     );
@@ -261,7 +268,7 @@ export function ArticleEditor({
                 description={values.seoDescription.trim() || values.excerpt.trim()}
                 card={{
                   title: values.title.trim(),
-                  label: getCategory(values.categorySlug)?.label ?? "",
+                  label: findCategoryIn(categories, values.categorySlug)?.label ?? "",
                   date: saved.publishAt ? formatDate(saved.publishAt) : "",
                 }}
               />
@@ -339,18 +346,17 @@ export function ArticleEditor({
 
           <EditorPanel title={t("admin.articles.editor.settings")}>
             <div className="flex flex-col gap-5">
-              <SelectField
-                label={t("admin.articles.editor.category")}
-                name="categorySlug"
-                value={values.categorySlug}
-                onChange={(event) => update("categorySlug", event.target.value)}
-                options={[
-                  { value: "", label: t("admin.articles.editor.chooseCategory") },
-                  ...articleCategories.map((category) => ({
-                    value: category.slug,
-                    label: category.label,
-                  })),
-                ]}
+              <ArticleCategoriesField
+                categories={categories}
+                main={values.categorySlug}
+                secondary={values.secondaryCategories}
+                onChange={({ main, secondary }) =>
+                  setValues((current) => ({
+                    ...current,
+                    categorySlug: main,
+                    secondaryCategories: secondary,
+                  }))
+                }
               />
               <TagCombobox
                 id="article-tags"

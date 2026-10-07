@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { CategorySlug } from "@/config/categories";
 import type { CategorySort } from "@/lib/articles/category";
 import { cx } from "@/lib/cx";
 import { t, type MessageKey } from "@/lib/i18n";
@@ -10,7 +9,7 @@ const sorts: { value: CategorySort; labelKey: MessageKey }[] = [
   { value: "deadline", labelKey: "categoryPage.sort.deadline" },
 ];
 
-export function SortToggle({ category, view }: { category: CategorySlug; view: ListView }) {
+export function SortToggle({ category, view }: { category: string; view: ListView }) {
   return (
     <nav aria-label={t("categoryPage.sort.label")}>
       <ul className="flex gap-5 font-mono text-xs tracking-label uppercase">

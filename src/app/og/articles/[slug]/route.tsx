@@ -1,5 +1,5 @@
-import { getCategory } from "@/config/categories";
 import { getArticle } from "@/lib/articles/public";
+import { getCategoryLabel } from "@/lib/categories/queries";
 import { formatDate } from "@/lib/dates";
 import { contentShareImage } from "@/lib/og/share-card";
 
@@ -12,7 +12,7 @@ export async function GET(_request: Request, { params }: RouteContext<"/og/artic
   }
   return contentShareImage({
     title: article.title,
-    label: getCategory(article.category_slug)?.label ?? "",
+    label: await getCategoryLabel(article.category_slug),
     date: article.publish_at ? formatDate(article.publish_at) : undefined,
   });
 }

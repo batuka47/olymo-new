@@ -1,6 +1,6 @@
 import bundleAnalyzer from "@next/bundle-analyzer";
 import type { NextConfig } from "next";
-import { articleCategories } from "./src/config/categories";
+import { RESERVED_SLUGS } from "./src/config/routes";
 
 // `npm run analyze` builds with webpack and opens a map of every JS bundle (.next/analyze/).
 const withBundleAnalyzer = bundleAnalyzer({
@@ -17,7 +17,11 @@ function listViewRewrites(source: string, destination: string, keys: string[]): 
   return keys.map((key) => ({ source, destination, has: [{ type: "query", key }] }));
 }
 
-const categorySlugs = articleCategories.map((category) => category.slug).join("|");
+/**
+ * Any category address: a slug-shaped first segment that no other route uses. Categories are added
+ * in /admin/categories at run time, so the pattern cannot list them; RESERVED_SLUGS can never be one.
+ */
+const categorySegment = `(?!(?:${[...RESERVED_SLUGS].join("|")})$)[a-z0-9]+(?:-[a-z0-9]+)*`;
 
 const nextConfig: NextConfig = {
   images: {
@@ -53,7 +57,7 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return {
       beforeFiles: [
-        ...listViewRewrites(`/:category(${categorySlugs})`, "/list-views/:category", [
+        ...listViewRewrites(`/:category(${categorySegment})`, "/list-views/:category", [
           "subject",
           "sort",
           "page",

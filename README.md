@@ -63,9 +63,8 @@ Never edit a migration that has already been pushed to the hosted project; add a
 
 - **Publishing:** the public sees an article or event when its status is `published` or `scheduled`
   and `publish_at` has passed. "Scheduled" is simply published with a future date; no cron job.
-- **Categories** live in both `src/config/categories.ts` and the `categories` table. Add or remove a
-  category in both (the table through a new migration). `npm run check:categories`, part of
-  `npm run lint`, fails if their slugs differ.
+- **Categories** are rows of the `categories` table, managed in `/admin/categories` (see Categories).
+  No code depends on a particular slug except `events`, the events section.
 
 ### Pushing migrations to the hosted project
 
@@ -190,18 +189,54 @@ page immediately. A link with the wrong category answers 308 with the right addr
   row never moves after loading.
 - **Comments** load their code only when the section nears the screen (see Reader accounts).
 
+### Categories
+
+`/admin/categories` (admins only; editors pick categories in the article editor):
+
+- **List:** drag a row, or use its arrows, to set the menu order; each move is saved at once.
+  "Нуух" hides a category: its page answers 404 and it leaves the menu, search filter and sitemap,
+  but its articles still open. "Цэсэнд харуулах" (in the form) only takes it out of the menu.
+- **Form:** name, address (made from the name in Latin letters; it can change only while no
+  article is in the category, so article addresses never break), the description under the
+  category title, menu, visibility, "Олимпиадын талбартай" (the olympiad panel in the editor,
+  the subject filter and the deadline sort, and the home page's olympiad section) and
+  "Нүүрэнд харуулах" (a tile in the home page's "Салбар бүрээс"; at most 4 categories, the box is
+  disabled once four are ticked and the server refuses a fifth).
+- **Reserved addresses:** a category cannot take the first part of another page's address
+  (`admin`, `events`, `search`, `about`, …; `RESERVED_SLUGS` in `src/config/routes.ts`, which a
+  unit test checks against `src/app`).
+- **Deleting** an empty category is immediate. One with articles asks for another category, moves
+  every article there (as main or secondary category) and then deletes, in one transaction
+  (`delete_category` in the database). Moved articles get a new address; the old one redirects.
+- **Эвентүүд** is the events section: its name, description, menu place and visibility can change,
+  but not its address, and it cannot be deleted or hold articles.
+- **Secondary categories** ("Хамаарах категориуд" in the article editor) put an article on those
+  category pages, home sections and search filters too; its address keeps the main category.
+  `articles.category_slugs` (main first, kept by database triggers) is what lists filter on.
+- **Caching:** the site reads categories through `src/lib/categories/queries.ts`, cached under the
+  `categories` tag; saving in `/admin/categories` expires it and every page, so menus update at
+  once. Changes made directly in the database show within an hour. A category page that a
+  visitor's browser prefetches (from a menu link) at the very moment of a change can keep its old
+  version for up to the 60 s ISR period.
+- **Home page:** "Салбар бүрээс" shows the newest article of each category ticked "Нүүрэнд
+  харуулах", in menu order, then the next event. With none ticked, the last three visible
+  categories in menu order, leaving out those with olympiad fields (by default Спорт, Технологи,
+  Шинжлэх ухаан). The olympiad band is titled with the first category that has olympiad fields
+  (`src/lib/categories/home.ts`).
+
 ### Category pages
 
-`/{category}` uses one template for every category except Эвентүүд (its own page comes later).
+`/{category}` uses one template for every category; `/events` has its own page.
 
 - **Banner:** the newest "Онцлох" article of the category. It is left out of the list below.
-- **Бүх мэдээ:** 9 per page, `?page=N` with real links. Olympiad also has `?subject=` (Математик,
-  Физик, …) and `?sort=deadline` ("Бүртгэл дуусах": open registrations closing soonest first, then
+- **Бүх мэдээ:** 9 per page, `?page=N` with real links. Categories with olympiad fields also have
+  `?subject=` (Математик, Физик, …) and `?sort=deadline` ("Бүртгэл дуусах": open registrations closing soonest first, then
   the rest, newest first). Values the page does not offer answer 404, so each view has one address.
 - **Cards** come from `src/components/site/article-card.tsx` (`grid`, `row`, `banner`); use it for
   every article list.
 - **Caching:** the plain address (`/olympiad`) is a static page (ISR, 60 s). Addresses with
-  `?subject=`, `?sort=` or `?page=` are rewritten in `next.config.ts` to
+  `?subject=`, `?sort=` or `?page=` are rewritten in `next.config.ts` (for any slug that is not reserved, so new
+  categories work without a deploy) to
   `app/(site)/list-views/[category]`, which renders them on request; both share
   `[category]/category-list.tsx`. `/events` works the same way (`?when=`, `?featured=`,
   `?page=`). The database reads are cached for 60 s under the `articles` tag
@@ -219,9 +254,9 @@ out and the section numbers close up.
 | Ticker (every page)    | 3 newest "Шинэ мэдээ" (`is_breaking`) articles                         |
 | Hero                   | Search (`/search?q=`) and the newest "Онцлох" article                  |
 | Онцлох                 | The next 4 "Онцлох" articles                                           |
-| Олимпиадууд            | Olympiads still taking registrations, closing soonest first (scroller) |
+| Олимпиад               | Olympiads still taking registrations, closing soonest first (scroller) |
 | Мэдүүштэй              | 5 "Мэдүүштэй" articles + the "Тусгай нийтлэл" banner (see below)       |
-| Салбар бүрээс          | Newest Спорт, Технологи, Шинжлэх ухаан article + the next event        |
+| Салбар бүрээс          | Newest article of each "Нүүрэнд харуулах" category + the next event    |
 | Удахгүй болох эвентүүд | The 3 events after that one (`events` table)                           |
 
 **Тусгай нийтлэл:** the newest article marked "Нүүрний том баннер" in the editor whose last day
@@ -415,7 +450,7 @@ address; `/account` changes it once, signs out, and deletes the account.
 
 - **404:** `(site)/not-found.tsx` shows "404", "Хуудас олдсонгүй", a search box and the 4 newest
   articles inside the site's header and footer, with a real 404 status. Missing articles,
-  categories and events check before the page streams (`[category]/layout.tsx`,
+  categories and events check before the page streams (`[category]/(list)/layout.tsx`,
   `[category]/[slug]/layout.tsx`), because a status cannot change once streaming starts. Admin
   addresses get their own 404 inside the admin menu (`admin/(panel)/not-found.tsx`).
 - **Errors:** `error.tsx` (site, admin, root) and `global-error.tsx` show "Алдаа гарлаа" with
@@ -478,22 +513,21 @@ configures all of this for local development.
 
 ## Scripts
 
-| Command                    | What it does                                                 |
-| -------------------------- | ------------------------------------------------------------ |
-| `npm run dev`              | Start the dev server with hot reload                         |
-| `npm run build`            | Production build                                             |
-| `npm run start`            | Serve the production build (run `build` first)               |
-| `npm run analyze`          | Webpack build that opens a map of every JS bundle            |
-| `npm run test`             | Unit tests (Vitest)                                          |
-| `npm run test:e2e`         | Browser tests (Playwright; see Browser tests)                |
-| `npm run lint`             | ESLint, then `check:categories`                              |
-| `npm run typecheck`        | Generate Next.js route types, then `tsc --noEmit`            |
-| `npm run format`           | Format all files with Prettier (sorts Tailwind classes)      |
-| `npm run db:types`         | Regenerate Supabase types from the local database            |
-| `npm run db:test`          | Run the database tests (local Supabase must be running)      |
-| `npm run check:categories` | Check `categories.ts` and the migrations list the same slugs |
-| `npm run check:samples`    | Check that no migration carries sample content               |
-| `npm run admin:create`     | Create or promote an admin (see Admin area)                  |
+| Command                 | What it does                                            |
+| ----------------------- | ------------------------------------------------------- |
+| `npm run dev`           | Start the dev server with hot reload                    |
+| `npm run build`         | Production build                                        |
+| `npm run start`         | Serve the production build (run `build` first)          |
+| `npm run analyze`       | Webpack build that opens a map of every JS bundle       |
+| `npm run test`          | Unit tests (Vitest)                                     |
+| `npm run test:e2e`      | Browser tests (Playwright; see Browser tests)           |
+| `npm run lint`          | ESLint, then `check:samples`                            |
+| `npm run typecheck`     | Generate Next.js route types, then `tsc --noEmit`       |
+| `npm run format`        | Format all files with Prettier (sorts Tailwind classes) |
+| `npm run db:types`      | Regenerate Supabase types from the local database       |
+| `npm run db:test`       | Run the database tests (local Supabase must be running) |
+| `npm run check:samples` | Check that no migration carries sample content          |
+| `npm run admin:create`  | Create or promote an admin (see Admin area)             |
 
 Before merging, `lint`, `typecheck` and `build` must all pass.
 
@@ -527,7 +561,7 @@ design/              visual spec (reference only, not shipped)
 messages/mn.json     all UI text, read through t() from src/lib/i18n.ts
 src/app/             routes, root layout, global styles and design tokens (globals.css)
 src/components/ui/   shared UI primitives (Button, …)
-src/config/          siteConfig and the category list (single source of truth for slugs)
+src/config/          siteConfig, routes and reserved slugs, category types and helpers
 src/lib/             fonts, i18n helper
 src/lib/supabase/    Supabase clients (server, browser, service-role admin) and generated types
 supabase/            CLI config, migrations/ and seed.sql

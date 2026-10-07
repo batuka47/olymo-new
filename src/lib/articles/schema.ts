@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { articleCategories, type CategorySlug } from "@/config/categories";
+import { EVENTS_CATEGORY_SLUG } from "@/config/categories";
 import { COVER_POSITIONS } from "@/lib/articles/cover";
 import { olympiadSubjects } from "@/lib/articles/olympiad";
 import { t } from "@/lib/i18n";
@@ -8,10 +8,13 @@ import { publishInputFields } from "@/lib/publishing";
 import { SLUG_PATTERN } from "@/lib/slug";
 import { isHttpUrl } from "@/lib/url";
 
-const categorySlugs = articleCategories.map((category) => category.slug) as [
-  CategorySlug,
-  ...CategorySlug[],
-];
+/** A category an article can be in (not the events section); saveArticle checks it exists. */
+const categorySlug = z
+  .string()
+  .regex(SLUG_PATTERN, { error: () => t("admin.articles.errors.category") })
+  .refine((slug) => slug !== EVENTS_CATEGORY_SLUG, {
+    error: () => t("admin.articles.errors.category"),
+  });
 
 /** Trimmed text; an empty field becomes null in the database. */
 const optionalText = (max: number) =>
@@ -65,7 +68,9 @@ export const articleInputSchema = z
       .regex(SLUG_PATTERN, { error: () => t("admin.slug.invalid") }),
     /** Made from the title, not typed: the server may add "-2" to keep it unique. */
     slugFollowsTitle: z.boolean(),
-    categorySlug: z.enum(categorySlugs, { error: () => t("admin.articles.errors.category") }),
+    categorySlug,
+    /** "Хамаарах категориуд": lists the article in these too; its address keeps the main one. */
+    secondaryCategories: z.array(categorySlug).max(20),
     tags: z.array(tagSchema).max(15),
     authorName: optionalText(80),
     excerpt: z

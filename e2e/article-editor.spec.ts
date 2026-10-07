@@ -45,6 +45,16 @@ async function pngFile(page: Page, name: string, width: number, height: number) 
   return { name, mimeType: "image/png", buffer: Buffer.from(dataUrl.split(",")[1], "base64") };
 }
 
+/**
+ * Waits two frames. The editor takes up a moved caret on the browser's selectionchange event and
+ * gives focus back after a dialog on the next frame; a key pressed sooner acts on the old selection.
+ */
+function nextFrames(page: Page) {
+  return page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
+}
+
 function bodyEditor(page: Page) {
   return page.getByRole("textbox", { name: t("admin.articles.editor.body") });
 }
@@ -64,6 +74,7 @@ async function goToEmptyLastLine(page: Page) {
     await last.click();
   } else {
     await bodyEditor(page).press("Control+End");
+    await nextFrames(page);
     await page.keyboard.press("Enter");
   }
 }
@@ -88,6 +99,7 @@ async function fillDialog(page: Page, label: string, value: string) {
   await dialog.getByLabel(label).fill(value);
   await dialog.getByRole("button", { name: t("editor.dialog.insert") }).click();
   await expect(dialog).toBeHidden();
+  await nextFrames(page);
 }
 
 async function writeText(page: Page) {
@@ -107,8 +119,11 @@ async function writeText(page: Page) {
   }
   await page.keyboard.type("холбоос");
   for (let i = 0; i < "холбоос".length; i++) await page.keyboard.press("Shift+ArrowLeft");
+  // The editor must have taken the typing and the selection before the link is applied.
+  await expect.poll(() => page.evaluate(() => window.getSelection()?.toString())).toBe("холбоос");
   await bar.getByRole("button", { name: t("editor.toolbar.link") }).click();
   await fillDialog(page, t("admin.articles.link.url"), "https://example.mn/");
+  await expect(bodyEditor(page).locator('a[href="https://example.mn/"]')).toHaveText("холбоос");
 
   await slash(page, "гарчиг 1");
   await page.keyboard.type("Нэгдүгээр гарчиг");

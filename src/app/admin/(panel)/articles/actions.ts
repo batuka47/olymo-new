@@ -5,6 +5,7 @@ import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { adminRoutes } from "@/config/admin";
+import { categoryPath } from "@/config/categories";
 import { ADS_CACHE_TAG } from "@/lib/ads/queries";
 import { ARTICLES_CACHE_TAG } from "@/lib/articles/public";
 import { articleInputSchema, type ArticleInput, type TagValue } from "@/lib/articles/schema";
@@ -12,7 +13,7 @@ import { articlePath } from "@/lib/articles/status";
 import { requireStaff } from "@/lib/auth/staff";
 import { renderArticleHtml } from "@/lib/editor/render-html";
 import { EVENTS_CACHE_TAG } from "@/lib/events/queries";
-import { t } from "@/lib/i18n";
+import { t, type MessageKey } from "@/lib/i18n";
 import { articleFolder, MEDIA_BUCKET } from "@/lib/media";
 import { removeFolder } from "@/lib/media-cleanup";
 import { resolvePublishing } from "@/lib/publishing";
@@ -43,15 +44,24 @@ interface ArticleLocation {
   slug: string;
 }
 
-/** Home, category page and article page all show the article; refresh their cached HTML and lists. */
-function revalidateArticlePages(locations: (ArticleLocation | null | undefined)[]) {
+/**
+ * Home, the category pages (main and secondary, before and after) and the article page all show
+ * the article; refresh their cached HTML and lists.
+ */
+function revalidateArticlePages(
+  locations: (ArticleLocation | null | undefined)[],
+  secondaryCategories: string[] = [],
+) {
   updateTag(ARTICLES_CACHE_TAG);
   revalidatePath("/");
   for (const location of locations) {
     if (location) {
-      revalidatePath(`/${location.category_slug}`);
+      revalidatePath(categoryPath(location.category_slug));
       revalidatePath(articlePath(location.category_slug, location.slug));
     }
+  }
+  for (const category of new Set(secondaryCategories)) {
+    revalidatePath(categoryPath(category));
   }
   revalidatePath(adminRoutes.articles);
 }
@@ -85,6 +95,23 @@ async function replaceTags(supabase: Supabase, articleId: string, tags: TagValue
   return error;
 }
 
+async function replaceSecondaryCategories(
+  supabase: Supabase,
+  articleId: string,
+  categories: string[],
+) {
+  const { error: deleteError } = await supabase
+    .from("article_categories")
+    .delete()
+    .eq("article_id", articleId);
+  if (deleteError || categories.length === 0) return deleteError;
+
+  const { error } = await supabase
+    .from("article_categories")
+    .insert(categories.map((category) => ({ article_id: articleId, category_slug: category })));
+  return error;
+}
+
 export async function saveArticle(input: ArticleInput): Promise<SaveArticleResult> {
   await requireStaff();
 
@@ -108,7 +135,7 @@ export async function saveArticle(input: ArticleInput): Promise<SaveArticleResul
   const supabase = await createClient();
   const { data: existing } = await supabase
     .from("articles")
-    .select("status, publish_at, slug, category_slug")
+    .select("status, publish_at, slug, category_slug, article_categories(category_slug)")
     .eq("id", values.id)
     .maybeSingle();
 
@@ -161,18 +188,28 @@ export async function saveArticle(input: ArticleInput): Promise<SaveArticleResul
     publish_at: publishing.publishAt,
   });
   if (error) {
-    const slugTaken = error.code === "23505";
-    return {
-      ok: false,
-      error: t(slugTaken ? "admin.slug.taken" : "admin.articles.errors.saveFailed"),
+    // 23503: the category was deleted while the editor was open.
+    const messages: Record<string, MessageKey> = {
+      "23505": "admin.slug.taken",
+      "23503": "admin.articles.errors.category",
     };
+    return { ok: false, error: t(messages[error.code] ?? "admin.articles.errors.saveFailed") };
   }
 
   if (await replaceTags(supabase, values.id, values.tags)) {
     return { ok: false, error: t("admin.articles.errors.saveFailed") };
   }
+  if (await replaceSecondaryCategories(supabase, values.id, values.secondaryCategories)) {
+    return { ok: false, error: t("admin.articles.errors.category") };
+  }
 
-  revalidateArticlePages([{ category_slug: values.categorySlug, slug }, existing]);
+  revalidateArticlePages(
+    [{ category_slug: values.categorySlug, slug }, existing],
+    [
+      ...values.secondaryCategories,
+      ...(existing?.article_categories.map((link) => link.category_slug) ?? []),
+    ],
+  );
   return {
     ok: true,
     status: publishing.status,
@@ -263,7 +300,7 @@ export async function duplicateArticle(articleId: string): Promise<ActionResult>
   const supabase = await createClient();
   const { data: source } = await supabase
     .from("articles")
-    .select("*, article_tags(tag_slug)")
+    .select("*, article_tags(tag_slug), article_categories(category_slug)")
     .eq("id", articleId)
     .maybeSingle();
   if (!source) {
@@ -278,7 +315,16 @@ export async function duplicateArticle(articleId: string): Promise<ActionResult>
   const moveToCopy = (text: string) =>
     text.replaceAll(`${articleFolder(articleId)}/`, `${articleFolder(copyId)}/`);
   // Everything except the identity, generated and bookkeeping columns is copied.
-  const { id, article_tags: tags, search_vector, created_at, updated_at, ...fields } = source;
+  const {
+    id,
+    article_tags: tags,
+    article_categories: secondary,
+    category_slugs,
+    search_vector,
+    created_at,
+    updated_at,
+    ...fields
+  } = source;
 
   const { error } = await supabase.from("articles").insert({
     ...fields,
@@ -304,6 +350,11 @@ export async function duplicateArticle(articleId: string): Promise<ActionResult>
     await supabase
       .from("article_tags")
       .insert(tags.map(({ tag_slug }) => ({ article_id: copyId, tag_slug })));
+  }
+  if (secondary.length > 0) {
+    await supabase
+      .from("article_categories")
+      .insert(secondary.map(({ category_slug }) => ({ article_id: copyId, category_slug })));
   }
 
   revalidatePath(adminRoutes.articles);

@@ -1,6 +1,5 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
-import type { CategorySlug } from "@/config/categories";
 import { LIST_CACHE, SUMMARY_COLUMNS, type ArticleSummary } from "@/lib/articles/public";
 import { readingMinutes } from "@/lib/articles/reading-time";
 import { ulaanbaatarDate } from "@/lib/dates";
@@ -15,13 +14,6 @@ const FEATURED_COUNT = 4;
 const OLYMPIAD_COUNT = 10;
 const GOOD_TO_KNOW_COUNT = 5;
 const EVENT_COUNT = 3;
-
-/** The "Салбар бүрээс" tiles, in order; the fourth tile is the next event. */
-export const SECTOR_CATEGORIES = [
-  "sports",
-  "technology",
-  "science",
-] as const satisfies readonly CategorySlug[];
 
 /**
  * Rows each query asks for. Sections are filled without repeating an article (the special article
@@ -74,17 +66,22 @@ export const getFeaturedArticles = unstable_cache(
   LIST_CACHE,
 );
 
-/** Olympiads still taking registrations (deadline today or later), closing soonest first. */
+/**
+ * Olympiads still taking registrations (deadline today or later), closing soonest first, from the
+ * categories with olympiad fields.
+ */
 export const getOpenOlympiads = unstable_cache(
-  (limit: number): Promise<ArticleSummary[]> =>
-    rows(
-      publishedSummaries()
-        .eq("category_slug", "olympiad")
-        .gte("registration_deadline", ulaanbaatarDate())
-        .order("registration_deadline", { ascending: true })
-        .order("publish_at", { ascending: false })
-        .limit(limit),
-    ),
+  async (categories: string[], limit: number): Promise<ArticleSummary[]> =>
+    categories.length === 0
+      ? []
+      : rows(
+          publishedSummaries()
+            .overlaps("category_slugs", categories)
+            .gte("registration_deadline", ulaanbaatarDate())
+            .order("registration_deadline", { ascending: true })
+            .order("publish_at", { ascending: false })
+            .limit(limit),
+        ),
   ["home-open-olympiads"],
   LIST_CACHE,
 );
@@ -102,10 +99,10 @@ export const getGoodToKnowArticles = unstable_cache(
 );
 
 export const getLatestInCategory = unstable_cache(
-  (category: CategorySlug, limit: number): Promise<ArticleSummary[]> =>
+  (category: string, limit: number): Promise<ArticleSummary[]> =>
     rows(
       publishedSummaries()
-        .eq("category_slug", category)
+        .contains("category_slugs", [category])
         .order("publish_at", { ascending: false })
         .limit(limit),
     ),

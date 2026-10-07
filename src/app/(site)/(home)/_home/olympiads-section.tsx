@@ -6,18 +6,20 @@ import { t } from "@/lib/i18n";
 
 interface OlympiadsSectionProps {
   index: number;
+  /** The first category with olympiad fields (see olympiadSectionTitle). */
+  title: string;
   articles: ArticleSummary[];
 }
 
 /** The dark band: open olympiads, closing soonest first, in a sideways scroller. */
-export function OlympiadsSection({ index, articles }: OlympiadsSectionProps) {
+export function OlympiadsSection({ index, title, articles }: OlympiadsSectionProps) {
   return (
     <section className="bg-ink py-10 text-paper lg:pt-18 lg:pb-20">
       <HorizontalScroller
         labels={{ previous: t("scroller.previous"), next: t("scroller.next") }}
         header={
           <>
-            <SectionHeader index={index} title={t("home.olympiads.title")} onInk />
+            <SectionHeader index={index} title={title} onInk />
             <p className="mt-2 text-sm text-fog lg:mt-3.5 lg:text-[17px]">
               {t("home.olympiads.description")}
             </p>

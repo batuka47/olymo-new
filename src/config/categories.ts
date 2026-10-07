@@ -1,74 +1,55 @@
+// Categories live in the database and are managed by admins in /admin/categories; the server reads
+// them through lib/categories/queries.ts. This file holds only their type and helpers that need no
+// database, so client components can use them too.
+
 export interface Category {
   slug: string;
   label: string;
+  /** Shown under the category title on its page. */
   description: string;
+  sort_order: number;
+  /** In the header menu, the phone chips, the drawer and the footer. */
+  show_in_nav: boolean;
+  /** Hidden categories have no page and are left out of every list and menu. */
+  is_active: boolean;
+  /** Olympiad details in the editor, the subject filter and deadline sort on the category page. */
+  has_olympiad_fields: boolean;
+  /** "Нүүрэнд харуулах": a tile in the home page's "Салбар бүрээс" (at most HOME_CATEGORY_LIMIT). */
+  show_on_home: boolean;
 }
 
-export const categories = [
-  {
-    slug: "education",
-    label: "Боловсрол",
-    description: "Ерөнхий боловсролын сургууль, их сургуулийн элсэлт, боловсролын бодлогын мэдээ.",
-  },
-  {
-    slug: "olympiad",
-    label: "Олимпиад",
-    description: "Олимпиад, уралдааны зар, бүртгэлийн хугацаа, дүн.",
-  },
-  {
-    slug: "world",
-    label: "Дэлхийд",
-    description: "Гадаадад суралцах боломж, тэтгэлэг, олон улсын боловсролын мэдээ.",
-  },
-  {
-    slug: "sports",
-    label: "Спорт",
-    description: "Сурагч, оюутны спортын тэмцээн, амжилт.",
-  },
-  {
-    slug: "technology",
-    label: "Технологи",
-    description: "Технологи, программчлал, дижитал ур чадварын мэдээ.",
-  },
-  {
-    slug: "science",
-    label: "Шинжлэх ухаан",
-    description: "Шинжлэх ухааны нээлт, судалгаа, залуу судлаачдын амжилт.",
-  },
-  {
-    slug: "events",
-    label: "Эвентүүд",
-    description: "Сургалт, семинар, хакатон, нээлттэй хаалганы өдөр болон бусад арга хэмжээ.",
-  },
-] as const satisfies readonly Category[];
+export const CATEGORY_COLUMNS =
+  "slug, label, description, sort_order, show_in_nav, is_active, has_olympiad_fields, show_on_home";
 
-export type CategorySlug = (typeof categories)[number]["slug"];
+/** Categories that may be ticked "Нүүрэнд харуулах" at once. */
+export const HOME_CATEGORY_LIMIT = 4;
 
 /**
- * Categories an article can belong to. "events" is the events section: /events/{slug} shows an
- * event from the events table, so an article there would be unreachable.
+ * The events section: /events lists the events table and is built in code around this row, so
+ * articles cannot be filed there and the row cannot be renamed or deleted (see the migration).
  */
-export const articleCategories = categories.filter((category) => category.slug !== "events");
+export const EVENTS_CATEGORY_SLUG = "events";
 
-const categorySlugs: ReadonlySet<string> = new Set(categories.map((category) => category.slug));
-
-export function isCategorySlug(value: string): value is CategorySlug {
-  return categorySlugs.has(value);
-}
-
-export function getCategory(slug: string) {
-  return categories.find((category) => category.slug === slug);
-}
-
-export function categoryPath(slug: CategorySlug): string {
+export function categoryPath(slug: string): string {
   return `/${slug}`;
 }
 
-/** A category that is known to exist (for pages built around one, like /events). */
-export function requireCategory(slug: CategorySlug) {
-  const category = getCategory(slug);
-  if (!category) {
-    throw new Error(`Unknown category "${slug}"`);
-  }
-  return category;
+/** Categories an article can be filed under: every one but the events section. */
+export function isArticleCategory(category: Pick<Category, "slug">): boolean {
+  return category.slug !== EVENTS_CATEGORY_SLUG;
+}
+
+export function findCategoryIn<C extends Pick<Category, "slug">>(
+  categories: readonly C[],
+  slug: string,
+): C | undefined {
+  return categories.find((category) => category.slug === slug);
+}
+
+/** What the article editor offers: active article categories, plus `current` if it was hidden. */
+export function articleCategoryChoices(categories: readonly Category[], current: string[] = []) {
+  return categories.filter(
+    (category) =>
+      isArticleCategory(category) && (category.is_active || current.includes(category.slug)),
+  );
 }

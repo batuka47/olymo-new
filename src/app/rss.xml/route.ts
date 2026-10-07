@@ -1,4 +1,5 @@
-import { getCategory } from "@/config/categories";
+import { findCategoryIn } from "@/config/categories";
+import { getCategories } from "@/lib/categories/queries";
 import { routes } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
 import { getLatestArticles } from "@/lib/articles/public";
@@ -22,10 +23,10 @@ const rssDate = (value: string) => new Date(value).toUTCString();
 
 /** The 50 newest published articles for feed readers. */
 export async function GET() {
-  const articles = await getLatestArticles(FEED_SIZE);
+  const [articles, categories] = await Promise.all([getLatestArticles(FEED_SIZE), getCategories()]);
   const items = articles.map((article) => {
     const url = `${siteConfig.url}${articlePath(article.category_slug, article.slug)}`;
-    const category = getCategory(article.category_slug)?.label;
+    const category = findCategoryIn(categories, article.category_slug)?.label;
     return [
       "<item>",
       `<title>${escapeXml(article.title)}</title>`,

@@ -12,9 +12,10 @@ import {
   getOpenOlympiads,
   getSpecialArticles,
   HOME_FETCH,
-  SECTOR_CATEGORIES,
   type HomeSections,
 } from "@/lib/articles/home";
+import { olympiadSectionTitle, sectorCategories } from "@/lib/categories/home";
+import { getActiveCategories } from "@/lib/categories/queries";
 import { getUpcomingEvents } from "@/lib/events/queries";
 import { t } from "@/lib/i18n";
 import { homeJsonLd } from "@/lib/json-ld";
@@ -69,13 +70,19 @@ function sectionNumbers(
 }
 
 export default async function HomePage() {
+  const categories = await getActiveCategories();
+  const olympiadCategories = categories
+    .filter((category) => category.has_olympiad_fields)
+    .map((category) => category.slug);
   const [special, featured, olympiads, goodToKnow, sectors, events] = await Promise.all([
     getSpecialArticles(HOME_FETCH.special),
     getFeaturedArticles(HOME_FETCH.featured),
-    getOpenOlympiads(HOME_FETCH.olympiads),
+    getOpenOlympiads(olympiadCategories, HOME_FETCH.olympiads),
     getGoodToKnowArticles(HOME_FETCH.goodToKnow),
     Promise.all(
-      SECTOR_CATEGORIES.map((category) => getLatestInCategory(category, HOME_FETCH.sector)),
+      sectorCategories(categories).map((category) =>
+        getLatestInCategory(category.slug, HOME_FETCH.sector),
+      ),
     ),
     getUpcomingEvents(HOME_FETCH.events),
   ]);
@@ -111,7 +118,11 @@ export default async function HomePage() {
       </Container>
 
       {visible.olympiads && (
-        <OlympiadsSection index={number.olympiads} articles={sections.olympiads} />
+        <OlympiadsSection
+          index={number.olympiads}
+          title={olympiadSectionTitle(categories) ?? t("home.olympiads.title")}
+          articles={sections.olympiads}
+        />
       )}
 
       <Container className="pb-16 lg:pb-24">

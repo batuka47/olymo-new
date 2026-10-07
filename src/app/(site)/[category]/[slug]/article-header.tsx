@@ -1,6 +1,6 @@
 import { Breadcrumb, type Crumb } from "@/components/site/breadcrumb";
 import { ShareButtons } from "@/components/site/share-buttons";
-import { categoryPath, getCategory } from "@/config/categories";
+import { categoryPath, type Category } from "@/config/categories";
 import { siteConfig } from "@/config/site";
 import { toCoverPosition } from "@/lib/articles/cover";
 import { isOlympiadSubject } from "@/lib/articles/olympiad";
@@ -11,11 +11,20 @@ import { formatDate } from "@/lib/dates";
 import { t } from "@/lib/i18n";
 import { ArticleCover } from "./article-cover";
 
-function ArticleBreadcrumb({ article }: { article: Article }) {
-  const category = getCategory(article.category_slug);
+interface ArticleHeaderProps {
+  article: Article;
+  /** The main category; undefined only if it was deleted mid-request. */
+  category: Category | undefined;
+}
+
+function ArticleBreadcrumb({ article, category }: ArticleHeaderProps) {
   const items: Crumb[] = [{ label: t("article.home"), href: "/" }];
   if (category) {
-    items.push({ label: category.label, href: categoryPath(category.slug) });
+    // A hidden category has no page to link to.
+    items.push({
+      label: category.label,
+      href: category.is_active ? categoryPath(category.slug) : undefined,
+    });
   }
   if (isOlympiadSubject(article.subject)) {
     items.push({ label: t(`olympiad.subjects.${article.subject}`) });
@@ -53,7 +62,7 @@ function Byline({ article }: { article: Article }) {
  * Breadcrumb, title, excerpt and byline. The cover goes over the title, beside it (stacked under
  * the excerpt on phones) or, by default, under the header at the top of the text (ArticleBody).
  */
-export function ArticleHeader({ article, path }: { article: Article; path: string }) {
+export function ArticleHeader({ article, category, path }: ArticleHeaderProps & { path: string }) {
   const position = toCoverPosition(article.cover_position);
   const beside = Boolean(article.cover_path) && position === "beside";
 
@@ -65,7 +74,7 @@ export function ArticleHeader({ article, path }: { article: Article; path: strin
       )}
     >
       <div className={cx("flex flex-col gap-6", beside && "lg:self-center")}>
-        <ArticleBreadcrumb article={article} />
+        <ArticleBreadcrumb article={article} category={category} />
         {position === "above" && (
           <ArticleCover
             article={article}
