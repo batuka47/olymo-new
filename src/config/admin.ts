@@ -7,6 +7,8 @@ export const adminRoutes = {
   confirm: "/admin/auth/confirm",
   setPassword: "/admin/set-password",
   articles: "/admin/articles",
+  categories: "/admin/categories",
+  quizzes: "/admin/quizzes",
   preview: "/admin/preview",
   previewExit: "/admin/preview/exit",
   events: "/admin/events",
@@ -15,6 +17,8 @@ export const adminRoutes = {
   inbox: "/admin/inbox",
   comments: "/admin/comments",
   users: "/admin/users",
+  /** The generated share card for the editors' preview (title, label and date in the query). */
+  sharePreview: "/admin/share-preview",
 } as const;
 
 /** Admin paths reachable without a staff session. */
@@ -49,6 +53,9 @@ export interface AdminNavItem {
 export const adminNavItems: readonly AdminNavItem[] = [
   { href: adminRoutes.dashboard, labelKey: "admin.nav.dashboard" },
   { href: adminRoutes.articles, labelKey: "admin.nav.articles" },
+  // Editors pick categories in the editor; adding, renaming and deleting them is for admins (RLS).
+  { href: adminRoutes.categories, labelKey: "admin.nav.categories", adminOnly: true },
+  { href: adminRoutes.quizzes, labelKey: "admin.nav.quizzes" },
   { href: adminRoutes.events, labelKey: "admin.nav.events" },
   { href: adminRoutes.ads, labelKey: "admin.nav.ads" },
   { href: adminRoutes.pages, labelKey: "admin.nav.pages" },

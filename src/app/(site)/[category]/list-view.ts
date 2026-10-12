@@ -1,4 +1,4 @@
-import { categoryPath, type CategorySlug } from "@/config/categories";
+import { categoryPath, type Category } from "@/config/categories";
 import type { CategorySort } from "@/lib/articles/category";
 import { isOlympiadSubject, type OlympiadSubject } from "@/lib/articles/olympiad";
 
@@ -16,16 +16,19 @@ type SearchParams = Record<string, string | string[] | undefined>;
 
 const PAGE_PATTERN = /^[1-9]\d{0,4}$/;
 
-/** Subject and sort exist on the olympiad page only. */
-export function hasOlympiadFilters(category: CategorySlug): boolean {
-  return category === "olympiad";
+/** Subject filter and deadline sort: for categories with the olympiad fields (admin setting). */
+export function hasOlympiadFilters(category: Pick<Category, "has_olympiad_fields">): boolean {
+  return category.has_olympiad_fields;
 }
 
 /**
  * Null when a known parameter has a value the page does not offer (a 404, so every view has one
  * address). Unknown parameters such as fbclid are ignored.
  */
-export function parseListView(category: CategorySlug, params: SearchParams): ListView | null {
+export function parseListView(
+  category: Pick<Category, "has_olympiad_fields">,
+  params: SearchParams,
+): ListView | null {
   const { subject, sort, page } = params;
   if (Array.isArray(subject) || Array.isArray(sort) || Array.isArray(page)) {
     return null;
@@ -48,7 +51,7 @@ export function parseListView(category: CategorySlug, params: SearchParams): Lis
 }
 
 /** Defaults are left out: /olympiad rather than /olympiad?sort=newest&page=1. */
-export function listViewHref(category: CategorySlug, view: ListView): string {
+export function listViewHref(category: string, view: ListView): string {
   const params = new URLSearchParams();
   if (view.subject) {
     params.set("subject", view.subject);

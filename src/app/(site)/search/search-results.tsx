@@ -4,15 +4,15 @@ import { EventCard } from "@/components/site/event-card";
 import { FilterLinks, type FilterOption } from "@/components/site/filter-links";
 import { Pagination } from "@/components/site/pagination";
 import { TagLinks } from "@/components/site/tag-links";
-import { articleCategories, categories } from "@/config/categories";
+import { isArticleCategory, type Category } from "@/config/categories";
 import { cx } from "@/lib/cx";
 import { t } from "@/lib/i18n";
 import { searchHref, searchTerms, type SearchView } from "@/lib/search/params";
 import type { SearchResult, TagLink } from "@/lib/search/queries";
 
-/** "Бүгд" and every category; events have no tags, so a tag search leaves "Эвентүүд" out. */
-function categoryOptions(view: SearchView): FilterOption[] {
-  const searchable = view.tag ? articleCategories : categories;
+/** "Бүгд" and every active category; events have no tags, so a tag search leaves them out. */
+function categoryOptions(view: SearchView, categories: Category[]): FilterOption[] {
+  const searchable = view.tag ? categories.filter(isArticleCategory) : categories;
   return [
     {
       key: "all",
@@ -85,6 +85,8 @@ function NoResults({ view, popularTags }: { view: SearchView; popularTags: TagLi
 
 interface SearchResultsProps {
   view: SearchView;
+  /** The active categories, for the filter chips. */
+  categories: Category[];
   results: SearchResult[];
   total: number;
   pageCount: number;
@@ -95,6 +97,7 @@ interface SearchResultsProps {
 /** Count, category chips, the ranked rows (articles and events mixed) and page links. */
 export function SearchResults({
   view,
+  categories,
   results,
   total,
   pageCount,
@@ -110,7 +113,10 @@ export function SearchResults({
         >
           {t("searchPage.count", { count: total })}
         </h2>
-        <FilterLinks label={t("searchPage.categoryFilter")} options={categoryOptions(view)} />
+        <FilterLinks
+          label={t("searchPage.categoryFilter")}
+          options={categoryOptions(view, categories)}
+        />
       </div>
 
       {results.length > 0 ? (

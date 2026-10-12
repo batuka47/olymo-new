@@ -8,6 +8,12 @@ const env = vi.hoisted(() => {
   return { client: null as unknown };
 });
 vi.mock("@/lib/supabase/server", () => ({ createPublicClient: () => env.client }));
+vi.mock("@/lib/categories/queries", () => ({
+  getActiveCategories: async () =>
+    ["education", "olympiad", "world", "sports", "technology", "science", "events"].map((slug) => ({
+      slug,
+    })),
+}));
 
 const { countSitemaps, sitemapEntries, URLS_PER_SITEMAP } = await import("./sitemap");
 

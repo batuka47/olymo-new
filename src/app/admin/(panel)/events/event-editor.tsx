@@ -11,6 +11,7 @@ import type { LastSave, SavingKind } from "@/components/admin/editor/save-status
 import { SlugField } from "@/components/admin/editor/slug-field";
 import { useDraftAutosave } from "@/components/admin/editor/use-draft-autosave";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
+import { SharePreview } from "@/components/admin/share-preview";
 import { CharacterCount } from "@/components/ui/character-count";
 import { CheckboxField } from "@/components/ui/checkbox-field";
 import { FormMessage } from "@/components/ui/form-message";
@@ -18,8 +19,15 @@ import { SelectField } from "@/components/ui/select-field";
 import { fieldLabelClasses, TextField } from "@/components/ui/text-field";
 import { TextAreaField } from "@/components/ui/textarea-field";
 import { adminRoutes } from "@/config/admin";
-import { eventPath, eventTypeLabelKeys, eventTypes, type EventType } from "@/config/events";
+import {
+  eventPath,
+  eventTypeLabel,
+  eventTypeLabelKeys,
+  eventTypes,
+  type EventType,
+} from "@/config/events";
 import { articleState } from "@/lib/articles/status";
+import { formatDate, fromUlaanbaatarInputValue } from "@/lib/dates";
 import { toEventInput, type EventFormValues } from "@/lib/events/form";
 import { useLeaveGuard } from "@/lib/hooks/use-leave-guard";
 import { t } from "@/lib/i18n";
@@ -40,6 +48,12 @@ interface SavedState {
 }
 
 /** The fields a draft needs before autosave can store it; the rest is checked on save. */
+/** The start date the share card shows; empty until a start is entered. */
+function shareCardDate(startsAt: string): string {
+  const start = fromUlaanbaatarInputValue(startsAt);
+  return start ? formatDate(start) : "";
+}
+
 function canAutosave(values: EventFormValues): boolean {
   return (
     values.title.trim() !== "" &&
@@ -294,6 +308,18 @@ export function EventEditor({ eventId, initialValues, saved: initialSaved }: Eve
               onRemove={() => update("coverPath", null)}
               onAltChange={(alt) => update("coverAlt", alt)}
             />
+            <div className="mt-6">
+              <SharePreview
+                coverPath={values.coverPath}
+                title={values.title.trim()}
+                description={values.excerpt.trim()}
+                card={{
+                  title: values.title.trim(),
+                  label: eventTypeLabel(values.eventType),
+                  date: shareCardDate(values.startsAt),
+                }}
+              />
+            </div>
           </EditorPanel>
         </div>
 

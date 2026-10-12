@@ -4,7 +4,7 @@ import type { JSONContent } from "@tiptap/react";
 import { revalidatePath, updateTag } from "next/cache";
 import { z } from "zod";
 import { adminRoutes } from "@/config/admin";
-import { categoryPath } from "@/config/categories";
+import { routes } from "@/config/navigation";
 import { requireStaff } from "@/lib/auth/staff";
 import { renderArticleHtml } from "@/lib/editor/render-html";
 import { eventPath } from "@/config/events";
@@ -33,7 +33,7 @@ export interface EventActionResult {
 function refreshEventPages(slugs: (string | null | undefined)[]) {
   updateTag(EVENTS_CACHE_TAG);
   revalidatePath("/");
-  revalidatePath(categoryPath("events"));
+  revalidatePath(routes.events);
   for (const slug of slugs) {
     if (slug) {
       revalidatePath(eventPath(slug));

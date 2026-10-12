@@ -35,4 +35,11 @@ export const siteConfig = {
   socials,
   /** Optional; enables the Messenger share button on computers. See .env.example. */
   facebookAppId: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID ?? "",
+  /** Off until launch: robots.txt shuts crawlers out and every page says noindex. */
+  allowIndexing: process.env.NEXT_PUBLIC_ALLOW_INDEXING === "1",
 } as const;
+
+/** "olymo.mn": the address shown on share cards and their previews. */
+export function siteHost(): string {
+  return new URL(siteConfig.url).host;
+}

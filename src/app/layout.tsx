@@ -3,7 +3,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
 import { jetbrainsMono, onest, unbounded } from "@/lib/fonts";
-import { siteOpenGraph } from "@/lib/metadata";
+import { pageRobots, siteOpenGraph } from "@/lib/metadata";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,6 +13,7 @@ export const metadata: Metadata = {
     template: `%s — ${siteConfig.name}`,
   },
   description: siteConfig.tagline,
+  robots: pageRobots(),
   openGraph: { ...siteOpenGraph, type: "website" },
   // X shows og:image in a large card; pages without their own twitter field inherit this.
   twitter: { card: "summary_large_image" },

@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import { createClient, createPublicClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/types";
@@ -62,6 +63,21 @@ export type Article = NonNullable<Awaited<ReturnType<typeof getArticle>>>;
 export function articleTags(article: Article) {
   return article.article_tags.flatMap((link) => (link.tags ? [link.tags] : []));
 }
+
+/** Newest published articles first: the RSS feed and the 404 page. */
+export const getLatestArticles = unstable_cache(
+  async (limit: number): Promise<ArticleSummary[]> => {
+    const { data, error } = await createPublicClient()
+      .from("articles")
+      .select(SUMMARY_COLUMNS)
+      .order("publish_at", { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return data;
+  },
+  ["latest-articles"],
+  LIST_CACHE,
+);
 
 /** Newest published articles, prerendered at build time. Others render on their first visit. */
 export async function getLatestArticlePaths(limit: number) {

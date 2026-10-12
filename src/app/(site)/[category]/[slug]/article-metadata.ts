@@ -1,13 +1,17 @@
 import type { Metadata } from "next";
-import { getCategory } from "@/config/categories";
+import type { Category } from "@/config/categories";
 import { siteConfig } from "@/config/site";
 import { articleTags, type Article } from "@/lib/articles/public";
 import { articlePath } from "@/lib/articles/status";
 import { SOCIAL_IMAGE_SIZE } from "@/lib/media";
-import { siteOpenGraph } from "@/lib/metadata";
+import { noindex, pageRobots, siteOpenGraph } from "@/lib/metadata";
 import { shareImageUrl } from "@/lib/og/share-image-url";
 
-export function articleMetadata(article: Article, preview: boolean): Metadata {
+export function articleMetadata(
+  article: Article,
+  category: Category | undefined,
+  preview: boolean,
+): Metadata {
   const title = article.seo_title || article.title;
   const description = article.seo_description || article.excerpt || undefined;
   const url = articlePath(article.category_slug, article.slug);
@@ -33,7 +37,7 @@ export function articleMetadata(article: Article, preview: boolean): Metadata {
       images,
       publishedTime: article.publish_at ?? undefined,
       modifiedTime: article.updated_at,
-      section: getCategory(article.category_slug)?.label,
+      section: category?.label,
       tags: articleTags(article).map((tag) => tag.label),
     },
     twitter: {
@@ -42,6 +46,6 @@ export function articleMetadata(article: Article, preview: boolean): Metadata {
       description,
       images,
     },
-    robots: preview ? { index: false, follow: false } : undefined,
+    robots: pageRobots(preview ? noindex : undefined),
   };
 }

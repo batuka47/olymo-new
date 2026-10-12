@@ -7,7 +7,7 @@ import { ArticleGrid } from "@/components/site/article-grid";
 import { CategoryHeader } from "@/components/site/category-header";
 import { Pagination } from "@/components/site/pagination";
 import { Container } from "@/components/ui/container";
-import { getCategory, isCategorySlug } from "@/config/categories";
+import type { Category } from "@/config/categories";
 import {
   CATEGORY_PAGE_SIZE,
   getCategoryArticles,
@@ -22,19 +22,12 @@ import { SubjectFilter } from "./subject-filter";
 /** category_2 sits in the list after this many cards (two rows on desktop). */
 const MID_LIST_AD_AFTER = 6;
 
-export type ListCategory = NonNullable<ReturnType<typeof getCategory>>;
-
-/** The category behind a URL segment, or undefined (for a 404). */
-export function findListCategory(slug: string): ListCategory | undefined {
-  return isCategorySlug(slug) ? getCategory(slug) : undefined;
-}
-
 function pageTitle(label: string, view: ListView): string {
   const title = view.subject ? `${label}: ${t(`olympiad.subjects.${view.subject}`)}` : label;
   return view.page > 1 ? t("categoryPage.pageTitle", { title, page: view.page }) : title;
 }
 
-export function categoryListMetadata(category: ListCategory, view: ListView): Metadata {
+export function categoryListMetadata(category: Category, view: ListView): Metadata {
   const title = pageTitle(category.label, view);
   // The sort order is a reading preference, not a different page.
   const url = listViewHref(category.slug, { ...view, sort: "newest" });
@@ -69,7 +62,7 @@ function EmptyState({ filteredHref }: { filteredHref: string | null }) {
 }
 
 interface CategoryListProps {
-  category: ListCategory;
+  category: Category;
   view: ListView;
 }
 
@@ -99,9 +92,7 @@ export async function CategoryList({ category, view }: CategoryListProps) {
     <Container className="pb-16 lg:pb-24">
       <div className="border-b border-line lg:border-x">
         <CategoryHeader title={category.label} description={category.description}>
-          {hasOlympiadFilters(category.slug) && (
-            <SubjectFilter category={category.slug} view={view} />
-          )}
+          {hasOlympiadFilters(category) && <SubjectFilter category={category.slug} view={view} />}
         </CategoryHeader>
 
         {featured && (
@@ -121,9 +112,7 @@ export async function CategoryList({ category, view }: CategoryListProps) {
               >
                 {t("categoryPage.allNews")}
               </h2>
-              {hasOlympiadFilters(category.slug) && (
-                <SortToggle category={category.slug} view={view} />
-              )}
+              {hasOlympiadFilters(category) && <SortToggle category={category.slug} view={view} />}
             </div>
 
             {articles.length > 0 ? (

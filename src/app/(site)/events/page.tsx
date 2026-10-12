@@ -6,7 +6,9 @@ import { DEFAULT_EVENT_LIST_VIEW } from "./list-view";
 // ?featured= or ?page= are rewritten to ../list-views/events (see next.config.ts).
 export const revalidate = 60;
 
-export const metadata: Metadata = eventListMetadata(DEFAULT_EVENT_LIST_VIEW);
+export function generateMetadata(): Promise<Metadata> {
+  return eventListMetadata(DEFAULT_EVENT_LIST_VIEW);
+}
 
 export default function EventsPage() {
   return <EventList view={DEFAULT_EVENT_LIST_VIEW} />;

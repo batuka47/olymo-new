@@ -3,8 +3,14 @@ import { adminRoutes } from "@/config/admin";
 import { routes } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
 
-/** Everything public, except staff pages, reader accounts, search results and sign-in steps. */
+/**
+ * Everything public, except staff pages, reader accounts, search results and sign-in steps. Until
+ * launch (NEXT_PUBLIC_ALLOW_INDEXING=1) nothing at all, so a test deployment is never indexed.
+ */
 export default function robots(): MetadataRoute.Robots {
+  if (!siteConfig.allowIndexing) {
+    return { rules: { userAgent: "*", disallow: "/" } };
+  }
   return {
     rules: {
       userAgent: "*",

@@ -63,9 +63,8 @@ Never edit a migration that has already been pushed to the hosted project; add a
 
 - **Publishing:** the public sees an article or event when its status is `published` or `scheduled`
   and `publish_at` has passed. "Scheduled" is simply published with a future date; no cron job.
-- **Categories** live in both `src/config/categories.ts` and the `categories` table. Add or remove a
-  category in both (the table through a new migration). `npm run check:categories`, part of
-  `npm run lint`, fails if their slugs differ.
+- **Categories** are rows of the `categories` table, managed in `/admin/categories` (see Categories).
+  No code depends on a particular slug except `events`, the events section.
 
 ### Pushing migrations to the hosted project
 
@@ -77,7 +76,8 @@ npx supabase db push                             # apply pending migrations
 ```
 
 `db push` applies migrations only. It does not run `seed.sql`, so sample content never reaches the
-hosted database. After the first push, add the hosted URL and keys to Vercel (see Environment
+hosted database. Never add `--include-seed`: it would send the samples too. `npm run lint`
+checks that no migration carries sample content (`check:samples`). After the first push, add the hosted URL and keys to Vercel (see Environment
 variables).
 
 ## Admin area
@@ -120,7 +120,43 @@ is a shortcut for the same script.
   upload is served with `Cache-Control: max-age=31536000` (a year). Images uploaded before this
   (`cover-1600.webp`, no token) keep working with their old one-hour setting.
 - **Body text** is saved as Tiptap JSON. The server builds the HTML from that JSON and cleans it
-  with an allow-list; HTML sent by a browser is never stored.
+  with an allow-list (`src/lib/editor/render-html.ts`); HTML sent by a browser is never stored.
+  Articles written before the block editor open and render as before.
+- **Block editor** (articles, events and info pages): "/" on an empty line opens a searchable
+  block menu (Mongolian or Latin words, ↑↓ and Enter); hovering a block shows "+" (add a block
+  below) and a grip to drag it elsewhere. The fixed toolbar does the same for people who don't use
+  "/". Blocks: Гарчиг 1–3 (h2–h4; the title is the page's only h1), Энгийн / Жижиг текст,
+  alignment, bold, italic, underline, strikethrough, links, lists, Эшлэл with an optional author,
+  Хуваах зураас, Зураг, Зургийн слайдер, Хүснэгт, YouTube, Сошиал пост, Embed and Quiz. The block types
+  live in `src/lib/editor/nodes.ts` (what readers get) and `src/components/admin/body-editor/`
+  (how they are edited).
+- **Images in the text** can be uploaded, pasted or dropped, of any size: the browser resizes them
+  to at most 2400 px wide (WebP, JPEG where WebP can't be made) as `body-{token}-{width}.webp`,
+  with a progress bar. Only files that aren't images are refused. Each has a caption, a credit,
+  alt text and a width: text, full, left or right (left and right are full width on phones).
+- **No image fails on size** (text, covers, ads, team photos): a file still over 4.5 MB after
+  resizing is re-encoded at lower quality (down to 0.6), then narrower (down to 1600 px), and no
+  copy is larger than 16 million pixels, the most an iPhone can draw. The `media` bucket allows
+  10 MB as a margin (`src/lib/images/fit.ts`).
+- **YouTube** shows a thumbnail and play button; the youtube-nocookie.com player loads only on
+  click. **Social posts** (Facebook, Instagram, X, TikTok) use each platform's own embed; its
+  script loads only on pages with such a post, when the post nears the screen.
+- **Embed:** a single iframe from an address in `src/config/embeds.ts` (Google Maps, Forms, Docs,
+  Calendar, Drive, Canva, Vimeo, Spotify, SoundCloud, Facebook plugins) is shown as it is. Any
+  other code runs in a sandboxed frame (`srcdoc`, `sandbox="allow-scripts allow-popups
+allow-forms"`, never `allow-same-origin`) that reports its height to the page, so pasted code
+  can't reach the site or the reader's session. To allow a new service, add its host and path to
+  `allowedIframeSources`.
+- **Cover position** ("Нүүр зургийн байрлал"): over the title, under it (the default, and every
+  older article), or beside it on desktop (stacked under the excerpt on phones).
+- **Богино тайлбар** (the excerpt) is required to publish, 50–200 characters; drafts save without
+  it. The card beside it shows the link preview live: image, SEO title or title, SEO description
+  or excerpt, and the domain.
+- **The link** (slug) is the title in Latin letters and never contains Cyrillic; the full address
+  shows under the title. While it follows the title, a taken link gets a number on save
+  (`...-2`); one typed by hand is kept as typed, and a taken one is an error.
+- **"Сайтыг шинэчлэх"** on the articles list rebuilds every public page (home, categories,
+  articles, events) on its next visit, for when something changed outside the editors.
 - **Publishing:** "Нийтлэх" publishes now, or at the chosen Ulaanbaatar time when "Огноо товлох" is
   selected. Drafts autosave every 30 seconds; published articles are only saved on "Шинэчлэх".
 - **Preview** opens the public page in Next.js Draft Mode, so staff see drafts exactly as readers
@@ -130,8 +166,8 @@ is a shortcut for the same script.
 - **Unused images:** images uploaded to an article that was never saved, and the old files of a
   replaced cover or of an image taken out of the text, stay in storage. Admins can remove them with
   "Ашиглагдаагүй зураг цэвэрлэх" on the dashboard: it deletes `articles/{id}/` folders that have no
-  article, and files that their article (or event, ad, team member) no longer points at, leaving
-  anything uploaded in the last 24 hours.
+  article, and files that their article (or event, ad, team member, quiz) no longer points at,
+  leaving anything uploaded in the last 24 hours.
 
 ### Public article page
 
@@ -153,18 +189,85 @@ page immediately. A link with the wrong category answers 308 with the right addr
   row never moves after loading.
 - **Comments** load their code only when the section nears the screen (see Reader accounts).
 
+### Categories
+
+`/admin/categories` (admins only; editors pick categories in the article editor):
+
+- **List:** drag a row, or use its arrows, to set the menu order; each move is saved at once.
+  "Нуух" hides a category: its page answers 404 and it leaves the menu, search filter and sitemap,
+  but its articles still open. "Цэсэнд харуулах" (in the form) only takes it out of the menu.
+- **Form:** name, address (made from the name in Latin letters; it can change only while no
+  article is in the category, so article addresses never break), the description under the
+  category title, menu, visibility, "Олимпиадын талбартай" (the olympiad panel in the editor,
+  the subject filter and the deadline sort, and the home page's olympiad section) and
+  "Нүүрэнд харуулах" (a tile in the home page's "Салбар бүрээс"; at most 4 categories, the box is
+  disabled once four are ticked and the server refuses a fifth).
+- **Reserved addresses:** a category cannot take the first part of another page's address
+  (`admin`, `events`, `search`, `about`, …; `RESERVED_SLUGS` in `src/config/routes.ts`, which a
+  unit test checks against `src/app`).
+- **Deleting** an empty category is immediate. One with articles asks for another category, moves
+  every article there (as main or secondary category) and then deletes, in one transaction
+  (`delete_category` in the database). Moved articles get a new address; the old one redirects.
+- **Эвентүүд** is the events section: its name, description, menu place and visibility can change,
+  but not its address, and it cannot be deleted or hold articles.
+- **Secondary categories** ("Хамаарах категориуд" in the article editor) put an article on those
+  category pages, home sections and search filters too; its address keeps the main category.
+  `articles.category_slugs` (main first, kept by database triggers) is what lists filter on.
+- **Caching:** the site reads categories through `src/lib/categories/queries.ts`, cached under the
+  `categories` tag; saving in `/admin/categories` expires it and every page, so menus update at
+  once. Changes made directly in the database show within an hour. A category page that a
+  visitor's browser prefetches (from a menu link) at the very moment of a change can keep its old
+  version for up to the 60 s ISR period.
+- **Home page:** "Салбар бүрээс" shows the newest article of each category ticked "Нүүрэнд
+  харуулах", in menu order, then the next event. With none ticked, the last three visible
+  categories in menu order, leaving out those with olympiad fields (by default Спорт, Технологи,
+  Шинжлэх ухаан). The olympiad band is titled with the first category that has olympiad fields
+  (`src/lib/categories/home.ts`).
+
+### Quizzes
+
+`/admin/quizzes` (all staff) builds quizzes; the article editor's "Quiz" block ("/" menu or the
+toolbar) opens a list of the active ones and inserts the chosen quiz anywhere in the text. Events
+and info pages share the editor, so quizzes work there too.
+
+- **Editor:** name, description, "Дарааллын төрөл" (questions as written, or shuffled for every
+  attempt), "Идэвхтэй", and the questions: text, optional image (`quizzes/{id}/`, resized in the
+  browser like covers), 2–8 options with the correct one marked, and an explanation shown after
+  answering. Questions and options are reordered with the arrows. The reader's card is shown
+  live beside the form; answers given there are not counted.
+- **One correct option** per question is checked by the form and enforced by the database (a
+  constraint trigger checked when the save commits). A quiz is saved whole, in one transaction,
+  by the `save_quiz` database function; questions and options keep their ids, so answer counts
+  survive edits.
+- **In the text** only the quiz id is stored (`<figure class="quiz" data-quiz="…">`). The page
+  reads the quiz when it is shown (`src/components/site/article-body-html.tsx`), so editing a quiz
+  updates every article it is in at once. An inactive or deleted quiz shows nothing; deleting one
+  that articles use says how many first. The list shows "used in N articles".
+- **Readers** need no account. One question at a time with the progress ("3 / 10"); choosing an
+  option locks the question and shows "Зөв" or "Буруу", the correct answer, the explanation and
+  "Уншигчдын 62% зөв хариулсан"; the end shows the score, a short message, "Дахин оролдох" and a
+  share button ("Би 7/10 авлаа": the phone's share sheet, or the link copied). Real buttons,
+  announcements for screen readers, 44 px targets.
+- **Loading:** the card (`src/components/site/quiz/`) and its script load only on pages whose text
+  has a quiz block (`src/lib/body-enhancers/quiz.tsx`); the block keeps its place until then.
+- **Answer counts** are anonymous: `quiz_option_counts` holds a number per option. The server
+  action `recordQuizAnswer` counts an answer once per question and address a day (at most 300 an
+  hour), using the same salted address hash as the forms; those hashes are deleted after a day.
+  The correct options are sent to the browser with the quiz, so feedback is instant.
+
 ### Category pages
 
-`/{category}` uses one template for every category except Эвентүүд (its own page comes later).
+`/{category}` uses one template for every category; `/events` has its own page.
 
 - **Banner:** the newest "Онцлох" article of the category. It is left out of the list below.
-- **Бүх мэдээ:** 9 per page, `?page=N` with real links. Olympiad also has `?subject=` (Математик,
-  Физик, …) and `?sort=deadline` ("Бүртгэл дуусах": open registrations closing soonest first, then
+- **Бүх мэдээ:** 9 per page, `?page=N` with real links. Categories with olympiad fields also have
+  `?subject=` (Математик, Физик, …) and `?sort=deadline` ("Бүртгэл дуусах": open registrations closing soonest first, then
   the rest, newest first). Values the page does not offer answer 404, so each view has one address.
 - **Cards** come from `src/components/site/article-card.tsx` (`grid`, `row`, `banner`); use it for
   every article list.
 - **Caching:** the plain address (`/olympiad`) is a static page (ISR, 60 s). Addresses with
-  `?subject=`, `?sort=` or `?page=` are rewritten in `next.config.ts` to
+  `?subject=`, `?sort=` or `?page=` are rewritten in `next.config.ts` (for any slug that is not reserved, so new
+  categories work without a deploy) to
   `app/(site)/list-views/[category]`, which renders them on request; both share
   `[category]/category-list.tsx`. `/events` works the same way (`?when=`, `?featured=`,
   `?page=`). The database reads are cached for 60 s under the `articles` tag
@@ -182,9 +285,9 @@ out and the section numbers close up.
 | Ticker (every page)    | 3 newest "Шинэ мэдээ" (`is_breaking`) articles                         |
 | Hero                   | Search (`/search?q=`) and the newest "Онцлох" article                  |
 | Онцлох                 | The next 4 "Онцлох" articles                                           |
-| Олимпиадууд            | Olympiads still taking registrations, closing soonest first (scroller) |
+| Олимпиад               | Olympiads still taking registrations, closing soonest first (scroller) |
 | Мэдүүштэй              | 5 "Мэдүүштэй" articles + the "Тусгай нийтлэл" banner (see below)       |
-| Салбар бүрээс          | Newest Спорт, Технологи, Шинжлэх ухаан article + the next event        |
+| Салбар бүрээс          | Newest article of each "Нүүрэнд харуулах" category + the next event    |
 | Удахгүй болох эвентүүд | The 3 events after that one (`events` table)                           |
 
 **Тусгай нийтлэл:** the newest article marked "Нүүрний том баннер" in the editor whose last day
@@ -341,12 +444,16 @@ address; `/account` changes it once, signs out, and deletes the account.
 
 ### SEO and performance
 
+- **Indexing switch:** until `NEXT_PUBLIC_ALLOW_INDEXING=1` is set, robots.txt disallows
+  everything and every response says `noindex, nofollow` (an `X-Robots-Tag` header and the page's
+  robots meta), so a deployment with test content, such as `olymo-new.vercel.app`, never shows up
+  in Google. Set it for Production only, at launch, and redeploy; Preview deployments stay hidden.
 - **Sitemap:** `/sitemap-index.xml` lists `/sitemap/0.xml`, `/sitemap/1.xml`, …: the home page,
   categories, info pages, then every published article and event with its last change, 5000 URLs
   to a file (`src/lib/sitemap.ts`). New files appear by themselves as the site grows. Give
   `https://<domain>/sitemap-index.xml` to Google Search Console. (`/sitemap.xml` is reserved by
   Next.js and answers 404.)
-- **robots.txt** allows everything except `/admin`, `/account`, `/search`, `/auth`, the ad click
+- **robots.txt**, once indexing is on, allows everything except `/admin`, `/account`, `/search`, `/auth`, the ad click
   redirects (`/r/`) and the internal `/list-views/`, and points to the sitemap index.
 - **RSS:** `/rss.xml`, the 50 newest articles; the home page links it.
 - **Share images:** `app/opengraph-image.tsx` draws the default 1200 × 630 card (paper, the name
@@ -369,6 +476,49 @@ address; `/account` changes it once, signs out, and deletes the account.
   article all score 93 Performance, 100 Accessibility, 100 SEO, 100 Best Practices.
 - **Vercel Analytics and Speed Insights** load only when `VERCEL_ANALYTICS=1` and
   `VERCEL_SPEED_INSIGHTS=1` are set (see Deploy).
+
+### Errors, 404 and loading
+
+- **404:** `(site)/not-found.tsx` shows "404", "Хуудас олдсонгүй", a search box and the 4 newest
+  articles inside the site's header and footer, with a real 404 status. Missing articles,
+  categories and events check before the page streams (`[category]/(list)/layout.tsx`,
+  `[category]/[slug]/layout.tsx`), because a status cannot change once streaming starts. Admin
+  addresses get their own 404 inside the admin menu (`admin/(panel)/not-found.tsx`).
+- **Errors:** `error.tsx` (site, admin, root) and `global-error.tsx` show "Алдаа гарлаа" with
+  "Дахин оролдох" and an error code. The server logs every error with that code
+  (`src/instrumentation.ts` → `src/lib/error-reporting.ts`) and, when `SENTRY_DSN` is set, sends
+  it to Sentry (server errors only, a minimal reporter without the Sentry SDK).
+- **Loading:** home, category, article and search pages show the page's outline with striped
+  placeholders while they load (`loading.tsx`, `components/site/skeleton.tsx`).
+- **Accessibility:** skip link, 2 px focus ring (lime on dark sections), alerts for form errors,
+  reduced motion respected. `e2e/a11y.spec.ts` runs axe on every public page.
+
+### Browser tests
+
+`e2e/` holds Playwright tests that run against a production build and the local Supabase with
+its sample content:
+
+- `smoke.spec.ts`: home, an article, search, the contact form (Turnstile test keys), staff sign-in
+  and a draft article. Test rows are deleted afterwards.
+- `a11y.spec.ts`: axe (WCAG 2.1 AA and best practices) on every public page.
+- `layout.spec.ts`: no page scrolls sideways at 360, 390, 768, 1024 or 1440 px.
+- `article-editor.spec.ts`: inserts every block type through "/" and the toolbar, publishes, and
+  checks the article page at 390 and 1440 px (YouTube, X and Google Maps requests are answered
+  locally). The test article and its images are deleted afterwards.
+- `categories.spec.ts`: an admin adds a category, publishes an article in it, renames, hides,
+  reorders and deletes it with its articles moved.
+- `quizzes.spec.ts`: builds a quiz, inserts it into an article through "/", answers it at 390 px
+  (right and wrong feedback, final score, axe on the card), then deletes the quiz.
+
+```bash
+npx playwright install chromium        # once
+npm run build                          # with the Turnstile test keys in .env.local
+E2E_ADMIN_EMAIL=… E2E_ADMIN_PASSWORD=… npm run test:e2e
+```
+
+`E2E_ADMIN_*` is a local staff account (`npm run admin:create`). GitHub Actions
+(`.github/workflows/ci.yml`) runs lint, typecheck, unit and database tests, the build and these
+browser tests on every pull request, against a fresh local Supabase.
 
 ### Inviting staff and resetting passwords
 
@@ -398,20 +548,21 @@ configures all of this for local development.
 
 ## Scripts
 
-| Command                    | What it does                                                 |
-| -------------------------- | ------------------------------------------------------------ |
-| `npm run dev`              | Start the dev server with hot reload                         |
-| `npm run build`            | Production build                                             |
-| `npm run start`            | Serve the production build (run `build` first)               |
-| `npm run analyze`          | Webpack build that opens a map of every JS bundle            |
-| `npm run test`             | Unit tests (Vitest)                                          |
-| `npm run lint`             | ESLint, then `check:categories`                              |
-| `npm run typecheck`        | Generate Next.js route types, then `tsc --noEmit`            |
-| `npm run format`           | Format all files with Prettier (sorts Tailwind classes)      |
-| `npm run db:types`         | Regenerate Supabase types from the local database            |
-| `npm run db:test`          | Run the database tests (local Supabase must be running)      |
-| `npm run check:categories` | Check `categories.ts` and the migrations list the same slugs |
-| `npm run admin:create`     | Create or promote an admin (see Admin area)                  |
+| Command                 | What it does                                            |
+| ----------------------- | ------------------------------------------------------- |
+| `npm run dev`           | Start the dev server with hot reload                    |
+| `npm run build`         | Production build                                        |
+| `npm run start`         | Serve the production build (run `build` first)          |
+| `npm run analyze`       | Webpack build that opens a map of every JS bundle       |
+| `npm run test`          | Unit tests (Vitest)                                     |
+| `npm run test:e2e`      | Browser tests (Playwright; see Browser tests)           |
+| `npm run lint`          | ESLint, then `check:samples`                            |
+| `npm run typecheck`     | Generate Next.js route types, then `tsc --noEmit`       |
+| `npm run format`        | Format all files with Prettier (sorts Tailwind classes) |
+| `npm run db:types`      | Regenerate Supabase types from the local database       |
+| `npm run db:test`       | Run the database tests (local Supabase must be running) |
+| `npm run check:samples` | Check that no migration carries sample content          |
+| `npm run admin:create`  | Create or promote an admin (see Admin area)             |
 
 Before merging, `lint`, `typecheck` and `build` must all pass.
 
@@ -420,21 +571,23 @@ Before merging, `lint`, `typecheck` and `build` must all pass.
 All configuration comes from env vars. `.env.example` lists every variable with a comment. Copy it to
 `.env.local` for local work. `.env*.local` files are git-ignored.
 
-| Variable                               | Required | Description                                                  |
-| -------------------------------------- | -------- | ------------------------------------------------------------ |
-| `NEXT_PUBLIC_SITE_URL`                 | yes      | Public base URL, no trailing slash. The build fails if unset |
-| `NEXT_PUBLIC_SUPABASE_URL`             | yes      | Supabase API URL                                             |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | yes      | Publishable key; safe in the browser, RLS applies            |
-| `SUPABASE_SECRET_KEY`                  | yes      | Secret (service role) key; server only, bypasses RLS         |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`       | yes      | Cloudflare Turnstile site key (forms, staff sign-in)         |
-| `TURNSTILE_SECRET_KEY`                 | yes      | Cloudflare Turnstile secret key; server only                 |
-| `IP_HASH_SALT`                         | yes      | Secret salt for hashing visitor IPs (rate limits)            |
-| `RESEND_API_KEY`                       | no       | Resend key for new-submission emails                         |
-| `NOTIFY_EMAIL`                         | no       | Who gets those emails                                        |
-| `EMAIL_FROM`                           | no       | Sender once a domain is verified in Resend                   |
-| `NEXT_PUBLIC_FACEBOOK_APP_ID`          | no       | Facebook app ID: Messenger button on desktop, `fb:app_id`    |
-| `VERCEL_ANALYTICS`                     | no       | `1` turns on Vercel Web Analytics                            |
-| `VERCEL_SPEED_INSIGHTS`                | no       | `1` turns on Vercel Speed Insights                           |
+| Variable                               | Required  | Description                                                  |
+| -------------------------------------- | --------- | ------------------------------------------------------------ |
+| `NEXT_PUBLIC_SITE_URL`                 | yes       | Public base URL, no trailing slash. The build fails if unset |
+| `NEXT_PUBLIC_ALLOW_INDEXING`           | at launch | `1` lets search engines index the site (Production only)     |
+| `NEXT_PUBLIC_SUPABASE_URL`             | yes       | Supabase API URL                                             |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | yes       | Publishable key; safe in the browser, RLS applies            |
+| `SUPABASE_SECRET_KEY`                  | yes       | Secret (service role) key; server only, bypasses RLS         |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`       | yes       | Cloudflare Turnstile site key (forms, staff sign-in)         |
+| `TURNSTILE_SECRET_KEY`                 | yes       | Cloudflare Turnstile secret key; server only                 |
+| `IP_HASH_SALT`                         | yes       | Secret salt for hashing visitor IPs (rate limits)            |
+| `RESEND_API_KEY`                       | no        | Resend key for new-submission emails                         |
+| `NOTIFY_EMAIL`                         | no        | Who gets those emails                                        |
+| `EMAIL_FROM`                           | no        | Sender once a domain is verified in Resend                   |
+| `NEXT_PUBLIC_FACEBOOK_APP_ID`          | no        | Facebook app ID: Messenger button on desktop, `fb:app_id`    |
+| `VERCEL_ANALYTICS`                     | no        | `1` turns on Vercel Web Analytics                            |
+| `VERCEL_SPEED_INSIGHTS`                | no        | `1` turns on Vercel Speed Insights                           |
+| `SENTRY_DSN`                           | no        | Sends server errors to Sentry                                |
 
 ## Project layout
 
@@ -443,7 +596,7 @@ design/              visual spec (reference only, not shipped)
 messages/mn.json     all UI text, read through t() from src/lib/i18n.ts
 src/app/             routes, root layout, global styles and design tokens (globals.css)
 src/components/ui/   shared UI primitives (Button, …)
-src/config/          siteConfig and the category list (single source of truth for slugs)
+src/config/          siteConfig, routes and reserved slugs, category types and helpers
 src/lib/             fonts, i18n helper
 src/lib/supabase/    Supabase clients (server, browser, service-role admin) and generated types
 supabase/            CLI config, migrations/ and seed.sql
@@ -462,3 +615,15 @@ supabase/            CLI config, migrations/ and seed.sql
    a free tier), then set `VERCEL_ANALYTICS=1` and `VERCEL_SPEED_INSIGHTS=1` for Production and
    redeploy.
 7. In Google Search Console, add the domain and submit `https://<domain>/sitemap-index.xml`.
+
+### Launch checklist
+
+1. Fill in `siteConfig` in `src/config/site.ts`: the name (now "НЭР"), the legal name, email,
+   phone and address (placeholders in brackets are hidden on the site until replaced).
+2. In `/admin/pages`, finish the privacy policy (the `[ХУГАЦАА]` marks and the draft note) and add
+   the team.
+3. If test content was ever added to the hosted database, review and run
+   `supabase/launch/remove-sample-content.sql` in its SQL editor (it removes only rows still marked
+   `[ЖИШЭЭ]` and `[Нэр]` placeholders), and delete other test articles in `/admin`.
+4. Set `NEXT_PUBLIC_ALLOW_INDEXING=1` for Production and redeploy, then submit the sitemap
+   (step 7 above).

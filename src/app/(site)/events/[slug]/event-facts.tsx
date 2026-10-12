@@ -71,17 +71,19 @@ export function EventFacts({ event }: { event: EventDetail }) {
         {rows
           .filter((row) => row.value)
           .map((row, index) => (
+            // A <dl> row may only hold <dt> and <dd>, so the icon sits in the <dt>, placed left.
             <div
               key={row.labelKey}
-              className={cx("flex gap-3.5 px-5 py-3.5", index > 0 && "border-t border-line")}
+              className={cx(
+                "relative flex flex-col gap-1 py-3.5 pr-5 pl-13.5",
+                index > 0 && "border-t border-line",
+              )}
             >
-              <row.icon className="mt-0.5 size-5 shrink-0 text-muted" />
-              <div className="flex min-w-0 flex-col gap-1">
-                <dt className="font-mono text-[11px] tracking-label text-muted uppercase">
-                  {t(row.labelKey)}
-                </dt>
-                <dd className="text-[15px] font-semibold">{row.value}</dd>
-              </div>
+              <dt className="font-mono text-[11px] tracking-label text-muted uppercase">
+                <row.icon className="absolute top-4 left-5 size-5 text-muted" />
+                {t(row.labelKey)}
+              </dt>
+              <dd className="min-w-0 text-[15px] font-semibold">{row.value}</dd>
             </div>
           ))}
       </dl>

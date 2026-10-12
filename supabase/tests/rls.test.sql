@@ -138,6 +138,9 @@ select throws_ok($$insert into public.events (slug, title, starts_at, event_type
 select ok((select event_type from public.events where slug = 'test-event-scheduled-past') = 'other', 'event type defaults to other');
 select ok((select not is_special and special_until is null from public.articles where slug = 'max-caption'), 'is_special defaults to false without an end date');
 select ok((select count(*) = 2 from information_schema.columns where table_name = 'published_articles' and column_name in ('is_special', 'special_until')), 'published_articles view includes is_special and special_until');
+select ok((select cover_position = 'below' from public.articles where slug = 'max-caption'), 'cover position defaults to below the title');
+select throws_ok($$insert into public.articles (slug, title, category_slug, cover_position) values ('bad-position', 'X', 'education', 'left')$$, '23514', null, 'cover position outside the list is rejected');
+select ok(exists (select 1 from information_schema.columns where table_name = 'published_articles' and column_name = 'cover_position'), 'published_articles view includes cover_position');
 select throws_ok($$insert into public.articles (slug, title, category_slug, status) values ('no-date', 'X', 'education', 'published')$$, '23514', null, 'published without publish_at is rejected');
 select throws_ok($$insert into public.articles (slug, title, category_slug) values ('Bad Slug', 'X', 'education')$$, '23514', null, 'non-kebab slug is rejected');
 select throws_ok($$insert into public.comments (article_id, user_id, body) select id, '00000000-0000-0000-0000-00000000000a', repeat('а', 1001) from public.articles limit 1$$, '23514', null, 'comment longer than 1000 is rejected');
@@ -151,8 +154,8 @@ select ok(
   'trigram: typo "матиматикийн олимпяд" ranks the math article first'
 );
 select ok(
-  (select public and file_size_limit = 5242880 and allowed_mime_types = array['image/webp','image/jpeg','image/png'] from storage.buckets where id = 'media'),
-  'media bucket: public, 5 MB, webp/jpeg/png'
+  (select public and file_size_limit = 10485760 and allowed_mime_types = array['image/webp','image/jpeg','image/png'] from storage.buckets where id = 'media'),
+  'media bucket: public, 10 MB, webp/jpeg/png'
 );
 select ok(
   (select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace

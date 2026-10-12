@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { draftMode } from "next/headers";
 import { notFound } from "next/navigation";
+import { getEventsSection } from "@/lib/categories/queries";
 import { JsonLd } from "@/components/json-ld";
+import { ArticleBodyHtml } from "@/components/site/article-body-html";
 import { Breadcrumb } from "@/components/site/breadcrumb";
 import { EventCard } from "@/components/site/event-card";
 import { PreviewBanner } from "@/components/site/preview-banner";
@@ -9,7 +11,6 @@ import { ShareButtons } from "@/components/site/share-buttons";
 import { Container } from "@/components/ui/container";
 import { ResponsiveImage } from "@/components/ui/responsive-image";
 import { Tag } from "@/components/ui/tag";
-import { categoryPath, requireCategory } from "@/config/categories";
 import { eventPath, eventTypeLabel } from "@/config/events";
 import { routes } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
@@ -47,8 +48,7 @@ export default async function EventPage({ params }: PageProps<"/events/[slug]">)
 
   const path = eventPath(event.slug);
   const pageUrl = `${siteConfig.url}${path}`;
-  const related = await getRelatedEvents(event);
-  const section = requireCategory("events");
+  const [related, section] = await Promise.all([getRelatedEvents(event), getEventsSection()]);
 
   return (
     <>
@@ -57,7 +57,7 @@ export default async function EventPage({ params }: PageProps<"/events/[slug]">)
       <JsonLd
         data={breadcrumbJsonLd([
           { name: t("article.home"), path: routes.home },
-          { name: section.label, path: categoryPath("events") },
+          { name: section.label, path: routes.events },
           { name: event.title },
         ])}
       />
@@ -69,7 +69,7 @@ export default async function EventPage({ params }: PageProps<"/events/[slug]">)
               <Breadcrumb
                 items={[
                   { label: t("article.home"), href: routes.home },
-                  { label: section.label, href: categoryPath("events") },
+                  { label: section.label, href: routes.events },
                   { label: eventTypeLabel(event.event_type) },
                 ]}
               />
@@ -118,11 +118,7 @@ export default async function EventPage({ params }: PageProps<"/events/[slug]">)
                     className="mb-8 aspect-video w-full"
                   />
                 )}
-                {/* body_html is generated and sanitized on the server when the event is saved. */}
-                <div
-                  className="article-body"
-                  dangerouslySetInnerHTML={{ __html: event.body_html ?? "" }}
-                />
+                <ArticleBodyHtml html={event.body_html ?? ""} />
               </div>
             </div>
           </article>

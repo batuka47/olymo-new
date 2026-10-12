@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { draftMode } from "next/headers";
-import { notFound, permanentRedirect, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/json-ld";
 import { AdSlot } from "@/components/site/ad-slot";
+import { ArticleBodyHtml } from "@/components/site/article-body-html";
 import { PreviewBanner } from "@/components/site/preview-banner";
 import { TagLinks } from "@/components/site/tag-links";
 import { Container } from "@/components/ui/container";
-import { ResponsiveImage } from "@/components/ui/responsive-image";
 import { siteConfig } from "@/config/site";
+import { toCoverPosition } from "@/lib/articles/cover";
 import { articleBreadcrumbJsonLd, articleJsonLd } from "@/lib/articles/json-ld";
 import {
   articleTags,
@@ -18,8 +19,10 @@ import {
   type Article,
 } from "@/lib/articles/public";
 import { articlePath } from "@/lib/articles/status";
+import { findCategory } from "@/lib/categories/queries";
 import { cx } from "@/lib/cx";
 import { t } from "@/lib/i18n";
+import { ArticleCover } from "./article-cover";
 import { ArticleHeader } from "./article-header";
 import { articleMetadata } from "./article-metadata";
 import { CommentsSection } from "./comments-section";
@@ -43,29 +46,19 @@ export async function generateMetadata({
   const { slug } = await params;
   const { isEnabled: preview } = await draftMode();
   const article = await getArticle(slug, preview);
-  return article ? articleMetadata(article, preview) : {};
+  return article
+    ? articleMetadata(article, await findCategory(article.category_slug), preview)
+    : {};
 }
 
 function ArticleBody({ article }: { article: Article }) {
   const tags = articleTags(article);
   return (
     <>
-      {article.cover_path && (
-        <figure className="mb-8">
-          <ResponsiveImage
-            path={article.cover_path}
-            alt={article.cover_alt ?? ""}
-            sizes="(min-width: 1024px) 780px, 100vw"
-            preload
-            className="aspect-video w-full"
-          />
-          {article.cover_caption && (
-            <figcaption className="mt-2.5 caption">{article.cover_caption}</figcaption>
-          )}
-        </figure>
+      {toCoverPosition(article.cover_position) === "below" && (
+        <ArticleCover article={article} sizes="(min-width: 1024px) 780px, 100vw" className="mb-8" />
       )}
-      {/* body_html is generated and sanitized on the server when the article is saved. */}
-      <div className="article-body" dangerouslySetInnerHTML={{ __html: article.body_html ?? "" }} />
+      <ArticleBodyHtml html={article.body_html ?? ""} />
       {tags.length > 0 && (
         <TagLinks
           tags={tags}
@@ -78,20 +71,17 @@ function ArticleBody({ article }: { article: Article }) {
 }
 
 export default async function ArticlePage({ params }: PageProps<"/[category]/[slug]">) {
-  const { category, slug } = await params;
+  const { slug } = await params;
   const { isEnabled: preview } = await draftMode();
+  // The layout has already answered 404 or 308 where needed; this only narrows the type.
   const article = await getArticle(slug, preview);
   if (!article) {
     notFound();
   }
-
   const path = articlePath(article.category_slug, article.slug);
-  if (article.category_slug !== category) {
-    // Wrong or outdated category in the link (it was changed after publishing): 308 to the right one.
-    (preview ? redirect : permanentRedirect)(path);
-  }
 
-  const [mostRead, related] = await Promise.all([
+  const [category, mostRead, related] = await Promise.all([
+    findCategory(article.category_slug),
     getMostReadArticles(article.id),
     getRelatedArticles(article),
   ]);
@@ -100,13 +90,13 @@ export default async function ArticlePage({ params }: PageProps<"/[category]/[sl
   return (
     <>
       {preview ? <PreviewBanner path={path} /> : <ViewBeacon articleId={article.id} />}
-      <JsonLd data={articleJsonLd(article, `${siteConfig.url}${path}`)} />
-      <JsonLd data={articleBreadcrumbJsonLd(article)} />
+      <JsonLd data={articleJsonLd(article, category, `${siteConfig.url}${path}`)} />
+      <JsonLd data={articleBreadcrumbJsonLd(article, category)} />
 
       <Container className="pb-16 lg:pb-24">
         <div className="border-b border-line lg:border-x">
           <article>
-            <ArticleHeader article={article} path={path} />
+            <ArticleHeader article={article} category={category} path={path} />
 
             {/* One column on phones (key facts, body, aside); 8 + 4 columns from lg. */}
             <div className="grid border-t border-line lg:grid-cols-12 lg:grid-rows-[auto_1fr]">

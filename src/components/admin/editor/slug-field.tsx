@@ -17,17 +17,26 @@ interface SlugFieldProps {
   onRegenerate: () => void;
   /** true = free, false = taken, null = not a valid slug. */
   checkAvailability: (slug: string) => Promise<boolean | null>;
+  /** Still made from the title: a taken link gets a number on save instead of being an error. */
+  numbersWhenTaken?: boolean;
+  /** Where the slug comes from, for fields that follow something other than a title. */
+  hint?: string;
+  regenerateLabel?: string;
 }
 
 function SlugStatus({
   slug,
   check,
+  numbersWhenTaken,
+  hint,
 }: {
   slug: string;
   check: { slug: string; available: boolean | null } | null;
+  numbersWhenTaken: boolean;
+  hint: string;
 }) {
   if (!slug) {
-    return <p className="text-xs text-muted">{t("admin.slug.hint")}</p>;
+    return <p className="text-xs text-muted">{hint}</p>;
   }
   if (!SLUG_PATTERN.test(slug)) {
     return <p className="text-xs text-danger">{t("admin.slug.invalid")}</p>;
@@ -35,15 +44,26 @@ function SlugStatus({
   if (check?.slug !== slug) {
     return <p className="text-xs text-muted">{t("admin.slug.checking")}</p>;
   }
-  return check.available ? (
-    <p className="text-xs text-muted">✓ {t("admin.slug.available")}</p>
+  if (check.available) {
+    return <p className="text-xs text-muted">✓ {t("admin.slug.available")}</p>;
+  }
+  return numbersWhenTaken ? (
+    <p className="text-xs text-muted">{t("admin.slug.takenAuto")}</p>
   ) : (
     <p className="text-xs text-danger">{t("admin.slug.taken")}</p>
   );
 }
 
 /** The public address part, with a live "is it free?" check. */
-export function SlugField({ value, onEdit, onRegenerate, checkAvailability }: SlugFieldProps) {
+export function SlugField({
+  value,
+  onEdit,
+  onRegenerate,
+  checkAvailability,
+  numbersWhenTaken = false,
+  hint = t("admin.slug.hint"),
+  regenerateLabel = t("admin.slug.regenerate"),
+}: SlugFieldProps) {
   const [check, setCheck] = useState<{ slug: string; available: boolean | null } | null>(null);
 
   useEffect(() => {
@@ -68,10 +88,10 @@ export function SlugField({ value, onEdit, onRegenerate, checkAvailability }: Sl
           onChange={(event) => onEdit(event.target.value.toLowerCase())}
         />
         <Button variant="outline" size="field" onClick={onRegenerate}>
-          {t("admin.slug.regenerate")}
+          {regenerateLabel}
         </Button>
       </div>
-      <SlugStatus slug={value} check={check} />
+      <SlugStatus slug={value} check={check} numbersWhenTaken={numbersWhenTaken} hint={hint} />
     </div>
   );
 }

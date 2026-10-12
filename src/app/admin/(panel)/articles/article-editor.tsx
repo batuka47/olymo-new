@@ -11,28 +11,30 @@ import type { LastSave, SavingKind } from "@/components/admin/editor/save-status
 import { SlugField } from "@/components/admin/editor/slug-field";
 import { useDraftAutosave } from "@/components/admin/editor/use-draft-autosave";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
+import { SharePreview } from "@/components/admin/share-preview";
 import { TagCombobox } from "@/components/admin/tag-combobox";
 import { Button } from "@/components/ui/button";
 import { CharacterCount } from "@/components/ui/character-count";
 import { CheckboxField } from "@/components/ui/checkbox-field";
 import { FormMessage } from "@/components/ui/form-message";
-import { SelectField } from "@/components/ui/select-field";
 import { fieldLabelClasses, TextField } from "@/components/ui/text-field";
 import { TextAreaField } from "@/components/ui/textarea-field";
 import { adminRoutes } from "@/config/admin";
-import { articleCategories } from "@/config/categories";
+import { findCategoryIn, type Category } from "@/config/categories";
+import { siteConfig } from "@/config/site";
 import { toArticleInput, type ArticleFormValues } from "@/lib/articles/form";
-import type { TagValue } from "@/lib/articles/schema";
+import { EXCERPT_LENGTH, type TagValue } from "@/lib/articles/schema";
 import { articlePath, articleState } from "@/lib/articles/status";
+import { formatDate } from "@/lib/dates";
 import { useLeaveGuard } from "@/lib/hooks/use-leave-guard";
 import { t } from "@/lib/i18n";
 import { articleCoverPath, articleFolder } from "@/lib/media";
-import { SLUG_PATTERN, slugify } from "@/lib/slug";
+import { SLUG_PATTERN, slugFromTitle } from "@/lib/slug";
 import { checkSlugAvailability, saveArticle } from "./actions";
+import { ArticleCategoriesField } from "./article-categories-field";
+import { CoverPositionField } from "./cover-position-field";
 import { OlympiadFields } from "./olympiad-fields";
 import { SeoPanel } from "./seo-panel";
-
-const EXCERPT_LIMIT = 200;
 
 interface SavedState {
   /** JSON of the form values as last saved; the form is "dirty" when it differs. */
@@ -49,7 +51,8 @@ interface ArticleEditorProps {
   initialValues: ArticleFormValues;
   saved: Omit<SavedState, "snapshot">;
   availableTags: TagValue[];
-  siteHost: string;
+  /** Every category (lib/categories/queries.ts). */
+  categories: Category[];
 }
 
 function canAutosave(values: ArticleFormValues): boolean {
@@ -66,7 +69,7 @@ export function ArticleEditor({
   initialValues,
   saved: initialSaved,
   availableTags,
-  siteHost,
+  categories,
 }: ArticleEditorProps) {
   const bodyLabelId = useId();
   const [values, setValues] = useState(initialValues);
@@ -85,6 +88,7 @@ export function ArticleEditor({
   const guard = useLeaveGuard(dirty);
   const state = saved.exists ? articleState(saved.status, saved.publishAt) : "draft";
   const isLive = saved.exists && saved.status !== "draft";
+  const slugFollowsTitle = !slugEdited && !isLive;
   const checkSlug = useCallback(
     (slug: string) => checkSlugAvailability(slug, articleId),
     [articleId],
@@ -97,11 +101,10 @@ export function ArticleEditor({
   // The slug follows the title until it is edited by hand or the article goes live;
   // after that the public URL must not change behind the editor's back.
   function updateTitle(title: string) {
-    const followTitle = !slugEdited && !isLive;
     setValues((current) => ({
       ...current,
       title,
-      slug: followTitle ? slugify(title) : current.slug,
+      slug: slugFollowsTitle ? slugFromTitle(title) : current.slug,
     }));
   }
 
@@ -110,16 +113,23 @@ export function ArticleEditor({
     savingRef.current = true;
     setSaving(auto ? "auto" : "manual");
     setError(undefined);
-    const snapshot = JSON.stringify(values);
-
     try {
-      const result = await saveArticle(toArticleInput(values, articleId, intent));
+      const result = await saveArticle(
+        toArticleInput(values, articleId, intent, { slugFollowsTitle }),
+      );
       if (!result.ok) {
         setError(result.error);
         return false;
       }
+      // A link made from the title may have come back with a number ("...-2"): show that one.
+      const savedValues = { ...values, slug: result.slug };
+      if (result.slug !== values.slug) {
+        setValues((current) =>
+          current.slug === values.slug ? { ...current, slug: result.slug } : current,
+        );
+      }
       setSaved({
-        snapshot,
+        snapshot: JSON.stringify(savedValues),
         exists: true,
         status: result.status,
         publishAt: result.publishAt,
@@ -156,9 +166,16 @@ export function ArticleEditor({
     }
   }
 
+  // "…" stands in for the category or link until they are chosen.
+  const articleUrl = siteConfig.url + articlePath(values.categorySlug || "…", values.slug || "…");
+
+  // Shown for categories with the olympiad fields (an admin setting), or when any is filled in.
+  const inOlympiadCategory = [values.categorySlug, ...values.secondaryCategories].some(
+    (slug) => findCategoryIn(categories, slug)?.has_olympiad_fields,
+  );
   const showOlympiadFields =
     showOlympiad ||
-    values.categorySlug === "olympiad" ||
+    inOlympiadCategory ||
     [values.subject, values.levelText, values.registrationDeadline, values.registrationUrl].some(
       Boolean,
     );
@@ -198,6 +215,14 @@ export function ArticleEditor({
             maxLength={200}
             required
             onChange={(event) => updateTitle(event.target.value)}
+            hint={
+              <span className="flex flex-wrap gap-x-2">
+                {t("admin.articles.editor.address")}:
+                <span className="font-mono break-all text-ink" data-testid="article-url">
+                  {articleUrl}
+                </span>
+              </span>
+            }
           />
 
           <SlugField
@@ -208,25 +233,47 @@ export function ArticleEditor({
             }}
             onRegenerate={() => {
               setSlugEdited(false);
-              update("slug", slugify(values.title));
+              update("slug", slugFromTitle(values.title));
             }}
             checkAvailability={checkSlug}
+            numbersWhenTaken={slugFollowsTitle}
           />
 
-          <TextAreaField
-            label={t("admin.articles.editor.excerpt")}
-            name="excerpt"
-            value={values.excerpt}
-            rows={3}
-            maxLength={EXCERPT_LIMIT}
-            onChange={(event) => update("excerpt", event.target.value)}
-            hint={
-              <span className="flex flex-wrap justify-between gap-2">
-                {t("admin.articles.editor.excerptHint")}
-                <CharacterCount value={values.excerpt} limit={EXCERPT_LIMIT} />
-              </span>
-            }
-          />
+          {/* Side by side once the column is wide enough for both (a container query). */}
+          <div className="@container">
+            <div className="grid gap-6 @2xl:grid-cols-2">
+              <TextAreaField
+                label={t("admin.articles.editor.excerpt")}
+                name="excerpt"
+                value={values.excerpt}
+                rows={4}
+                minLength={EXCERPT_LENGTH.min}
+                maxLength={EXCERPT_LENGTH.max}
+                required
+                onChange={(event) => update("excerpt", event.target.value)}
+                hint={
+                  <span className="flex flex-wrap justify-between gap-2">
+                    {t("admin.articles.editor.excerptHint", EXCERPT_LENGTH)}
+                    <CharacterCount
+                      value={values.excerpt}
+                      min={EXCERPT_LENGTH.min}
+                      limit={EXCERPT_LENGTH.max}
+                    />
+                  </span>
+                }
+              />
+              <SharePreview
+                coverPath={values.coverPath}
+                title={values.seoTitle.trim() || values.title.trim()}
+                description={values.seoDescription.trim() || values.excerpt.trim()}
+                card={{
+                  title: values.title.trim(),
+                  label: findCategoryIn(categories, values.categorySlug)?.label ?? "",
+                  date: saved.publishAt ? formatDate(saved.publishAt) : "",
+                }}
+              />
+            </div>
+          </div>
 
           <div className="flex flex-col gap-2">
             <span id={bodyLabelId} className={fieldLabelClasses}>
@@ -255,6 +302,10 @@ export function ArticleEditor({
                 onChange: (caption) => update("coverCaption", caption),
               }}
             />
+            <CoverPositionField
+              value={values.coverPosition}
+              onChange={(position) => update("coverPosition", position)}
+            />
           </EditorPanel>
 
           <EditorPanel title={t("admin.articles.olympiad.title")}>
@@ -276,12 +327,8 @@ export function ArticleEditor({
 
           <EditorPanel title={t("admin.articles.seo.title")}>
             <SeoPanel
-              title={values.title}
-              excerpt={values.excerpt}
               seoTitle={values.seoTitle}
               seoDescription={values.seoDescription}
-              coverPath={values.coverPath}
-              siteHost={siteHost}
               onSeoTitleChange={(value) => update("seoTitle", value)}
               onSeoDescriptionChange={(value) => update("seoDescription", value)}
             />
@@ -299,18 +346,17 @@ export function ArticleEditor({
 
           <EditorPanel title={t("admin.articles.editor.settings")}>
             <div className="flex flex-col gap-5">
-              <SelectField
-                label={t("admin.articles.editor.category")}
-                name="categorySlug"
-                value={values.categorySlug}
-                onChange={(event) => update("categorySlug", event.target.value)}
-                options={[
-                  { value: "", label: t("admin.articles.editor.chooseCategory") },
-                  ...articleCategories.map((category) => ({
-                    value: category.slug,
-                    label: category.label,
-                  })),
-                ]}
+              <ArticleCategoriesField
+                categories={categories}
+                main={values.categorySlug}
+                secondary={values.secondaryCategories}
+                onChange={({ main, secondary }) =>
+                  setValues((current) => ({
+                    ...current,
+                    categorySlug: main,
+                    secondaryCategories: secondary,
+                  }))
+                }
               />
               <TagCombobox
                 id="article-tags"

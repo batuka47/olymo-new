@@ -95,3 +95,36 @@ export function TicketIcon(props: IconProps) {
     </Icon>
   );
 }
+
+/** Text alignment in the article editor: the lines show where text sits. */
+export function AlignLeftIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 6h16M4 10h10M4 14h16M4 18h10" />
+    </Icon>
+  );
+}
+
+export function AlignCenterIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 6h16M7 10h10M4 14h16M7 18h10" />
+    </Icon>
+  );
+}
+
+export function AlignRightIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 6h16M10 10h10M4 14h16M10 18h10" />
+    </Icon>
+  );
+}
+
+export function AlignJustifyIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+    </Icon>
+  );
+}

@@ -1,11 +1,12 @@
 import "server-only";
 import type { MetadataRoute } from "next";
-import { categories, categoryPath } from "@/config/categories";
+import { categoryPath, isArticleCategory } from "@/config/categories";
 import { eventPath } from "@/config/events";
 import { routes } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
 import { sitePages } from "@/config/site-pages";
 import { articlePath } from "@/lib/articles/status";
+import { getActiveCategories } from "@/lib/categories/queries";
 import { mediaUrl } from "@/lib/media";
 import { createPublicClient } from "@/lib/supabase/server";
 
@@ -16,15 +17,21 @@ export const URLS_PER_SITEMAP = 5000;
 /** Supabase returns at most 1000 rows per request. */
 const ROWS_PER_REQUEST = 1000;
 
-/** Pages that are always there, in the first sitemap; /search, /login and /account are left out. */
-const fixedPaths = [
-  routes.home,
-  ...categories.map((category) => categoryPath(category.slug)),
-  ...sitePages.map((page) => page.href),
-  routes.advertise,
-  routes.submit,
-  routes.contact,
-];
+/**
+ * Pages that are always there, in the first sitemap: home, the active categories (events too), the
+ * info pages and forms. /search, /login and /account are left out.
+ */
+async function fixedPaths(): Promise<string[]> {
+  const categories = await getActiveCategories();
+  return [
+    routes.home,
+    ...categories.map((category) => categoryPath(category.slug)),
+    ...sitePages.map((page) => page.href),
+    routes.advertise,
+    routes.submit,
+    routes.contact,
+  ];
+}
 
 const absolute = (path: string) => `${siteConfig.url}${path}`;
 
@@ -38,8 +45,12 @@ async function countRows(table: "articles" | "events"): Promise<number> {
 }
 
 export async function countSitemapUrls(): Promise<number> {
-  const [articles, events] = await Promise.all([countRows("articles"), countRows("events")]);
-  return fixedPaths.length + articles + events;
+  const [paths, articles, events] = await Promise.all([
+    fixedPaths(),
+    countRows("articles"),
+    countRows("events"),
+  ]);
+  return paths.length + articles + events;
 }
 
 /** How many sitemap files the URLs fill; at least one. */
@@ -52,12 +63,12 @@ async function fixedPageDates(): Promise<Map<string, string>> {
   const supabase = createPublicClient();
   const latestArticle = (categorySlug?: string) => {
     const query = supabase.from("articles").select("updated_at");
-    return (categorySlug ? query.eq("category_slug", categorySlug) : query)
+    return (categorySlug ? query.contains("category_slugs", [categorySlug]) : query)
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
   };
-  const articleCategories = categories.filter((category) => category.slug !== "events");
+  const articleCategories = (await getActiveCategories()).filter(isArticleCategory);
   const [home, events, pages, ...byCategory] = await Promise.all([
     latestArticle(),
     supabase
@@ -73,7 +84,7 @@ async function fixedPageDates(): Promise<Map<string, string>> {
   const dates = new Map<string, string>();
   const set = (path: string, date: string | undefined) => date && dates.set(path, date);
   set(routes.home, home.data?.updated_at);
-  set(categoryPath("events"), events.data?.updated_at);
+  set(routes.events, events.data?.updated_at);
   articleCategories.forEach((category, index) =>
     set(categoryPath(category.slug), byCategory[index].data?.updated_at),
   );
@@ -146,7 +157,8 @@ function eventEntries(from: number, to: number) {
 export async function sitemapEntries(index: number): Promise<SitemapEntry[]> {
   const start = index * URLS_PER_SITEMAP;
   const end = start + URLS_PER_SITEMAP;
-  const [articleCount, eventCount] = await Promise.all([
+  const [paths, articleCount, eventCount] = await Promise.all([
+    fixedPaths(),
     countRows("articles"),
     countRows("events"),
   ]);
@@ -157,9 +169,9 @@ export async function sitemapEntries(index: number): Promise<SitemapEntry[]> {
     const to = Math.min(end, kindStart + kindCount) - kindStart;
     return { from, to, any: from < to };
   };
-  const fixed = slice(0, fixedPaths.length);
-  const articles = slice(fixedPaths.length, articleCount);
-  const events = slice(fixedPaths.length + articleCount, eventCount);
+  const fixed = slice(0, paths.length);
+  const articles = slice(paths.length, articleCount);
+  const events = slice(paths.length + articleCount, eventCount);
 
   const [dates, articleRows, eventRows] = await Promise.all([
     fixed.any ? fixedPageDates() : new Map<string, string>(),
@@ -167,7 +179,7 @@ export async function sitemapEntries(index: number): Promise<SitemapEntry[]> {
     events.any ? eventEntries(events.from, events.to) : [],
   ]);
   const fixedRows = fixed.any
-    ? fixedPaths
+    ? paths
         .slice(fixed.from, fixed.to)
         .map((path): SitemapEntry => ({ url: absolute(path), lastModified: dates.get(path) }))
     : [];

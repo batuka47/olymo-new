@@ -51,6 +51,43 @@ export type Database = {
         };
         Relationships: [];
       };
+      article_categories: {
+        Row: {
+          article_id: string;
+          category_slug: string;
+        };
+        Insert: {
+          article_id: string;
+          category_slug: string;
+        };
+        Update: {
+          article_id?: string;
+          category_slug?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "article_categories_article_id_fkey";
+            columns: ["article_id"];
+            isOneToOne: false;
+            referencedRelation: "articles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "article_categories_article_id_fkey";
+            columns: ["article_id"];
+            isOneToOne: false;
+            referencedRelation: "published_articles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "article_categories_category_slug_fkey";
+            columns: ["category_slug"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["slug"];
+          },
+        ];
+      };
       article_tags: {
         Row: {
           article_id: string;
@@ -98,10 +135,12 @@ export type Database = {
           body_html: string | null;
           body_json: Json | null;
           category_slug: string;
+          category_slugs: string[];
           comments_closed: boolean;
           cover_alt: string | null;
           cover_caption: string | null;
           cover_path: string | null;
+          cover_position: string;
           created_at: string;
           exam_date: string | null;
           excerpt: string | null;
@@ -134,10 +173,12 @@ export type Database = {
           body_html?: string | null;
           body_json?: Json | null;
           category_slug: string;
+          category_slugs?: string[];
           comments_closed?: boolean;
           cover_alt?: string | null;
           cover_caption?: string | null;
           cover_path?: string | null;
+          cover_position?: string;
           created_at?: string;
           exam_date?: string | null;
           excerpt?: string | null;
@@ -170,10 +211,12 @@ export type Database = {
           body_html?: string | null;
           body_json?: Json | null;
           category_slug?: string;
+          category_slugs?: string[];
           comments_closed?: boolean;
           cover_alt?: string | null;
           cover_caption?: string | null;
           cover_path?: string | null;
+          cover_position?: string;
           created_at?: string;
           exam_date?: string | null;
           excerpt?: string | null;
@@ -235,7 +278,11 @@ export type Database = {
         Row: {
           created_at: string;
           description: string;
+          has_olympiad_fields: boolean;
+          is_active: boolean;
           label: string;
+          show_in_nav: boolean;
+          show_on_home: boolean;
           slug: string;
           sort_order: number;
           updated_at: string;
@@ -243,7 +290,11 @@ export type Database = {
         Insert: {
           created_at?: string;
           description?: string;
+          has_olympiad_fields?: boolean;
+          is_active?: boolean;
           label: string;
+          show_in_nav?: boolean;
+          show_on_home?: boolean;
           slug: string;
           sort_order?: number;
           updated_at?: string;
@@ -251,7 +302,11 @@ export type Database = {
         Update: {
           created_at?: string;
           description?: string;
+          has_olympiad_fields?: boolean;
+          is_active?: boolean;
           label?: string;
+          show_in_nav?: boolean;
+          show_on_home?: boolean;
           slug?: string;
           sort_order?: number;
           updated_at?: string;
@@ -503,6 +558,155 @@ export type Database = {
         };
         Relationships: [];
       };
+      quiz_answer_log: {
+        Row: {
+          created_at: string;
+          ip_hash: string;
+          question_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          ip_hash: string;
+          question_id: string;
+        };
+        Update: {
+          created_at?: string;
+          ip_hash?: string;
+          question_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "quiz_answer_log_question_id_fkey";
+            columns: ["question_id"];
+            isOneToOne: false;
+            referencedRelation: "quiz_questions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      quiz_option_counts: {
+        Row: {
+          answers: number;
+          option_id: string;
+        };
+        Insert: {
+          answers?: number;
+          option_id: string;
+        };
+        Update: {
+          answers?: number;
+          option_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "quiz_option_counts_option_id_fkey";
+            columns: ["option_id"];
+            isOneToOne: true;
+            referencedRelation: "quiz_options";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      quiz_options: {
+        Row: {
+          id: string;
+          is_correct: boolean;
+          question_id: string;
+          sort_order: number;
+          text: string;
+        };
+        Insert: {
+          id?: string;
+          is_correct?: boolean;
+          question_id: string;
+          sort_order?: number;
+          text: string;
+        };
+        Update: {
+          id?: string;
+          is_correct?: boolean;
+          question_id?: string;
+          sort_order?: number;
+          text?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "quiz_options_question_id_fkey";
+            columns: ["question_id"];
+            isOneToOne: false;
+            referencedRelation: "quiz_questions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      quiz_questions: {
+        Row: {
+          explanation: string;
+          id: string;
+          image_alt: string | null;
+          image_path: string | null;
+          quiz_id: string;
+          sort_order: number;
+          text: string;
+        };
+        Insert: {
+          explanation?: string;
+          id?: string;
+          image_alt?: string | null;
+          image_path?: string | null;
+          quiz_id: string;
+          sort_order?: number;
+          text: string;
+        };
+        Update: {
+          explanation?: string;
+          id?: string;
+          image_alt?: string | null;
+          image_path?: string | null;
+          quiz_id?: string;
+          sort_order?: number;
+          text?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_quiz_id_fkey";
+            columns: ["quiz_id"];
+            isOneToOne: false;
+            referencedRelation: "quizzes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      quizzes: {
+        Row: {
+          created_at: string;
+          description: string;
+          id: string;
+          is_active: boolean;
+          order_mode: string;
+          title: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string;
+          id?: string;
+          is_active?: boolean;
+          order_mode?: string;
+          title: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string;
+          id?: string;
+          is_active?: boolean;
+          order_mode?: string;
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       site_pages: {
         Row: {
           blocks: NonNullable<Json>;
@@ -650,9 +854,12 @@ export type Database = {
           body_html: string | null;
           body_json: Json | null;
           category_slug: string | null;
+          category_slugs: string[] | null;
+          comments_closed: boolean | null;
           cover_alt: string | null;
           cover_caption: string | null;
           cover_path: string | null;
+          cover_position: string | null;
           created_at: string | null;
           exam_date: string | null;
           excerpt: string | null;
@@ -685,9 +892,12 @@ export type Database = {
           body_html?: string | null;
           body_json?: Json | null;
           category_slug?: string | null;
+          category_slugs?: string[] | null;
+          comments_closed?: boolean | null;
           cover_alt?: string | null;
           cover_caption?: string | null;
           cover_path?: string | null;
+          cover_position?: string | null;
           created_at?: string | null;
           exam_date?: string | null;
           excerpt?: string | null;
@@ -720,9 +930,12 @@ export type Database = {
           body_html?: string | null;
           body_json?: Json | null;
           category_slug?: string | null;
+          category_slugs?: string[] | null;
+          comments_closed?: boolean | null;
           cover_alt?: string | null;
           cover_caption?: string | null;
           cover_path?: string | null;
+          cover_position?: string | null;
           created_at?: string | null;
           exam_date?: string | null;
           excerpt?: string | null;
@@ -836,6 +1049,10 @@ export type Database = {
       };
     };
     Functions: {
+      article_category_slugs: {
+        Args: { main_slug: string; target_article: string };
+        Returns: string[];
+      };
       article_comment_count: { Args: { target_article: string }; Returns: number };
       article_comments: {
         Args: {
@@ -858,12 +1075,20 @@ export type Database = {
         }[];
       };
       comment_needs_review: { Args: { body: string }; Returns: boolean };
+      delete_category: { Args: { category: string; move_to?: string }; Returns: undefined };
       popular_tags: {
         Args: { tag_limit?: number };
         Returns: {
           article_count: number;
           label: string;
           slug: string;
+        }[];
+      };
+      quiz_article_counts: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          article_count: number;
+          quiz_id: string;
         }[];
       };
       record_ad_click: { Args: { ad_id: string }; Returns: string };
@@ -873,6 +1098,9 @@ export type Database = {
         Args: { attempt_action: string; attempt_ip_hash: string; window_minutes: number };
         Returns: number;
       };
+      record_quiz_answer: { Args: { ip_hash: string; option_id: string }; Returns: number };
+      reorder_categories: { Args: { slugs: string[] }; Returns: undefined };
+      save_quiz: { Args: { quiz: Json }; Returns: undefined };
       search_content: {
         Args: {
           category?: string;

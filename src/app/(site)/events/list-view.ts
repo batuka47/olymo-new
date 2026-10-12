@@ -1,4 +1,4 @@
-import { categoryPath } from "@/config/categories";
+import { routes } from "@/config/navigation";
 import type { EventListQuery } from "@/lib/events/queries";
 
 /** The plain /events: upcoming, all of them, page 1. */
@@ -50,5 +50,5 @@ export function eventListHref(view: EventListQuery): string {
     params.set("page", String(view.page));
   }
   const query = params.toString();
-  return query ? `${categoryPath("events")}?${query}` : categoryPath("events");
+  return query ? `${routes.events}?${query}` : routes.events;
 }

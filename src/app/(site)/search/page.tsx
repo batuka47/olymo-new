@@ -5,7 +5,8 @@ import { SearchForm } from "@/components/site/search-form";
 import { Container } from "@/components/ui/container";
 import { routes } from "@/config/navigation";
 import { t } from "@/lib/i18n";
-import { siteOpenGraph } from "@/lib/metadata";
+import { pageRobots, siteOpenGraph } from "@/lib/metadata";
+import { getActiveCategories } from "@/lib/categories/queries";
 import { hasSearch, parseSearchView, searchHref, type SearchView } from "@/lib/search/params";
 import {
   getPopularTags,
@@ -26,7 +27,11 @@ const POPULAR_TAG_COUNT = 12;
 
 /** The view, and the tag it filters by; null for a view that does not exist (unknown tag too). */
 async function resolveView(searchParams: PageProps<"/search">["searchParams"]) {
-  const view = parseSearchView(await searchParams);
+  const categories = await getActiveCategories();
+  const view = parseSearchView(
+    await searchParams,
+    new Set(categories.map((category) => category.slug)),
+  );
   if (!view) {
     return null;
   }
@@ -61,7 +66,7 @@ export async function generateMetadata({ searchParams }: PageProps<"/search">): 
     description,
     alternates: { canonical: url },
     // Result pages are endless word combinations: crawlers may follow their links, not index them.
-    robots: url === routes.search ? undefined : { index: false, follow: true },
+    robots: pageRobots(url === routes.search ? undefined : { index: false, follow: true }),
     openGraph: { ...siteOpenGraph, type: "website", url, title, description },
   };
 }
@@ -84,7 +89,10 @@ function ActiveTag({ view, tag }: { view: SearchView; tag: TagLink }) {
 }
 
 async function Results({ view }: { view: SearchView }) {
-  const { results, total } = await searchContent(view);
+  const [{ results, total }, categories] = await Promise.all([
+    searchContent(view),
+    getActiveCategories(),
+  ]);
   if (view.page > 1 && results.length === 0) {
     notFound();
   }
@@ -92,6 +100,7 @@ async function Results({ view }: { view: SearchView }) {
   return (
     <SearchResults
       view={view}
+      categories={categories}
       results={results}
       total={total}
       pageCount={Math.ceil(total / SEARCH_PAGE_SIZE)}

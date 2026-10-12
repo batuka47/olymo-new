@@ -1,5 +1,4 @@
 import { FilterLinks } from "@/components/site/filter-links";
-import type { CategorySlug } from "@/config/categories";
 import { olympiadSubjects, type OlympiadSubject } from "@/lib/articles/olympiad";
 import { t } from "@/lib/i18n";
 import { listViewHref, type ListView } from "./list-view";
@@ -7,7 +6,7 @@ import { listViewHref, type ListView } from "./list-view";
 /** "Бусад" has no button; ?subject=other still works for links. */
 const filterSubjects = olympiadSubjects.filter((subject) => subject !== "other");
 
-export function SubjectFilter({ category, view }: { category: CategorySlug; view: ListView }) {
+export function SubjectFilter({ category, view }: { category: string; view: ListView }) {
   const options: (OlympiadSubject | null)[] = [null, ...filterSubjects];
   return (
     <FilterLinks

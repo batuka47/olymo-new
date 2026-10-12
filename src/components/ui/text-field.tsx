@@ -18,12 +18,15 @@ export function describedBy({ id, hint, error }: FieldTextProps): string | undef
   return ids.length > 0 ? ids.join(" ") : undefined;
 }
 
-/** The error and help text under an input; the error in red. */
+/**
+ * The error and help text under an input; the error in red. The error is an alert, so screen
+ * readers announce it when it appears, wherever focus is (a comment refused by the server).
+ */
 export function FieldText({ id, hint, error }: FieldTextProps) {
   return (
     <>
       {error && (
-        <p id={`${id}-error`} className="text-sm text-danger">
+        <p id={`${id}-error`} role="alert" className="text-sm text-danger">
           {error}
         </p>
       )}

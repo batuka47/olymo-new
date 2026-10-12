@@ -29,7 +29,8 @@ function categoryArticles(query: CategoryListQuery) {
   let builder = createPublicClient()
     .from("articles")
     .select(SUMMARY_COLUMNS, { count: "exact" })
-    .eq("category_slug", query.category);
+    // Main or secondary category (category_slugs is kept by the database).
+    .contains("category_slugs", [query.category]);
   if (query.subject) {
     builder = builder.eq("subject", query.subject);
   }
@@ -141,7 +142,7 @@ export const getFeaturedArticle = unstable_cache(
     const { data, error } = await createPublicClient()
       .from("articles")
       .select(SUMMARY_COLUMNS)
-      .eq("category_slug", category)
+      .contains("category_slugs", [category])
       .eq("is_featured", true)
       .order("publish_at", { ascending: false })
       .limit(1)
