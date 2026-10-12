@@ -2,12 +2,21 @@ import type { Extensions } from "@tiptap/core";
 import { Placeholder } from "@tiptap/extensions";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { textExtensions } from "@/lib/editor/extensions";
-import { Embed, FigureImage, Gallery, Quote, SocialEmbed, YouTube } from "@/lib/editor/nodes";
+import {
+  Embed,
+  FigureImage,
+  Gallery,
+  QuizBlock,
+  Quote,
+  SocialEmbed,
+  YouTube,
+} from "@/lib/editor/nodes";
 import { ImageFiles } from "./editor-events";
 import { SlashCommand } from "./slash-menu";
 import { EmbedView, SocialView, YouTubeView } from "./views/embed-views";
 import { GalleryView } from "./views/gallery-view";
 import { ImageView } from "./views/image-view";
+import { QuizView } from "./views/quiz-view";
 import { QuoteView } from "./views/quote-view";
 
 /**
@@ -23,6 +32,7 @@ export function editorExtensions(placeholder: string): Extensions {
     YouTube.extend({ addNodeView: () => ReactNodeViewRenderer(YouTubeView) }),
     SocialEmbed.extend({ addNodeView: () => ReactNodeViewRenderer(SocialView) }),
     Embed.extend({ addNodeView: () => ReactNodeViewRenderer(EmbedView) }),
+    QuizBlock.extend({ addNodeView: () => ReactNodeViewRenderer(QuizView) }),
     Placeholder.configure({ placeholder }),
     SlashCommand,
     ImageFiles,

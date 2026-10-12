@@ -8,12 +8,16 @@ type Supabase = Awaited<ReturnType<typeof createClient>>;
 const LIST_PAGE_SIZE = 1000;
 const ID_BATCH_SIZE = 100;
 
-/** Image folders named after the row that owns them: {prefix}/{id}/. */
+/**
+ * Image folders named after the row that owns them: {prefix}/{id}/. A quiz's images are named in its
+ * questions, so those are read along with it.
+ */
 const OWNED_FOLDERS = [
-  { prefix: "articles", table: "articles" },
-  { prefix: "ads", table: "ads" },
-  { prefix: "events", table: "events" },
-  { prefix: "team", table: "team_members" },
+  { prefix: "articles", table: "articles", columns: "*" },
+  { prefix: "ads", table: "ads", columns: "*" },
+  { prefix: "events", table: "events", columns: "*" },
+  { prefix: "team", table: "team_members", columns: "*" },
+  { prefix: "quizzes", table: "quizzes", columns: "*, quiz_questions(image_path)" },
 ] as const;
 
 type OwnerTable = (typeof OWNED_FOLDERS)[number]["table"];
@@ -44,15 +48,16 @@ export async function removeFolder(supabase: Supabase, folder: string) {
 }
 
 /** The rows that still exist, whole: whatever column or text points at an image counts. */
-async function existingRows(supabase: Supabase, table: OwnerTable, ids: string[]) {
+async function existingRows(supabase: Supabase, table: OwnerTable, columns: string, ids: string[]) {
   const rows = new Map<string, string>();
   for (let start = 0; start < ids.length; start += ID_BATCH_SIZE) {
     const { data, error } = await supabase
       .from(table)
-      .select("*")
+      .select(columns)
       .in("id", ids.slice(start, start + ID_BATCH_SIZE));
     if (error) throw error;
-    for (const row of data) rows.set(row.id, JSON.stringify(row));
+    // The columns differ per table, so the client cannot type the rows; each has an id.
+    for (const row of data as unknown as { id: string }[]) rows.set(row.id, JSON.stringify(row));
   }
   return rows;
 }
@@ -105,7 +110,7 @@ export interface CleanupResult {
 }
 
 /**
- * Deletes articles/{id}/, ads/{id}/, events/{id}/ and team/{id}/ folders whose row no longer exists
+ * Deletes articles/, ads/, events/, team/ and quizzes/{id}/ folders whose row no longer exists
  * (or never did), and files in the other folders that their row no longer points at (uploads are
  * never overwritten, so a replaced image leaves its files behind). Nothing uploaded within
  * `minAgeMs` is deleted: images are uploaded before the save that points at them.
@@ -117,12 +122,12 @@ export async function removeUnusedFolders(
 ): Promise<CleanupResult> {
   const result: CleanupResult = { folders: 0, files: 0 };
 
-  for (const { prefix, table } of OWNED_FOLDERS) {
+  for (const { prefix, table, columns } of OWNED_FOLDERS) {
     const folderIds = (await listAll(supabase, prefix))
       // Folders are listed without an id; they are named after the row id.
       .filter((entry) => entry.id === null && z.uuid().safeParse(entry.name).success)
       .map((entry) => entry.name);
-    const rows = await existingRows(supabase, table, folderIds);
+    const rows = await existingRows(supabase, table, columns, folderIds);
 
     for (const id of folderIds) {
       const folder = `${prefix}/${id}`;

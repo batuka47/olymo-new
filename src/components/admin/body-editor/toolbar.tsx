@@ -22,7 +22,7 @@ const ALIGN_ICONS: Record<TextAlignment, (props: { className?: string }) => Reac
 };
 
 /** Blocks the toolbar inserts, the same as in the "/" menu. */
-const INSERTS: BlockDialog[] = ["image", "gallery", "youtube", "social", "embed"];
+const INSERTS: BlockDialog[] = ["image", "gallery", "youtube", "social", "embed", "quiz"];
 
 interface ToolbarProps {
   editor: Editor;

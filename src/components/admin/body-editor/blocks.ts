@@ -5,7 +5,7 @@ import type { TextSize } from "@/lib/editor/nodes";
 // What the "/" menu, the "+" button and the toolbar can insert. Blocks that need a file or a link
 // open a dialog; the rest change the current line.
 
-export type BlockDialog = "image" | "gallery" | "youtube" | "social" | "embed";
+export type BlockDialog = "image" | "gallery" | "youtube" | "social" | "embed" | "quiz";
 
 export type BlockId =
   TextSize | "bulletList" | "orderedList" | "quote" | "rule" | "table" | BlockDialog;
@@ -87,6 +87,7 @@ export const BLOCKS: Block[] = [
     action: { dialog: "social" },
   },
   { id: "embed", keywords: "embed iframe code maps forms canva", action: { dialog: "embed" } },
+  { id: "quiz", keywords: "quiz test asuult shalgalt тест асуулт", action: { dialog: "quiz" } },
 ];
 
 export function blockLabel(id: BlockId): string {

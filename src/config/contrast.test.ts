@@ -37,6 +37,8 @@ const TEXT_PAIRS: [string, string][] = [
   ["ink", "white"],
   ["muted", "white"],
   ["accent", "white"],
+  ["success", "white"],
+  ["danger", "white"],
   ["ink", "stone"],
   ["muted", "stone"],
   ["paper", "ink"],

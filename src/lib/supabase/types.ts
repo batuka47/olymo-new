@@ -558,6 +558,155 @@ export type Database = {
         };
         Relationships: [];
       };
+      quiz_answer_log: {
+        Row: {
+          created_at: string;
+          ip_hash: string;
+          question_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          ip_hash: string;
+          question_id: string;
+        };
+        Update: {
+          created_at?: string;
+          ip_hash?: string;
+          question_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "quiz_answer_log_question_id_fkey";
+            columns: ["question_id"];
+            isOneToOne: false;
+            referencedRelation: "quiz_questions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      quiz_option_counts: {
+        Row: {
+          answers: number;
+          option_id: string;
+        };
+        Insert: {
+          answers?: number;
+          option_id: string;
+        };
+        Update: {
+          answers?: number;
+          option_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "quiz_option_counts_option_id_fkey";
+            columns: ["option_id"];
+            isOneToOne: true;
+            referencedRelation: "quiz_options";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      quiz_options: {
+        Row: {
+          id: string;
+          is_correct: boolean;
+          question_id: string;
+          sort_order: number;
+          text: string;
+        };
+        Insert: {
+          id?: string;
+          is_correct?: boolean;
+          question_id: string;
+          sort_order?: number;
+          text: string;
+        };
+        Update: {
+          id?: string;
+          is_correct?: boolean;
+          question_id?: string;
+          sort_order?: number;
+          text?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "quiz_options_question_id_fkey";
+            columns: ["question_id"];
+            isOneToOne: false;
+            referencedRelation: "quiz_questions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      quiz_questions: {
+        Row: {
+          explanation: string;
+          id: string;
+          image_alt: string | null;
+          image_path: string | null;
+          quiz_id: string;
+          sort_order: number;
+          text: string;
+        };
+        Insert: {
+          explanation?: string;
+          id?: string;
+          image_alt?: string | null;
+          image_path?: string | null;
+          quiz_id: string;
+          sort_order?: number;
+          text: string;
+        };
+        Update: {
+          explanation?: string;
+          id?: string;
+          image_alt?: string | null;
+          image_path?: string | null;
+          quiz_id?: string;
+          sort_order?: number;
+          text?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_quiz_id_fkey";
+            columns: ["quiz_id"];
+            isOneToOne: false;
+            referencedRelation: "quizzes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      quizzes: {
+        Row: {
+          created_at: string;
+          description: string;
+          id: string;
+          is_active: boolean;
+          order_mode: string;
+          title: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string;
+          id?: string;
+          is_active?: boolean;
+          order_mode?: string;
+          title: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string;
+          id?: string;
+          is_active?: boolean;
+          order_mode?: string;
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       site_pages: {
         Row: {
           blocks: NonNullable<Json>;
@@ -935,6 +1084,13 @@ export type Database = {
           slug: string;
         }[];
       };
+      quiz_article_counts: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          article_count: number;
+          quiz_id: string;
+        }[];
+      };
       record_ad_click: { Args: { ad_id: string }; Returns: string };
       record_ad_impression: { Args: { ad_id: string }; Returns: undefined };
       record_article_view: { Args: { article_id: string }; Returns: undefined };
@@ -942,7 +1098,9 @@ export type Database = {
         Args: { attempt_action: string; attempt_ip_hash: string; window_minutes: number };
         Returns: number;
       };
+      record_quiz_answer: { Args: { ip_hash: string; option_id: string }; Returns: number };
       reorder_categories: { Args: { slugs: string[] }; Returns: undefined };
+      save_quiz: { Args: { quiz: Json }; Returns: undefined };
       search_content: {
         Args: {
           category?: string;

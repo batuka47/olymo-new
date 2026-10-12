@@ -16,6 +16,7 @@
   --color-ash: #8e8c86; /* meta text on ink, dashed ad slot border */
   --color-graphite: #3b3c40; /* lead paragraph; 9.7:1 on paper */
   --color-danger: #b42318; /* form errors; 5.8:1 on paper */
+  --color-success: #1a7f37; /* quiz "Зөв"; 5.1:1 on white (quiz cards are white) */
 
   --radius-*: initial;
   --radius: 0;
@@ -480,6 +481,18 @@
 
     & .embed-empty {
       display: none;
+    }
+
+    /* "Quiz": the card (components/site/quiz) fills the block once its script runs; until then the
+       block keeps its place so the text below does not jump. */
+    & .quiz {
+      clear: both;
+
+      &:empty {
+        min-height: 22rem;
+        border: 1px solid var(--color-line);
+        @apply stripe-pattern;
+      }
     }
   }
 

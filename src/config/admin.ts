@@ -8,6 +8,7 @@ export const adminRoutes = {
   setPassword: "/admin/set-password",
   articles: "/admin/articles",
   categories: "/admin/categories",
+  quizzes: "/admin/quizzes",
   preview: "/admin/preview",
   previewExit: "/admin/preview/exit",
   events: "/admin/events",
@@ -54,6 +55,7 @@ export const adminNavItems: readonly AdminNavItem[] = [
   { href: adminRoutes.articles, labelKey: "admin.nav.articles" },
   // Editors pick categories in the editor; adding, renaming and deleting them is for admins (RLS).
   { href: adminRoutes.categories, labelKey: "admin.nav.categories", adminOnly: true },
+  { href: adminRoutes.quizzes, labelKey: "admin.nav.quizzes" },
   { href: adminRoutes.events, labelKey: "admin.nav.events" },
   { href: adminRoutes.ads, labelKey: "admin.nav.ads" },
   { href: adminRoutes.pages, labelKey: "admin.nav.pages" },

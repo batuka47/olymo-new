@@ -6,6 +6,7 @@ import {
   Embed,
   FigureImage,
   Gallery,
+  QuizBlock,
   Quote,
   SmallText,
   SocialEmbed,
@@ -51,4 +52,5 @@ export const articleExtensions: Extensions = [
   YouTube,
   SocialEmbed,
   Embed,
+  QuizBlock,
 ];

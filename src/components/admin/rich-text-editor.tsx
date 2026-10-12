@@ -13,6 +13,7 @@ import type { BlockDialog } from "@/components/admin/body-editor/blocks";
 import { EmbedDialog, LinkDialog, PostLinkDialog } from "@/components/admin/body-editor/dialogs";
 import { onDialogRequest, onImageFiles } from "@/components/admin/body-editor/editor-events";
 import { editorExtensions } from "@/components/admin/body-editor/editor-extensions";
+import { QuizPickerDialog } from "@/components/admin/body-editor/quiz-picker-dialog";
 import {
   ImageUploadsContext,
   useImageUploads,
@@ -34,7 +35,7 @@ interface RichTextEditorProps {
   placeholder?: string;
 }
 
-type Dialog = "link" | "youtube" | "social" | "embed";
+type Dialog = "link" | "youtube" | "social" | "embed" | "quiz";
 
 function imageNode(image: UploadedImage) {
   return {
@@ -185,6 +186,11 @@ export function RichTextEditor({
             <EmbedDialog
               editor={editor}
               open={dialog === "embed"}
+              onClose={() => setDialog(null)}
+            />
+            <QuizPickerDialog
+              editor={editor}
+              open={dialog === "quiz"}
               onClose={() => setDialog(null)}
             />
           </>

@@ -336,3 +336,20 @@ describe("renderArticleHtml: articles written before the block editor", () => {
     expect(html).toContain('alt="Хуучин зураг"');
   });
 });
+
+describe("renderArticleHtml: quizzes", () => {
+  const quizId = "6f1c2b9e-1d3a-4c55-8e0f-0a1b2c3d4e5f";
+
+  it("keeps only the quiz id; the page fills the block in", () => {
+    expect(renderArticleHtml(doc({ type: "quiz", attrs: { quizId, title: "Газарзүй" } }))).toBe(
+      `<figure class="quiz" data-quiz="${quizId}"></figure>`,
+    );
+  });
+
+  it("renders nothing for a stored id that is not one", () => {
+    expect(renderArticleHtml(doc({ type: "quiz", attrs: { quizId: '"><script>' } }))).toBe(
+      '<figure class="embed-empty"></figure>',
+    );
+    expect(sanitizeArticleHtml('<figure class="quiz" data-quiz="x"></figure>')).toBe("");
+  });
+});

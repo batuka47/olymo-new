@@ -2,12 +2,14 @@
 
 import { useEffect } from "react";
 import type { GalleryLabels } from "@/lib/body-enhancers/gallery";
+import type { QuizData, QuizLabels } from "@/lib/quizzes/model";
 
 export interface BodyFeatures {
   gallery: boolean;
   youtube: boolean;
   social: boolean;
   embed: boolean;
+  quiz: boolean;
 }
 
 interface BodyEnhancementsProps {
@@ -15,13 +17,23 @@ interface BodyEnhancementsProps {
   bodyId: string;
   features: BodyFeatures;
   labels: GalleryLabels & { youTubePlayer: string };
+  /** The page's active quizzes, for its quiz blocks. */
+  quizzes: QuizData[];
+  quizLabels: QuizLabels | null;
 }
 
 /**
  * Brings the article's interactive blocks to life: slider arrows, YouTube on click, social posts
- * near the screen, sandboxed embeds growing to fit. Each part loads only if the article has it.
+ * near the screen, sandboxed embeds growing to fit, quizzes. Each part loads only if the article has
+ * it.
  */
-export function BodyEnhancements({ bodyId, features, labels }: BodyEnhancementsProps) {
+export function BodyEnhancements({
+  bodyId,
+  features,
+  labels,
+  quizzes,
+  quizLabels,
+}: BodyEnhancementsProps) {
   useEffect(() => {
     const body = document.getElementById(bodyId);
     if (!body) return;
@@ -53,12 +65,17 @@ export function BodyEnhancements({ bodyId, features, labels }: BodyEnhancementsP
         keep(watchEmbedHeights(body)),
       );
     }
+    if (features.quiz && quizLabels) {
+      void import("@/lib/body-enhancers/quiz").then(({ mountQuizzes }) =>
+        keep(mountQuizzes(body, quizzes, quizLabels)),
+      );
+    }
 
     return () => {
       active = false;
       cleanups.forEach((cleanup) => cleanup());
     };
-  }, [bodyId, features, labels]);
+  }, [bodyId, features, labels, quizzes, quizLabels]);
 
   return null;
 }

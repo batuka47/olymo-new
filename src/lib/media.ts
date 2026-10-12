@@ -140,3 +140,19 @@ export function teamPhotoPath(
 ): string {
   return `${teamFolder(memberId)}/${TEAM_PHOTO_NAME}-${token}-${width}.${extension}`;
 }
+
+export function quizFolder(quizId: string): string {
+  return `quizzes/${quizId}`;
+}
+
+export const QUIZ_IMAGE_NAME = "question";
+
+/** A question's image: quizzes/{quiz id}/question-{token}-{width}.{extension}. */
+export function quizImagePath(
+  quizId: string,
+  token: string,
+  width: ImageWidth,
+  extension: ImageExtension,
+): string {
+  return `${quizFolder(quizId)}/${QUIZ_IMAGE_NAME}-${token}-${width}.${extension}`;
+}

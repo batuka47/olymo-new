@@ -127,7 +127,7 @@ is a shortcut for the same script.
   below) and a grip to drag it elsewhere. The fixed toolbar does the same for people who don't use
   "/". Blocks: Гарчиг 1–3 (h2–h4; the title is the page's only h1), Энгийн / Жижиг текст,
   alignment, bold, italic, underline, strikethrough, links, lists, Эшлэл with an optional author,
-  Хуваах зураас, Зураг, Зургийн слайдер, Хүснэгт, YouTube, Сошиал пост and Embed. The block types
+  Хуваах зураас, Зураг, Зургийн слайдер, Хүснэгт, YouTube, Сошиал пост, Embed and Quiz. The block types
   live in `src/lib/editor/nodes.ts` (what readers get) and `src/components/admin/body-editor/`
   (how they are edited).
 - **Images in the text** can be uploaded, pasted or dropped, of any size: the browser resizes them
@@ -166,8 +166,8 @@ allow-forms"`, never `allow-same-origin`) that reports its height to the page, s
 - **Unused images:** images uploaded to an article that was never saved, and the old files of a
   replaced cover or of an image taken out of the text, stay in storage. Admins can remove them with
   "Ашиглагдаагүй зураг цэвэрлэх" on the dashboard: it deletes `articles/{id}/` folders that have no
-  article, and files that their article (or event, ad, team member) no longer points at, leaving
-  anything uploaded in the last 24 hours.
+  article, and files that their article (or event, ad, team member, quiz) no longer points at,
+  leaving anything uploaded in the last 24 hours.
 
 ### Public article page
 
@@ -223,6 +223,37 @@ page immediately. A link with the wrong category answers 308 with the right addr
   categories in menu order, leaving out those with olympiad fields (by default Спорт, Технологи,
   Шинжлэх ухаан). The olympiad band is titled with the first category that has olympiad fields
   (`src/lib/categories/home.ts`).
+
+### Quizzes
+
+`/admin/quizzes` (all staff) builds quizzes; the article editor's "Quiz" block ("/" menu or the
+toolbar) opens a list of the active ones and inserts the chosen quiz anywhere in the text. Events
+and info pages share the editor, so quizzes work there too.
+
+- **Editor:** name, description, "Дарааллын төрөл" (questions as written, or shuffled for every
+  attempt), "Идэвхтэй", and the questions: text, optional image (`quizzes/{id}/`, resized in the
+  browser like covers), 2–8 options with the correct one marked, and an explanation shown after
+  answering. Questions and options are reordered with the arrows. The reader's card is shown
+  live beside the form; answers given there are not counted.
+- **One correct option** per question is checked by the form and enforced by the database (a
+  constraint trigger checked when the save commits). A quiz is saved whole, in one transaction,
+  by the `save_quiz` database function; questions and options keep their ids, so answer counts
+  survive edits.
+- **In the text** only the quiz id is stored (`<figure class="quiz" data-quiz="…">`). The page
+  reads the quiz when it is shown (`src/components/site/article-body-html.tsx`), so editing a quiz
+  updates every article it is in at once. An inactive or deleted quiz shows nothing; deleting one
+  that articles use says how many first. The list shows "used in N articles".
+- **Readers** need no account. One question at a time with the progress ("3 / 10"); choosing an
+  option locks the question and shows "Зөв" or "Буруу", the correct answer, the explanation and
+  "Уншигчдын 62% зөв хариулсан"; the end shows the score, a short message, "Дахин оролдох" and a
+  share button ("Би 7/10 авлаа": the phone's share sheet, or the link copied). Real buttons,
+  announcements for screen readers, 44 px targets.
+- **Loading:** the card (`src/components/site/quiz/`) and its script load only on pages whose text
+  has a quiz block (`src/lib/body-enhancers/quiz.tsx`); the block keeps its place until then.
+- **Answer counts** are anonymous: `quiz_option_counts` holds a number per option. The server
+  action `recordQuizAnswer` counts an answer once per question and address a day (at most 300 an
+  hour), using the same salted address hash as the forms; those hashes are deleted after a day.
+  The correct options are sent to the browser with the quiz, so feedback is instant.
 
 ### Category pages
 
@@ -474,6 +505,10 @@ its sample content:
 - `article-editor.spec.ts`: inserts every block type through "/" and the toolbar, publishes, and
   checks the article page at 390 and 1440 px (YouTube, X and Google Maps requests are answered
   locally). The test article and its images are deleted afterwards.
+- `categories.spec.ts`: an admin adds a category, publishes an article in it, renames, hides,
+  reorders and deletes it with its articles moved.
+- `quizzes.spec.ts`: builds a quiz, inserts it into an article through "/", answers it at 390 px
+  (right and wrong feedback, final score, axe on the card), then deletes the quiz.
 
 ```bash
 npx playwright install chromium        # once

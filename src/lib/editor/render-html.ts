@@ -61,6 +61,9 @@ function isAllowedIframe(attributes: Record<string, string>): boolean {
   return attributes.sandbox === undefined && isAllowedIframeSrc(attributes.src ?? "");
 }
 
+/** The id a quiz block (the Quiz node) carries. */
+const QUIZ_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
 const TEXT_ALIGN = { "text-align": [/^(left|center|right|justify)$/] };
 
 export function sanitizeArticleHtml(html: string): string {
@@ -130,6 +133,7 @@ export function sanitizeArticleHtml(html: string): string {
         "data-social",
         "data-url",
         "data-embed",
+        "data-quiz",
       ],
       td: ["colspan", "rowspan"],
       th: ["colspan", "rowspan"],
@@ -164,6 +168,7 @@ export function sanitizeArticleHtml(html: string): string {
         "embed-social",
         "embed-frame",
         "embed-empty",
+        "quiz",
       ],
     },
     allowedStyles: { p: TEXT_ALIGN, h2: TEXT_ALIGN, h3: TEXT_ALIGN, h4: TEXT_ALIGN },
@@ -171,9 +176,12 @@ export function sanitizeArticleHtml(html: string): string {
     allowedSchemesByTag: { img: ["https", "http"], iframe: ["https"] },
     allowProtocolRelative: false,
     // Images come from our own media bucket (no hotlinking or tracking pixels); iframes follow
-    // isAllowedIframe.
+    // isAllowedIframe; a quiz block holds a quiz id and nothing else.
     exclusiveFilter: (frame) =>
       (frame.tag === "img" && !isAllowedImage(frame.attribs, prefix)) ||
-      (frame.tag === "iframe" && !isAllowedIframe(frame.attribs)),
+      (frame.tag === "iframe" && !isAllowedIframe(frame.attribs)) ||
+      (frame.tag === "figure" &&
+        frame.attribs["data-quiz"] !== undefined &&
+        !QUIZ_ID.test(frame.attribs["data-quiz"])),
   });
 }

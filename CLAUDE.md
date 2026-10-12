@@ -14,7 +14,12 @@ Built by Anir Agency (4 people). The person publishing content is NOT a programm
 
 ## Content model (summary)
 articles, categories, tags, events, ads, site_pages, submissions (contact / ad / partner),
-comments, profiles (role: admin | editor | reader).
+comments, profiles (role: admin | editor | reader), quizzes (quiz_questions, quiz_options,
+quiz_option_counts).
+Quizzes are built by staff in /admin/quizzes and placed in a text with the editor's "Quiz" block, which
+stores only the quiz id; pages read the quiz when shown (src/lib/quizzes/, card in
+src/components/site/quiz/, mounted by src/lib/body-enhancers/quiz.tsx). Exactly one correct option per
+question is enforced in the database; save whole quizzes with the save_quiz function.
 Categories are data, managed by admins in /admin/categories (table categories: label, slug, description,
 sort_order, show_in_nav, is_active, has_olympiad_fields). The server reads them through
 src/lib/categories/queries.ts (cached, expired on save); src/config/categories.ts holds only types and helpers.

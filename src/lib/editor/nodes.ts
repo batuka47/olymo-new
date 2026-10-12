@@ -400,3 +400,39 @@ export const Embed = Node.create({
     );
   },
 });
+
+// --- Quiz --------------------------------------------------------------------------------------
+
+const QUIZ_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+/**
+ * "Quiz": a quiz from /admin/quizzes, by id. The text keeps only this block; the page reads the
+ * quiz when it is shown (components/site/article-body-html.tsx), so editing the quiz updates every
+ * article it is in, and a deleted or inactive quiz shows nothing.
+ */
+export const QuizBlock = Node.create({
+  name: "quiz",
+  group: "block",
+  atom: true,
+  draggable: true,
+  addAttributes() {
+    return {
+      quizId: { default: null, renderHTML: () => ({}) },
+      // The quiz's name when it was inserted, for the editor only.
+      title: { default: null, renderHTML: () => ({}) },
+    };
+  },
+  parseHTML() {
+    return [
+      {
+        tag: "figure[data-quiz]",
+        getAttrs: (element: HTMLElement) => ({ quizId: element.getAttribute("data-quiz") }),
+      },
+    ];
+  },
+  renderHTML({ node }) {
+    const quizId = String(node.attrs.quizId ?? "").toLowerCase();
+    if (!QUIZ_ID.test(quizId)) return ["figure", { class: "embed-empty" }];
+    return ["figure", { class: "quiz", "data-quiz": quizId }];
+  },
+});
