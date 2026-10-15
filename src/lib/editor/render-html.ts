@@ -70,6 +70,9 @@ export function sanitizeArticleHtml(html: string): string {
   const prefix = mediaUrlPrefix();
 
   return sanitizeHtml(html, {
+    // The static renderer writes an element without content as <figure/>. Read as HTML, that would
+    // open a figure and pull everything after it inside (a quiz block followed by text).
+    parser: { recognizeSelfClosing: true },
     allowedTags: [
       "p",
       "br",
