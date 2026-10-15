@@ -46,3 +46,6 @@ next-env.d.ts
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Screenshots of the local demo content (npm run demo:fill), for the designer
+/demo-screenshots/
