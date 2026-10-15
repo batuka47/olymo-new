@@ -15,7 +15,9 @@
     "db:test": "supabase test db",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "admin:create": "tsx scripts/create-admin.ts"
+    "admin:create": "tsx scripts/create-admin.ts",
+    "demo:fill": "tsx --conditions=react-server scripts/demo-content/index.ts fill",
+    "demo:clear": "tsx --conditions=react-server scripts/demo-content/index.ts clear"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

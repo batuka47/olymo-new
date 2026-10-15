@@ -346,6 +346,17 @@ describe("renderArticleHtml: quizzes", () => {
     );
   });
 
+  it("keeps the text after a quiz outside its block", () => {
+    const html = renderArticleHtml({
+      type: "doc",
+      content: [
+        { type: "quiz", attrs: { quizId } },
+        { type: "paragraph", content: [{ type: "text", text: "Дараагийн мөр" }] },
+      ],
+    });
+    expect(html).toBe(`<figure class="quiz" data-quiz="${quizId}"></figure><p>Дараагийн мөр</p>`);
+  });
+
   it("renders nothing for a stored id that is not one", () => {
     expect(renderArticleHtml(doc({ type: "quiz", attrs: { quizId: '"><script>' } }))).toBe(
       '<figure class="embed-empty"></figure>',

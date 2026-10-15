@@ -49,6 +49,14 @@ The Supabase CLI is a dev dependency, so every command runs through `npx supabas
   into `.env.local`.
 - **Sample content:** `supabase/seed.sql` loads 6 articles, 2 events and 1 ad. Every title starts
   with `[ЖИШЭЭ]`. The seed only runs locally.
+- **Demo content** (to judge the design with every space in use): `npm run demo:fill` adds 67
+  articles across the categories (olympiad deadlines, featured, special and "good to know" ones),
+  15 events, an ad in all 8 placements, 2 quizzes, comments and a team, with photos from
+  picsum.photos (needs the internet; takes about a minute). The `[ЖИШЭЭ]` samples are unpublished
+  meanwhile. `npm run demo:clear` removes all of it and publishes the samples again. Both refuse
+  any database that is not local, so demo news never reaches the hosted site. Demo rows have ids
+  starting with `de000000-`; the content is in `scripts/demo-content/`. Run the browser tests
+  after `demo:clear`: they expect the plain samples.
 - **An admin account:** see [Admin area](#admin-area) below.
 - **Emails** (staff invites) are not sent locally; they appear in Mailpit: http://127.0.0.1:54324
 
@@ -563,6 +571,8 @@ configures all of this for local development.
 | `npm run db:test`       | Run the database tests (local Supabase must be running) |
 | `npm run check:samples` | Check that no migration carries sample content          |
 | `npm run admin:create`  | Create or promote an admin (see Admin area)             |
+| `npm run demo:fill`     | Fill the local site with demo content (see below)       |
+| `npm run demo:clear`    | Remove the demo content again                           |
 
 Before merging, `lint`, `typecheck` and `build` must all pass.
 
@@ -599,6 +609,7 @@ src/components/ui/   shared UI primitives (Button, …)
 src/config/          siteConfig, routes and reserved slugs, category types and helpers
 src/lib/             fonts, i18n helper
 src/lib/supabase/    Supabase clients (server, browser, service-role admin) and generated types
+scripts/             admin account, sample check, demo content (demo-content/, local only)
 supabase/            CLI config, migrations/ and seed.sql
 ```
 
